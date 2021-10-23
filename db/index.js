@@ -38,6 +38,6 @@ module.exports = {
     } finally {
       client.release()
     }
-  }
+  }  
 };
 
