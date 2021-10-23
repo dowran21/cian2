@@ -11,21 +11,24 @@ const ComparePassword = async (password, hash) =>{
 };
 
 const GenerateUserAccessToken = async(data) =>{
-    return JWT.sign(data, process.env.ACCESS_SECRET_KEY, {expiresIn:"10d"})
+    return JWT.sign(data, process.env.USER_ACCESS_KEY, {expiresIn:"10d"})
 };
 
 const GenerateUserRefreshToken = async(data) =>{
-    return JWT.sign(data, process.env.REFRESH_SECRET_KEY, {expiresIn:"30d"})
+    return JWT.sign(data, process.env.USER_REFRESH_KEY, {expiresIn:"30d"})
 };
 
 const GenerateAdminAccessToken = async(data) =>{
-    return JWT.sign(data, process.env.ADMIN_ACCESS_SECRET_KEY, {expiresIn:"1d"})
+    return JWT.sign(data, process.env.ADMIN_ACCESS_KEY, {expiresIn:"1d"})
 };
-
+const GenerateAdminRefreshToken = async(data) =>{
+    return JWT.sign(data, process.env.ADMIN_REFRESH_KEY, {expiresIn:"15d"})
+};
 module.exports = {
     HashPassword,
     ComparePassword,
     GenerateUserAccessToken,
     GenerateUserRefreshToken,
     GenerateAdminAccessToken,
+    GenerateAdminRefreshToken
 }

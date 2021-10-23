@@ -1,6 +1,6 @@
 INSERT INTO languages(language, language_code) VALUES
 ('turkmen', 'tm'), 
-('russian', 'tm');
+('russian', 'ru');
 
 INSERT INTO categories(absolute_name) VALUES ('sale'), ('rent');
 
@@ -46,154 +46,154 @@ INSERT INTO vip_types(id, name, days) VALUES
 
 
 --------This inserts for specifications----------------------
--- WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
---                     VALUES (1, 'quantity_of_rooms', 'true', 'false') RETURNING id
---             ), insert_translations AS (
---                 INSERT INTO specification_translations(name, language_id, spec_id)
---                     VALUES 
---                     ('Otaglaryň sany', 1, (SELECT id FROM inserted)),('Количество комнат', 2, (SELECT id FROM inserted)) 
---             ), insert_value0 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '1') RETURNING id
---         ), insert_value1 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '2') RETURNING id
---         ), insert_value2 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '3') RETURNING id
---         ), insert_value3 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '4') RETURNING id
---         ), insert_value4 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '5') RETURNING id
---         ), insert_value5 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '6') RETURNING id
---         ), insert_value6 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '7') RETURNING id
---         ), insert_value7 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '8') RETURNING id
---         ), insert_value8 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '9') RETURNING id
---         ), insert_value9 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '10') RETURNING id
---         ) SELECT id FROM inserted;
+WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
+                    VALUES (1, 'quantity_of_rooms', 'true', 'false') RETURNING id
+            ), insert_translations AS (
+                INSERT INTO specification_translations(name, language_id, spec_id)
+                    VALUES 
+                    ('Otaglaryň sany', 1, (SELECT id FROM inserted)),('Количество комнат', 2, (SELECT id FROM inserted)) 
+            ), insert_value0 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '1') RETURNING id
+        ), insert_value1 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '2') RETURNING id
+        ), insert_value2 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '3') RETURNING id
+        ), insert_value3 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '4') RETURNING id
+        ), insert_value4 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '5') RETURNING id
+        ), insert_value5 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '6') RETURNING id
+        ), insert_value6 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '7') RETURNING id
+        ), insert_value7 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '8') RETURNING id
+        ), insert_value8 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '9') RETURNING id
+        ), insert_value9 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '10') RETURNING id
+        ) SELECT id FROM inserted;
 
--- WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
---         VALUES (2, 'quantity of floors of tower', 'true', 'false') RETURNING id
---             ), insert_translations AS (
---                 INSERT INTO specification_translations(name, language_id, spec_id)
---                     VALUES 
---                     ('Binanyň gatynyň sany', 1, (SELECT id FROM inserted)),('Количество этажей здания', 2, (SELECT id FROM inserted)) 
---             ), insert_value0 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '1') RETURNING id
---         ), insert_value1 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '2') RETURNING id
---         ), insert_value2 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '3') RETURNING id
---         ), insert_value3 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '4') RETURNING id
---         ), insert_value4 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '5') RETURNING id
---         ), insert_value5 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '6') RETURNING id
---         ), insert_value6 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '7') RETURNING id
---         ), insert_value7 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '8') RETURNING id
---         ), insert_value8 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '9') RETURNING id
---         ), insert_value9 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '10') RETURNING id
---         ), insert_value10 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '11') RETURNING id
---         ), insert_value11 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '12') RETURNING id
---         ), insert_value12 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '13') RETURNING id
---         ), insert_value13 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '14') RETURNING id
---         ), insert_value14 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '15') RETURNING id
---         ) SELECT id FROM inserted;
+WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
+        VALUES (2, 'quantity of floors of tower', 'true', 'false') RETURNING id
+            ), insert_translations AS (
+                INSERT INTO specification_translations(name, language_id, spec_id)
+                    VALUES 
+                    ('Binanyň gatynyň sany', 1, (SELECT id FROM inserted)),('Количество этажей здания', 2, (SELECT id FROM inserted)) 
+            ), insert_value0 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '1') RETURNING id
+        ), insert_value1 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '2') RETURNING id
+        ), insert_value2 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '3') RETURNING id
+        ), insert_value3 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '4') RETURNING id
+        ), insert_value4 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '5') RETURNING id
+        ), insert_value5 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '6') RETURNING id
+        ), insert_value6 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '7') RETURNING id
+        ), insert_value7 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '8') RETURNING id
+        ), insert_value8 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '9') RETURNING id
+        ), insert_value9 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '10') RETURNING id
+        ), insert_value10 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '11') RETURNING id
+        ), insert_value11 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '12') RETURNING id
+        ), insert_value12 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '13') RETURNING id
+        ), insert_value13 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '14') RETURNING id
+        ), insert_value14 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '15') RETURNING id
+        ) SELECT id FROM inserted;
 
--- WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
---                 VALUES (3, 'floor of the flat', 'true', 'false') RETURNING id
---             ), insert_translations AS (
---                 INSERT INTO specification_translations(name, language_id, spec_id)
---                     VALUES 
---                     ('Ýerleşýän gaty', 1, (SELECT id FROM inserted)),('Этаж квартиры', 2, (SELECT id FROM inserted)) 
---             ), insert_value0 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '1') RETURNING id
---         ), insert_value1 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '2') RETURNING id
---         ), insert_value2 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '3') RETURNING id
---         ), insert_value3 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '4') RETURNING id
---         ), insert_value4 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '5') RETURNING id
---         ), insert_value5 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '6') RETURNING id
---         ), insert_value6 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '7') RETURNING id
---         ), insert_value7 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '8') RETURNING id
---         ), insert_value8 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '9') RETURNING id
---         ), insert_value9 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '10') RETURNING id
---         ), insert_value10 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '11') RETURNING id
---         ), insert_value11 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '12') RETURNING id
---         ), insert_value12 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '13') RETURNING id
---         ), insert_value13 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '14') RETURNING id
---         ), insert_value14 AS (
---                 INSERT INTO specification_values (spec_id, absolute_value)
---                     VALUES ((SELECT id FROM inserted), '15') RETURNING id
---         ) SELECT id FROM inserted;
+WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
+                VALUES (3, 'floor of the flat', 'true', 'false') RETURNING id
+            ), insert_translations AS (
+                INSERT INTO specification_translations(name, language_id, spec_id)
+                    VALUES 
+                    ('Ýerleşýän gaty', 1, (SELECT id FROM inserted)),('Этаж квартиры', 2, (SELECT id FROM inserted)) 
+            ), insert_value0 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '1') RETURNING id
+        ), insert_value1 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '2') RETURNING id
+        ), insert_value2 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '3') RETURNING id
+        ), insert_value3 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '4') RETURNING id
+        ), insert_value4 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '5') RETURNING id
+        ), insert_value5 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '6') RETURNING id
+        ), insert_value6 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '7') RETURNING id
+        ), insert_value7 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '8') RETURNING id
+        ), insert_value8 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '9') RETURNING id
+        ), insert_value9 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '10') RETURNING id
+        ), insert_value10 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '11') RETURNING id
+        ), insert_value11 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '12') RETURNING id
+        ), insert_value12 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '13') RETURNING id
+        ), insert_value13 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '14') RETURNING id
+        ), insert_value14 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), '15') RETURNING id
+        ) SELECT id FROM inserted;
 
--- ----just continue----
--- SELECT nextval('specifications_id_seq'::regclass);
--- SELECT nextval('specifications_id_seq'::regclass);
--- SELECT nextval('specifications_id_seq'::regclass);
+----just continue----
+SELECT nextval('specifications_id_seq'::regclass);
+SELECT nextval('specifications_id_seq'::regclass);
+SELECT nextval('specifications_id_seq'::regclass);
 
 
 

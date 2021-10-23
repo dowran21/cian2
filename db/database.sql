@@ -123,7 +123,7 @@ CREATE TABLE specification_values(
     absolute_value CHARACTER VARYING(100) NOT NULL,
 
     CONSTRAINT spec_id_fk 
-        FOREIGN KEY (spec_id) REFERENCES specifications(id) ON UPDATE CASCADE
+        FOREIGN KEY (spec_id) REFERENCES specifications(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE INDEX specification_value_idx ON specification_values (spec_id);
@@ -187,7 +187,6 @@ CREATE TABLE real_estates(
     area NUMERIC(8,2) NOT NULL,
     position point,
     phone NUMERIC(8) NOT NULL,
-    urgency BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     status_id SMALLINT NOT NULL,
     location_id SMALLINT NOT NULL,

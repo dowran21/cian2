@@ -1,5 +1,6 @@
 const database = require('../db/index.js')
 const {lang_id} = require('../utils/helpFunctions.js')
+const {status} = require('../utils/status')
 
 const GetRealEstateByFilter = async (req, res) =>{
     const {specifications, type_id, category_id, price, area, images, position, page, limit} = req.query
@@ -96,7 +97,8 @@ const GetSpecificationsForType = async (req, res) =>{
                             LEFT JOIN specification_value_translations svt 
                                 ON svt.spec_value_id = sv.id AND svt.language_id = l.id
                         WHERE sv.spec_id = s.id
-                        ORDER BY sv.id DESC
+                        ORDER BY case when sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                            integer) ELSE null END ASC, sv.absolute_value ASC
                 )value) AS values
                 
             FROM specifications s
@@ -162,6 +164,7 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
+    console.log("Heloo i am inn all real estates")
     const {page, limit} = await req.query
     const {lang} = req.params
     const requestip = require('request-ip')
@@ -179,71 +182,23 @@ const AllRealEstate = async (req, res) =>{
     }else{
         offSet = ``
     }
-    let advertisements = ``
-    if (page == 1){
-       const delete_estate_vips = `
-                DELETE FROM shown_vips WHERE ip_address = $1
-            
-        `
-        try {
-            await database.query(delete_estate_vips, [ip])
-        } catch (e) {
-            console.log(e)
-            throw e
-        }
-        advertisements = `
-            selected_advertisements AS (
-                SELECT DISTINCT ON (advertisement_level_id) id, destination, advertisement_level_id
-                FROM (
-                    SELECT a.id, af.destination, a.advertisement_level_id
-                    FROM advertisements a
-                        INNER JOIN advertisement_files af 
-                            ON af.advertisement_id = a.id AND af.file_type_id = 2 
-                        WHERE a.advertisement_level_id IN (1, 2, 3) AND a.advertisement_type_id = 1 AND validity:: tsrange @> localtimestamp
-                    ORDER BY random()
-                ) AS adevrtisements ORDER BY advertisement_level_id ASC LIMIT 3
-            ), view_advertisement AS (
-                INSERT INTO view_address_advertisements(ip_address, advertisement_id, view_type_id)
-                    SELECT $1, id, 1 
-                        FROM selected_advertisements
-                ON CONFLICT (ip_address, advertisement_id, view_type_id) DO NOTHING
-            )
-
-        `
-    }else{
-        advertisements = `
-            selected_advertisements AS (
-                SELECT  id, destination, advertisement_level_id
-                FROM (
-                    SELECT a.id, af.destination, a.advertisement_level_id
-                    FROM advertisements a
-                        INNER JOIN advertisement_files af 
-                            ON af.advertisement_id = a.id AND af.file_type_id = 2 
-                        WHERE a.advertisement_level_id NOT IN (1, 2, 3) AND a.advertisement_type_id = 1 AND validity:: tsrange @> localtimestamp
-                    ORDER BY random() 
-                ) AS adevrtisements LIMIT 3
-            ), view_advertisement AS (
-                INSERT INTO view_address_advertisements(ip_address, advertisement_id, view_type_id)
-                    SELECT $1, id, 1 
-                        FROM selected_advertisements
-                ON CONFLICT (ip_address, advertisement_id, view_type_id) DO NOTHING
-            )
-
-        `
-    }
     let OrderPart = ``
     const real_estate_name = `
     concat(
         CASE WHEN 
                 (SELECT sv.absolute_value
                 FROM specification_values sv
-                    INNER JOIN specifications s ON s.id = sv.spec_id
-                    INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                    INNER JOIN specifications s 
+                        ON s.id = sv.spec_id
+                    INNER JOIN real_estate_specification_values resv 
+                        ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
                 WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id)  IS NOT NULL THEN 
                     (SELECT sv.absolute_value
                     FROM specification_values sv
-                        INNER JOIN specifications s ON s.id = sv.spec_id
-                        INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                        INNER JOIN specifications s 
+                            ON s.id = sv.spec_id
+                        INNER JOIN real_estate_specification_values resv 
+                            ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
                 WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id) ||
             CASE 
                 WHEN l.id = 1 THEN ' otagly '
@@ -259,8 +214,10 @@ const AllRealEstate = async (req, res) =>{
         CASE WHEN            
         (SELECT sv.absolute_value
             FROM specification_values sv
-                INNER JOIN specifications s ON s.id = sv.spec_id
-                INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                INNER JOIN specifications s 
+                    ON s.id = sv.spec_id
+                INNER JOIN real_estate_specification_values resv 
+                    ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
         WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) IS NOT NULL THEN 
         (SELECT sv.absolute_value
             FROM specification_values sv
@@ -276,7 +233,7 @@ const AllRealEstate = async (req, res) =>{
     
     let vip_estates = `
     selected_vip AS (
-        SELECT re.id, rep.price, re.created_at, re.urgency, vre.id AS VIP,
+        SELECT re.id, rep.price, re.created_at, vre.id AS VIP,
         concat(
             CASE 
                 WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
@@ -300,8 +257,6 @@ const AllRealEstate = async (req, res) =>{
             ON tt.type_id = cp.type_id AND tt.language_id = l.id
         INNER JOIN vip_real_estates vre 
             ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-        LEFT JOIN shown_vips sv 
-            ON sv.real_estate_id = re.id AND sv.ip_address = $1
         LEFT JOIN location_translations lt
             ON lt.location_id = re.location_id AND lt.language_id = l.id
         LEFT JOIN locations lc 
@@ -309,21 +264,21 @@ const AllRealEstate = async (req, res) =>{
         LEFT JOIN location_translations ltt
             ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
     WHERE re.is_active = 'true' AND re.status_id <> 2 
-        AND re.status_id <> 4 AND vre.id IS NOT NULL AND sv.ip_address IS NULL
+        AND re.status_id <> 4 AND vre.id IS NOT NULL 
     ORDER BY random() LIMIT ${vip_limit}
     )`
 
 
     const query_text =`
     WITH selected AS 
-        (SELECT re.id, rep.price, re.created_at, re.urgency, vre.id AS VIP, 
+        (SELECT re.id, rep.price, re.created_at, vre.id AS VIP, 
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         ${real_estate_name}
         
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei
-            WHERE rei.real_estate_id = re.id AND rei.file_type_id = 1 AND rei.is_active = true LIMIT 3
+            WHERE rei.real_estate_id = re.id AND rei.is_active = true LIMIT 3
         )dest) AS images
 
         FROM real_estates re 
@@ -350,13 +305,9 @@ const AllRealEstate = async (req, res) =>{
         SELECT $1,  id, 1 FROM selected 
         ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING), ${vip_estates}, 
     
-    insert_shown_vips AS (INSERT INTO shown_vips 
-        SELECT $1, id FROM selected_vip 
-        ON CONFLICT (ip_address, real_estate_id) DO NOTHING),
-    
     inserted_vips AS (INSERT INTO view_address
         SELECT $1, id, 1 FROM selected_vip
-        ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING), ${advertisements}
+        ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING)
     
     SELECT
         (SELECT COUNT(re.id) FROM real_estates re  
@@ -371,11 +322,7 @@ const AllRealEstate = async (req, res) =>{
         
         (SELECT json_agg(s) FROM 
             selected_vip 
-        s) AS vip_real_estates,
-
-        (SELECT json_agg(adv) FROM
-            selected_advertisements    
-        adv) AS advertisements
+        s) AS vip_real_estates
         `
     try {
         const {rows} = await database.query(query_text, [ip, lang])
@@ -398,11 +345,10 @@ const AllRealEstate = async (req, res) =>{
         }else{
             real_estates_all = rows[0].real_estates_all
         }
-        console.log(rows[0].advertisements)
-        return res.json({"rows":{"count":rows[0].count, "real_estates_all":real_estates_all, "advertisements":rows[0].advertisements}})
+        return res.status(status.success).json({"rows":{"count":rows[0].count, "real_estates_all":real_estates_all}})
     } catch (e) {
         console.log(e)
-        throw e
+        return res.status(status.error).json({"message":e.message})
     }
 
 }
@@ -437,67 +383,6 @@ const TypeCategoryController = async (req, res) =>{
         console.log(e)
         throw e        
     }
-}
-
-const PaperTypes = async (req, res) => {
-    const {lang} = req.params
-
-    const query_text = `
-        SELECT pt.id, ptt.name FROM paper_type pt
-            INNER JOIN paper_type_translations ptt ON ptt.paper_type_id = pt.id
-            INNER JOIN languages l ON l.id = ptt.language_id
-        WHERE l.language_code = '${lang}'              
-    `
-    try {
-        const {rows} = await database.query(query_text, [])
-        return res.json({"rows":rows})
-    } catch (e) {
-        console.log(e)
-        throw e
-    }
-}
-
-const PaperTypeController = async (req, res) =>{
-    const {lang, paper_type_id} = req.params
-    const {page, limit} = req.query
-    console.log(page, limit)
-    let offSet = ``
-    if (page && limit){
-        offSet = `OFFSET ${(page-1)*limit} LIMIT ${limit}`
-    }
-
-    const query_text = `
-        SELECT 
-            (SELECT COUNT(pn.id) FROM paper_name pn
-                WHERE pn.paper_type_id = $1) AS count,
-            
-            (SELECT json_agg(paper) FROM (
-                SELECT pn.id, pnt.name, pd.description, pn.created_at, pi.destination AS image
-                    FROM paper_name pn
-                        INNER JOIN paper_name_translations pnt ON pnt.paper_name_id = pn.id
-                        INNER JOIN paper_descriptions pd ON pd.paper_name_id = pn.id
-                        LEFT JOIN paper_image pi ON pi.paper_name_id = pn.id
-                        INNER JOIN languages l ON l.language_code = $2
-                    WHERE pn.paper_type_id = $1 AND pnt.language_id = l.id AND pd.language_id = l.id
-                        ORDER BY (pn.created_at) DESC ${offSet}
-            )paper) AS papers
-    `
-    try {
-        const {rows} = await database.query(query_text, [paper_type_id, lang])
-        return res.json({"rows":rows})
-
-    } catch (e) {
-        console.log(e)
-        throw e
-    }
-
-}
-
-const PaperByID = async (req, res) =>{
-    const {id, lang} = req.params;
-    const query_text = `
-
-        `
 }
 
 const GetRealEstateByID = async (req, res) => {
@@ -699,10 +584,7 @@ module.exports = {
     Languages,
     AllRealEstate,
     TypeCategoryController,
-    PaperTypes,
-    PaperTypeController,
     GetRealEstateByID,
-    PaperByID,
     GetTypesCategory,
     GetLocations,
     GetRegions

@@ -1,7 +1,70 @@
 const database = require('../db/index.js')
-const {lang_id} = require('../utils/helpFunctions.js')
+const {lang_id} = require('../utils/helpFunctions.js');
+const UserHelper = require('../utils/index.js');
+const {status} = require('../utils/status.js')
 
+const UserRegistration = async (req, res) =>{
+    /********************
+        {
+            "full_name": "SOme full name of moderator",
+            "email" : "ddowran2106@gmail.com",
+            "phone":"61123141",
+            "password":"somepasswordexample"
+        }
+    ************************/
+    const {full_name, email, phone, password} = req.body
+    const hashed_password = await UserHelper.HashPassword(password)
+    const query_text = `
+        INSERT INTO users(role_id, full_name, email, phone, password)
+        VALUES ($1, $2, $3, $4, $5) RETURNING *
+        `
+    try{
+        const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password]);
+        data = {"id":rows[0].id, "full_name":rows[0].full_name, "email":rows[0].email, "phone":rows[0].phone, "role_id":rows[0].role_id}
+        const access_token = await UserHelper.GenerateUserAccessToken(data);
+        const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
+        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+    }catch(e){
+        console.log(e)
+        return res.status(status.error).json({"message":e.message})
+    }
+    
+}
 
+const UserLogin = async (req, res) =>{
+    /*******************
+     {
+         "phone":"61123141",
+         "password":"somepassword"
+     }
+     *****************/
+    const {phone, password} = req.body
+    const query_text = `
+        SELECT * FROM users WHERE phone = ${phone} AND role_id = 3
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        const user = rows[0];
+        if(!user){
+            return res.status(status.notfound).json({"message":"Not found"})
+        }
+        if (UserHelper.ComparePassword(password, user.password)){
+            data = {"id":user.id, "full_name":user.full_name, "email":user.email, "phone":user.phone, "role_id":user.role_id}
+            const access_token = await UserHelper.GenerateUserAccessToken(data);
+            const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
+            return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+        }
+        if(!UserHelper.ComparePassword(password, user.password)){
+            const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
+            return res.status(status.bad).json(message)
+        }
+
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).json({"message":"Error"})
+    }
+
+}
 
 const UserRealEstates = async (req, res) =>{
     const {uuid, lang} = req.params
@@ -29,25 +92,25 @@ const UserRealEstates = async (req, res) =>{
 }
 
 const AddRealEstate = async (req, res) =>{
-    /***********************
- req.body should be like this;
-{
-        "type_id":3,
-        "category_id":1,
-        "area":"5412",
-        "position":{"lng":51.251, "lat":152.625},
-        "price":45624862,
-        "urgency":"true",
-        "phone":61123141,
-        "location_id":null
-        "descriptions" : [{"language_id":1, "description":"something about this home what you need to know"},
-                        {"language_id":2, "description":"something about this home what you need to know, "}],
-        "specifications":[{"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]},
-    {"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]}] ,
-}
+/***********************
+req.body should be like this;
+    {
+            "type_id":3,
+            "category_id":1,
+            "area":"5412",
+            "position":{"lng":51.251, "lat":152.625},
+            "price":45624862,
+            "phone":61123141,
+            "location_id":null
+            "descriptions" : [{"language_id":1, "description":"something about this home what you need to know"},
+                            {"language_id":2, "description":"something about this home what you need to know, "}],
+            "specifications":[{"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]},
+                {"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]}] ,
+    }
 *****************************/
 
-    const {type_id, category_id, phone, area, position, price, descriptions, specifications, urgency, location_id } = req.body
+    const {type_id, category_id, phone, area, position, price, descriptions, owner_id, specifications, location_id } = req.body
+    const user_id = req.user.id
     let status_id = 0
     if (category_id== 1){
         status_id = 1
@@ -83,8 +146,8 @@ const AddRealEstate = async (req, res) =>{
                 SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id}
 
             ),inserted AS (
-                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, urgency, location_id, phone, is_active)
-                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5, $6, $7, 'true') RETURNING id
+                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id, phone, is_active, owner_type_id)
+                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5, $6,  'false', $7) RETURNING id
 
             ),ins AS (
                 INSERT INTO real_estate_prices (real_estate_id, price)
@@ -96,7 +159,7 @@ const AddRealEstate = async (req, res) =>{
 
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
-        const {rows} = await database.query(query_text, [uuid, price, area, status_id, urgency, location_id, phone])
+        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id, phone, owner_id])
         return res.json(rows[0])
 
     } catch(e) {
@@ -303,6 +366,8 @@ const UpateRealEstate = async (req, res) =>{
 
 module.exports = {
 
+    UserRegistration,
+    UserLogin,
     UserRealEstates,
     AddRealEstate,
     GetUserRealEstateByID,
@@ -311,6 +376,7 @@ module.exports = {
     GetWishList,
     AddImage,
     AddToVIP,
-    UpateRealEstate
+    UpateRealEstate,
+    
 
 }

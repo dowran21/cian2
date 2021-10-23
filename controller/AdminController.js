@@ -1,5 +1,64 @@
-const database = require("../db/index.js")
-const {status} = require('../utils/status')
+const database = require("../db/index.js");
+const {status} = require('../utils/status');
+const AdminHelper = require('../utils/index.js');
+
+const AdminLogin = async (req, res) =>{
+    /******
+     {
+         "password":"61123141"
+         "phone":61123141
+     }
+     *********/
+    // console.log("I am in admin login controller")
+    const {password, phone} = req.body
+    const query_text = `
+        SELECT * FROM users u WHERE u.phone = $1 AND role_id = 1
+    `
+    try {
+        const {rows} = await database.query(query_text, [phone])
+        const user = rows[0]
+        if(!user){
+            const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
+            return res.status(status.notfound).json(message)
+        }
+        const is_password_same = await AdminHelper.ComparePassword(password, user.password)
+        if (!is_password_same){
+            const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
+            return res.status(status.bad).json(message)
+        }
+        const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
+        const access_token = await AdminHelper.GenerateAdminAccessToken(data)
+        const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
+        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).json({"message":"Operation wasn't succesfully"})
+    }
+}
+
+const AddOperator = async (req, res) =>{
+    /*******
+     {
+         "full_name": "SOme full name of moderator",
+         "email" : "ddowran2106@gmail.com",
+         "phone":"61123141",
+         "password":"somepasswordexample"
+     }
+     **********/
+    const {full_name, email, phone, password} = req.body
+    const hashed_password = await AdminHelper.HashPassword(password)
+    const query_text = `
+        INSERT INTO users(role_id, full_name, email, phone, password)
+        VALUES ($1, $2, $3, $4, $5)
+        `
+    try{
+        await database.query(query_text, [2, full_name, email, phone, hashed_password]);
+        return res.status(status.success).send(true);
+    }catch(e){
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
 
 const AddSpecification = async (req, res) =>{
     /*************************************** 
@@ -44,15 +103,26 @@ const AddSpecification = async (req, res) =>{
                 INSERT INTO specification_translations(name, language_id, spec_id)
                     VALUES 
                     ${translations.map(item =>`('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`).join(',')} 
-            )${spec_values} SELECT id FROM inserted
+            )${spec_values} 
+                SELECT id FROM inserted
         `
     try {
-        console.log(query_text)
         const {rows} = await database.query(query_text, [absolute_name, is_required, is_multiple ])
-        return res.json("You have added succesfully")
+        try{
+            const qt = `
+                SELECT id, absolute_name, name 
+                FROM specifications 
+                    INNER JOIN specification_translations 
+                        ON specifications.id = specification_translations.spec_id 
+                WHERE language_id = 1 AND id = ${rows[0].id}`
+            const so = await database.query(qt, [])
+            return res.status(status.success).json({"rows":spec})
+        }catch(e){
+
+        }
     } catch (e) {
         console.log(e)
-        throw e
+        return res.status(status.error).send(false)
     }
 
 }
@@ -136,11 +206,41 @@ const GetAllTypes = async (req, res) =>{
     }
 }
 
+const AddMaintype = async (req, res) =>{
+    /******
+    {
+        "absolute_name" : "Kakoy_to",
+        "translations" : [{"language_id":1, "name" : "bir zat"}, 
+        {"language_id":2, "name" : "cto to"}],
+    }
+    ***********************/
+    const body = req.body
+    const translations = body.translations
+    try {
+        const query_text = `
+            WITH inserted AS ( 
+                INSERT INTO types(absolute_name) VALUES ($1) RETURNING id
+            ), inserte AS (
+                INSERT INTO type_translations(name, language_id, type_id) 
+                VALUES 
+                ${translations.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
+            ) SELECT id FROM inserted
+            `
+        const {rows} = await database.query(query_text, [body.absolute_name])
+        return res.status(status.success).json({"id":rows[0].id})
+    }catch(e){
+        console.log(e)
+        return res.status(status.error).json({"message":e.message})
+    }
+
+
+}
+
 const AddType = async (req, res) =>{
     /***********************************
      {
         "absolute_name" : "Kakoy_to",
-        "main_type_id" : null,
+        "main_type_id" : 1,
         "translations" : [{"language_id":1, "name" : "bir zat"}, 
         {"language_id":2, "name" : "cto to"}],
         "categories" : [1, 2]
@@ -157,14 +257,16 @@ const AddType = async (req, res) =>{
                 INSERT INTO type_translations(name, language_id, type_id) 
                 VALUES 
                 ${translations.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
-            ) INSERT INTO ctypes(category_id, type_id) 
-            VALUES ${categories.map(item => `(${item}, (SELECT id FROM inserted))`)}
+            ), insert_ctype AS 
+                (INSERT INTO ctypes(category_id, type_id) 
+                VALUES ${categories.map(item => `(${item}, (SELECT id FROM inserted))`)})
+                SELECT id FROM inserted
             `
         const {rows} = await database.query(query_text, [body.absolute_name, body.main_type_id])
-        return res.json({"message":"Added"})
+        return res.status(status.success).json({"id":rows[0].id})
     }catch(e){
         console.log(e)
-        return res.json({"message":"Not succesfully"})
+        return res.status(status.error).json({"message":e.message})
     }
 }
 
@@ -202,87 +304,11 @@ const AddSpecificationToType = async (req, res) =>{
             `
         console.log(query_text)
         const {rows} = await database.query(query_text, [])
-        return res.json({"message" : "You have succesfully added specificatons"}) 
+        return res.status(status.success).send(true) 
     }catch(e){
         console.log(e)
-        throw e;
+        return res.status(status.error).send(false)
     }
-}
-
-const AddPaperType = async (req, res) =>{
-    /*******************************
-    req body hsould be like this  
-    {
-        "absolute_name" : "articles",
-        "translations" : [
-            {"lang_id":1, "name":"Makalalar"},
-            {"lang_id":2, "name":"Статьи"}
-        ]
-    }
-     ********************************/
-    const {absolute_name, translations} = req.body
-
-
-    const query_text = `
-        WITH inserted AS
-            (INSERT INTO paper_type(absolute_name) VALUES ('${absolute_name}') RETURNING id
-        ) INSERT INTO paper_type_translations(language_id, name, paper_type_id)
-            VALUES 
-                ${translations.map(item =>`(${item.lang_id}, '${item.name}', (SELECT id FROM inserted))`).join(',')}
-    `
-    try {
-        const {rows} = await database.query(query_text, [])
-        return res.json({"messages":rows})
-    } catch (e) {
-        console.log(e)
-        throw e;        
-    }
-
-}
-
-const AddPaper = async (req, res) =>{
-    /************
-    {
-        "paper_type_id":
-        "absolute_name":"some name"
-        "name_translations":[
-            {"lang_id":1, "name":"habaryn yada artiklyn ady"},
-            {"lang_id":2, "name":"Имя новости или артикла"}],
-        "descriptions" : [
-            {"lang_id":1, "name":"habaryn ozi shona degishli tekst ozem caksiz goylan"},
-            {"lang_id":2, "name":"Собственно и есть сама новость и что хочешь можно делать"}]
-    }
-    
-    ******************/
-    const {paper_type_id, absolute_name, name_translations, descriptions} = req.body
-    let imagePart=``
-    if (req.file){
-        const destination = req.file.path
-        imagePart = `
-            , insertImage AS(
-                INSERT INTO paper_image (paper_name_id, destination) VALUES ((SELECT id FROM inserted), '${destination}'))
-        `
-    }
-    const query_text = `
-        WITH inserted AS (
-            INSERT INTO paper_name(absolute_name, paper_type_id) VALUES ($1, $2) RETURNING id
-        )${imagePart}, 
-        insertNameTranslations AS(
-            INSERT INTO paper_name_translations(paper_name_id, language_id, name) 
-                VALUES
-                    ${name_translations.map(item => `((SELECT id FROM inserted), ${item.lang_id}, '${item.name}')`).join(',')}
-        ) INSERT INTO paper_descriptions(paper_name_id, language_id, description) 
-            VALUES
-                ${descriptions.map(item =>`((SELECT id FROM inserted), ${item.lang_id}, '${item.description}')`).join(',')}
-    `
-    try {
-        const {rows} = await database.query(query_text, [absolute_name,paper_type_id])
-        return res.json({"message":"You have added succesfully"})
-    } catch (e) {
-        console.log(e)
-        throw e
-    }
-
 }
 
 const UpdateRealEstate = async (req, res) =>{
@@ -300,41 +326,6 @@ const UpdateRealEstate = async (req, res) =>{
     } catch (e) {
         console.log(e)
         return res.json({"message":"Not updated"})
-    }
-}
-
-const ActivateRealEstateImages = async (req, res) =>{
-    const {id, is_active} = req.body
-
-    const  query_text = `
-        UPDATE real_estate_images 
-            SET is_active = $2
-        WHERE id = $1
-        `   
-    try {
-        const {rows} = await database.query(query_text, [id, is_active])
-        return res.status(200).json(true)
-    } catch (e) {
-        console.log(e)
-        return res.status(400).json(false)
-    }
-}
-
-const ActivateRealEstateDescriptions = async (req, res)  =>{
-    const {id} = req.params
-    const {is_active} = req.body
-    
-    const query_text = `
-            UPDATE real_estate_translations
-                SET is_active = $1
-            WHERE id = $2
-        `
-    try {
-        const {rows} = await database.query(query_text, [is_active, id])
-        return res.status(200).json(true)
-    } catch (e) {
-        console.log(e)
-        return res.status(400).json(false)
     }
 }
 
@@ -371,6 +362,34 @@ const AddToVIP = async (req, res) =>{
     }
 }
 
+const AddMainLocation = async (req, res)=>{
+    /************************
+     {
+         "absolute_name":"Ashgabat city",
+         "translations":[
+             {"lang_id" : "1", "name" : "Aşgabat"},
+             {"lang_id" : "2", "name" : "Ашгабат"},
+         ]
+     }
+     *******************************************/
+     const {absolute_name, translations} = req.body
+    
+     const query_text = `
+         WITH inserted AS (
+             INSERT INTO locations(absolute_name)
+              VALUES ($1) RETURNING id
+         ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+             ${translations.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
+     `
+     try {
+         const {rows} = await database.query(query_text, [absolute_name])
+         return res.status(status.success).send(true)
+     } catch (e) {
+         console.log(e)
+         return res.status(status.error).json({"message":"Error"})
+     }
+}
+
 const AddLocation = async (req, res) =>{
     /************************
      {
@@ -393,134 +412,18 @@ const AddLocation = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [absolute_name, main_location_id])
-        return res.json({"message":"You have added succesfully"})
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
-        return res.json({"message":"wasnt added sorry"})
+        return res.status(status.error).json({"message":"Error"})
     }
 }
 
-const AddAdvertisement = async (req, res) =>{
-    /************
-     "absolute_title":"something like this",
-     "validity" : {"start_time":"2021-20-11 14:30", "end_time":"something like first" }
-     "advertisement_type_id": 1 or 2 or 3 or 3,
-     "advertisement_level_id": 1 or 2 or 3 or 4,
-     "translations":[
-        {"language_id":1, "title_translation":"Titlyn terjimesi", "description":"Shu reklamanyn dushundirisi"},
-        {"language_id":2, "title_translation":"Titlyn perewody", "description":"obyasneniye reklamy cto hotite to i delayte"}
-     ]
-     *************/
-    console.log("Hi i am here")
-    const {absolute_title, validity, advertisement_type_id, advertisement_level_id, translations} = req.body
-    const query_text = `
-        WITH inserted AS (
-            INSERT INTO advertisements(absolute_title, validity, advertisement_type_id, advertisement_level_id)
-                VALUES( $1, '[${validity.start_time}, ${validity.end_time}]', $2, $3) RETURNING id 
-        ), insert_translations AS(INSERT INTO advertisement_translations(advertisement_id, language_id, title_translation, description) 
-            VALUES ${translations.map(item => `(
-                (SELECT id FROM inserted), ${item.language_id}, '${item.title_translation}', '${item.description}'
-                )`).join(',')}) SELECT id FROM inserted
-    `
-    try {
-        const {rows} = await database.query(query_text, [absolute_title, advertisement_type_id, advertisement_level_id ]) 
-        return res.json({"rows":rows[0]})
-    } catch (e) {
-        console.log(e)
-        throw e
-    }
-
-}
-
-const AddAdvertisementImage = async (req, res) =>{
-    const {id} = req.params
-    const files = req.files
-    if (req.files.length){
-        const query_text = `
-            INSERT INTO advertisement_files(file_type_id, advertisement_id, destination)  
-                VALUES ${files.map(item => `(1,  ${id}, '${item.path}')`).join(',')}
-        `
-        try {
-            const {rows} = await database.query(query_text,  [])
-            return res.status(200).json({"message":"Added succesfully"})
-        } catch (e) {
-            console.log(e)
-            throw e
-        }
-    }
-
-    return res.json({"message":"no files"})
-}
-
-const AddAdvertisementBanner = async (req, res) =>{
-    const {id} = req.params
-    const file_path = req.file.path 
-    const query_text = `
-        INSERT INTO advertisement_files(file_type_id, advertisement_id, destination)  
-        VALUES (2, ${id}, '${file_path}')
-    `
-    try {
-        const {rows} = await database.query(query_text, [])
-        return res.json({"message":"Succesfully"})
-    } catch (e) {
-        
-    }
-}
-
-const AddPanoramicImages = async (req, res) =>{
-    const {id} = req.params
-    const files = req.files
-    if (files){
-        const query_text = `
-            INSERT INTO real_estate_images (real_estate_id, is_active, destination, file_type_id)
-                VALUES ${files.map(item =>`(${id}, 'true', '${item.path}', 3)`)}
-            `
-        try {
-            console.log(query_text)
-            await database.query(query_text, [])
-            return res.json({"message":"Succesfully"})
-        } catch (e) {
-            console.log(e)
-            throw e
-        }
-    }else{
-        return res.json({"message":"Something went wrong"})
-    }
-}
-
-const GetDeactivatedImages = async (req, res) =>{
-    const query_text = `
-        SELECT rei.id, rei.destination, rei.real_estate_id 
-        FROM real_estate_images rei 
-            WHERE rei.is_active IS NULL
-        `
-    try {
-        const {rows} = await database.query(query_text, [])
-        return res.status(200).json(rows)
-    } catch (e) {
-        console.log(e)
-        return res.status(status.bad).json({"message":"Something went worng"})
-    }
-}
-
-const GetDeactivatedDescriptions = async (req, res) =>{
-    const query_text = `
-        SELECT ret.id, ret.description
-        FROM real_estate_translations ret 
-        WHERE ret.is_active IS NULL
-    `
-    try{
-        const {rows} = await database.query(query_text, []);
-        console.log(rows)
-        return res.status(200).json(rows)
-    }catch (e){
-        console.log(e)
-        return res.json({"message":"no no no"})
-    }
-}
 
 
 module.exports = {
+    AddOperator,
+    AdminLogin,
     AddSpecification,
     GetSpecificationByID,
     GetAllSpecifications,
@@ -529,17 +432,8 @@ module.exports = {
     GetTypeByID,
     UpdateRealEstate,
     AddSpecificationToType,
-    AddPaperType,
-    AddPaper,
-    ActivateRealEstateImages,
-    ActivateRealEstateDescriptions,
     AddToVIP,
+    AddMainLocation,
     AddLocation,
-    AddAdvertisement,
-    AddAdvertisementImage,
-    AddAdvertisementBanner,
-    AddPanoramicImages,
-    GetDeactivatedImages,
-    GetDeactivatedDescriptions  
-    // RealEstates
+    AddMaintype,
 }

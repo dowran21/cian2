@@ -5,7 +5,8 @@ const cors = require('cors')
 const Routers = require('./router/index.js')
 const cookieParser = require('cookie-parser')
 const path = require('path')
-const {cron_job} = require('./utils/cron')
+const {cron_job} = require('./utils/cron');
+const morgan = require ('morgan')
 
 const port = process.env.PORT || 3000
 
@@ -27,6 +28,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/api', Routers)
+app.use(morgan('dev'))
 app.use('/uploads', express.static(dir))
 app.use(cookieParser())
 
