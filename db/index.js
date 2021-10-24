@@ -10,7 +10,7 @@ const pool = new Pool(
   port: process.env.DB_PORT || 5432
 });
  
-
+   
 module.exports = {
   pool,
   async query(text, params) {
