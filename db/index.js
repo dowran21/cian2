@@ -3,10 +3,10 @@ const Pool = require('pg').Pool;
 
 const pool = new Pool(
 {
-  user: process.env.DB_USER || 'postgres',
+  user: process.env.DB_USER || 'dowran',
   host: process.env.DB_HOST || 'localhost',
   database: process.env.DB_NAME || 'cian',
-  password: process.env.DB_PASSWORD || '61123141',
+  password: process.env.DB_PASSWORD || '61123141dowran',
   port: process.env.DB_PORT || 5432
 });
  
