@@ -281,8 +281,8 @@ const AddImage = async (req, res) =>{
     const {id} = req.params
     if (files.length){
         const query_text = `
-            INSERT INTO real_estate_images (real_estate_id, destination, file_type_id)
-                VALUES ${files.map(item => `(${id}, '${item.path}', 1)`).join(',')}
+            INSERT INTO real_estate_images (real_estate_id, destination)
+                VALUES ${files.map(item => `(${id}, '${item.path}')`).join(',')}
         `
         try {
             const {rows} = await database.query(query_text, [])

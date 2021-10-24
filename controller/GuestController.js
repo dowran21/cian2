@@ -62,27 +62,34 @@ const GetRealEstateByFilter = async (req, res) =>{
 
     const query_text =`
     SELECT
-        (SELECT COUNT(re.id) FROM real_estate re
-            INNER JOIN ctype ON re.ctype_id = ctype.id
-            LEFT JOIN real_estate_prices rep ON rep.real_estate_id = re.id
-            LEFT JOIN real_estate_translations ret ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
-            INNER JOIN real_estate_specification_values resv ON resv.real_estate_id = re.id AND resv.is_active = true
+        (SELECT COUNT(re.id) 
+        FROM real_estate re
+            INNER JOIN ctype 
+                ON re.ctype_id = ctype.id
+            LEFT JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id
+            LEFT JOIN real_estate_translations ret 
+                ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
+            INNER JOIN real_estate_specification_values resv 
+                ON resv.real_estate_id = re.id AND resv.is_active = true
             ${image_part}
             ${where_part} ${spec_part} ${ctype_part}
         ) AS count,
         (SELECT json_agg(real_estate) FROM (
             SELECT re.id, re.area, rep.price, ret.description, re.position, re.created_at
             FROM real_estate re 
-            INNER JOIN ctype ON re.ctype_id = ctype.id
-            LEFT JOIN real_estate_prices rep ON rep.real_estate_id = re.id
-            LEFT JOIN real_estate_translations ret ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
-            INNER JOIN real_estate_specification_values resv ON resv.real_estate_id = re.id AND resv.is_active = true
-            ${image_part}
-            ${where_part} ${spec_part} ${ctype_part} ${order_part} ${offSet}
+                INNER JOIN ctype 
+                    ON re.ctype_id = ctype.id
+                LEFT JOIN real_estate_prices rep 
+                    ON rep.real_estate_id = re.id
+                LEFT JOIN real_estate_translations ret 
+                    ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
+                INNER JOIN real_estate_specification_values resv 
+                    ON resv.real_estate_id = re.id AND resv.is_active = true
+                ${image_part}
+                ${where_part} ${spec_part} ${ctype_part} ${order_part} ${offSet}
         ) 
-        `
-
-            
+        `            
 }
 
 const GetSpecificationsForType = async (req, res) =>{
@@ -163,13 +170,214 @@ const Languages = async (req, res) =>{
     }
 }
 
-const AllRealEstate = async (req, res) =>{
-    console.log("Heloo i am inn all real estates")
-    const {page, limit} = await req.query
+const GetAllRealEstateWithFilters = async (req, res) =>{
+    const {specifications, type_id, category_id, price, area, images, position, page, limit} = req.query
     const {lang} = req.params
+    const language_id = lang_id(lang)
+    let offSet = ``
+    let ctype_part =``
+    let spec_part = ``
+    let where_part = `WHERE `
+    let image_part =``
+    let order_part = `ORDER BY re.id DESC`
+    
+    //--------------------Pagination part ---------------------//
+    if (page !== 'null' && limit !== 'null'){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    
+    //---------------------ctype part -----------------------//
+    if (type_id !== 'null' && category_id !== 'null'){
+        ctype_part = `AND ctype.type_id = ${type_id} AND ctype.category_id = ${category_id}` 
+    }
+    
+    //-------------------specification part-----------------//
+    if (specifications.length){
+        for (let i=0; i<specifications.length; i++){
+            values = specifications[i].values
+            spec_part += `AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
+        }        
+    }
+    
+    //----------------area part--------------------//
+    if (area.min && area.max){
+        where_part += `(re.area > ${area.min} AND re.are < ${area.max})`
+    }else if(area.min && !area.max){
+        where_part += `re.area > ${area.min}`
+    }else if(!area.min && area.max){
+        where_part += `re.area < ${area.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //---------------price-----------------------//
+    if (price.min && price.max){
+        where_part += `AND (rep.price > ${price.min} AND rep.are < ${price.max})`
+    }else if(price.min && !price.max){
+        where_part += `AND rep.price > ${price.min}`
+    }else if(!price.min && price.max){
+        where_part += `AND rep.price < ${price.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //----------about to have an image---------// 
+    if (image){
+        image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }else{
+        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }
+
+    const real_estate_name = `
+        concat(
+            CASE WHEN 
+                    (SELECT sv.absolute_value
+                    FROM specification_values sv
+                        INNER JOIN specifications s 
+                            ON s.id = sv.spec_id
+                        INNER JOIN real_estate_specification_values resv 
+                            ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                    WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id)  IS NOT NULL THEN 
+                        (SELECT sv.absolute_value
+                        FROM specification_values sv
+                            INNER JOIN specifications s 
+                                ON s.id = sv.spec_id
+                            INNER JOIN real_estate_specification_values resv 
+                                ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                    WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id) ||
+                CASE 
+                    WHEN l.id = 1 THEN ' otagly '
+                    WHEN l.id = 2 THEN 
+                        CASE 
+                            WHEN tt.name = 'Дом' THEN '-и комнатный '
+                            ELSE '-х комнатная '
+                        END
+                END
+            END,
+            tt.name, ', ' ||
+            
+            CASE WHEN            
+            (SELECT sv.absolute_value
+                FROM specification_values sv
+                    INNER JOIN specifications s 
+                        ON s.id = sv.spec_id
+                    INNER JOIN real_estate_specification_values resv 
+                        ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+            WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) IS NOT NULL THEN 
+            (SELECT sv.absolute_value
+                FROM specification_values sv
+                    INNER JOIN specifications s ON s.id = sv.spec_id
+                    INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+            WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) ||
+                CASE 
+                    WHEN l.id = 1 THEN '-nji gat'
+                    WHEN l.id = 2 THEN '-й этаж'
+                END 
+            END          
+        )AS real_estate_name,`
+
+    const query_text =`
+        SELECT
+            (SELECT COUNT(re.id) 
+            FROM real_estate re
+                INNER JOIN ctype 
+                    ON re.ctype_id = ctype.id
+                LEFT JOIN real_estate_prices rep 
+                    ON rep.real_estate_id = re.id
+                LEFT JOIN real_estate_translations ret 
+                    ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
+                INNER JOIN real_estate_specification_values resv 
+                    ON resv.real_estate_id = re.id AND resv.is_active = true
+                ${image_part}
+                ${where_part} ${spec_part} ${ctype_part}
+            ) AS count,
+            (SELECT json_agg(real_estate) FROM (
+                SELECT re.id, re.area, rep.price, ret.description, re.position, re.created_at
+                FROM real_estate re 
+                    INNER JOIN ctype 
+                        ON re.ctype_id = ctype.id
+                    LEFT JOIN real_estate_prices rep 
+                        ON rep.real_estate_id = re.id
+                    LEFT JOIN real_estate_translations ret 
+                        ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
+                    INNER JOIN real_estate_specification_values resv 
+                        ON resv.real_estate_id = re.id AND resv.is_active = true
+                    ${image_part}
+                    ${where_part} ${spec_part} ${ctype_part} ${order_part} ${offSet}
+            ) 
+        `
+
+}
+
+
+const AllRealEstate = async (req, res) =>{
+    const {specifications, location_id, type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {lang} = req.params
+    let offSet = ``
+    let ctype_part =``
+    let spec_part = ``
+    let where_part = ``
+    let image_part =``
+    let order_part = `ORDER BY re.id DESC`
+    
+    //--------------------Pagination part ---------------------//
+    if (page !== 'null' && limit !== 'null' && page && limit){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    
+    //--------------location part -----------------------//
+    if (location_id && location_id !== 'null'){
+        where_part += ` AND (lc.id = ${location_id} OR lc.main_location_id = ${location_id})`
+    }
+
+    //---------------------ctype part -----------------------//
+    if (type_id !== 'null' && type_id){
+        where_part += ` AND cp.type_id = ${type_id}` 
+    }
+
+    if (category_id && category_id !== 'null'){
+        where_part += ` AND cp.category_id = ${category_id}` 
+    }
+    
+    //-------------------specification part-----------------//
+    if (specifications?.length){
+        for (let i=0; i<specifications.length; i++){
+            values = specifications[i].values
+            console.log(specifications)
+            spec_part += ` AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
+        }        
+    }
+    
+    //----------------area part--------------------//
+    if (area?.min && area?.max){
+        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
+    }else if(area?.min && !area?.max){
+        where_part += ` AND re.area > ${area?.min}`
+    }else if(!area?.min && area?.max){
+        where_part += ` AND re.area < ${area.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //---------------price-----------------------//
+    if (price?.min && price?.max){
+        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
+    }else if(price?.min && !price?.max){
+        where_part += ` AND rep.price > ${price.min}`
+    }else if(!price?.min && price?.max){
+        where_part += ` AND rep.price < ${price.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //----------about to have an image---------// 
+    if (images && images !== null && images !== 'undefined'){
+        image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }else{
+        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
-    let offSet = ``
     let vip_limit = ``
     if (limit){
         console.log("i am in limit if")
@@ -178,11 +386,10 @@ const AllRealEstate = async (req, res) =>{
         vip_limit = 5;
     }
     if (page && limit){
-        offSet = `OFFSET ${(page-1)*limit} LIMIT ${limit}`
+        offSet = ` OFFSET ${(page-1)*limit} LIMIT ${limit}`
     }else{
         offSet = ``
     }
-    let OrderPart = ``
     const real_estate_name = `
     concat(
         CASE WHEN 
@@ -267,18 +474,18 @@ const AllRealEstate = async (req, res) =>{
         AND re.status_id <> 4 AND vre.id IS NOT NULL 
     ORDER BY random() LIMIT ${vip_limit}
     )`
-
-
+    console.log(req.query)
+    console.log(where_part)
     const query_text =`
     WITH selected AS 
-        (SELECT re.id, rep.price, re.created_at, vre.id AS VIP, 
+        (SELECT re.id, rep.price::text, vre.id AS VIP, re.phone::text,
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         ${real_estate_name}
         
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei
-            WHERE rei.real_estate_id = re.id AND rei.is_active = true LIMIT 3
+            WHERE rei.real_estate_id = re.id AND rei.is_active = true
         )dest) AS images
 
         FROM real_estates re 
@@ -297,7 +504,7 @@ const AllRealEstate = async (req, res) =>{
                 ON lc.id = re.location_id
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
         ORDER BY  re.updated_at DESC  ${offSet}), 
 
                     
@@ -313,7 +520,11 @@ const AllRealEstate = async (req, res) =>{
         (SELECT COUNT(re.id) FROM real_estates re  
             LEFT JOIN vip_real_estates vre 
                 ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL          
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}   
         ) AS count,
 
         (SELECT json_agg(res) FROM 
@@ -346,6 +557,83 @@ const AllRealEstate = async (req, res) =>{
             real_estates_all = rows[0].real_estates_all
         }
         return res.status(status.success).json({"rows":{"count":rows[0].count, "real_estates_all":real_estates_all}})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).json({"message":e.message})
+    }
+
+}
+
+const CountForFilter = async (req, res) =>{
+    const {specifications, type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {lang} = req.params
+    let spec_part = ``
+    let where_part = ``
+    let image_part =``
+    let order_part = `ORDER BY re.id DESC`
+    
+    //--------------------Pagination part ---------------------//
+    if (page !== 'null' && limit !== 'null' && page && limit){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    
+    //---------------------ctype part -----------------------//
+    if (type_id !== 'null' && type_id){
+        where_part = ` AND cp.type_id = ${type_id}` 
+    }
+
+    if (category_id && category_id !== 'null'){
+        where_part = ` AND cp.category_id = ${category_id}` 
+    }
+    
+    //-------------------specification part-----------------//
+    if (specifications?.length){
+        for (let i=0; i<specifications.length; i++){
+            values = specifications[i].values
+            spec_part += ` AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
+        }        
+    }
+    
+    //----------------area part--------------------//
+    if (area?.min && area?.max){
+        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
+    }else if(area?.min && !area?.max){
+        where_part += ` AND re.area > ${area?.min}`
+    }else if(!area?.min && area?.max){
+        where_part += ` AND re.area < ${area.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //---------------price-----------------------//
+    if (price?.min && price?.max){
+        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
+    }else if(price?.min && !price?.max){
+        where_part += ` AND rep.price > ${price.min}`
+    }else if(!price?.min && price?.max){
+        where_part += ` AND rep.price < ${price.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //----------about to have an image---------// 
+    if (images && images !== null && images !== 'undefined'){
+        image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }else{
+        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }
+    const query_text =`
+        SELECT COUNT(re.id) FROM real_estates re  
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL 
+                ${where_part} ${spec_part}   
+    `
+    try {
+        const {rows} = await database.query(query_text, [ip, lang])        
+        return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)
         return res.status(status.error).json({"message":e.message})
@@ -587,6 +875,7 @@ module.exports = {
     GetRealEstateByID,
     GetTypesCategory,
     GetLocations,
-    GetRegions
+    GetRegions,
+    CountForFilter
 
 }   
