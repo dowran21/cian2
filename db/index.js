@@ -8,7 +8,7 @@ const pool = new Pool(
   database: process.env.DB_NAME || 'cian',
   password: process.env.DB_PASSWORD || '61123141dow',
   port: process.env.DB_PORT || 5432
-});
+});    
   
    
 module.exports = {
