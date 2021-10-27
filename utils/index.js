@@ -14,6 +14,10 @@ const GenerateUserAccessToken = async(data) =>{
     return JWT.sign(data, process.env.USER_ACCESS_KEY, {expiresIn:"10d"})
 };
 
+const GenerateCodeAccessToken = async(data) =>{
+    return JWT.sign(data, process.env.CODE_ACCESS_KEY, {expiresIn:"3m"})
+}
+
 const GenerateUserRefreshToken = async(data) =>{
     return JWT.sign(data, process.env.USER_REFRESH_KEY, {expiresIn:"30d"})
 };
@@ -30,5 +34,6 @@ module.exports = {
     GenerateUserAccessToken,
     GenerateUserRefreshToken,
     GenerateAdminAccessToken,
-    GenerateAdminRefreshToken
+    GenerateAdminRefreshToken,
+    GenerateCodeAccessToken
 }

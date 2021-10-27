@@ -9,26 +9,61 @@ const UserRegistration = async (req, res) =>{
             "full_name": "SOme full name of moderator",
             "email" : "ddowran2106@gmail.com",
             "phone":"61123141",
-            "password":"somepasswordexample"
+            "password":"somepasswordexample",
+            "owner_id": 1
         }
     ************************/
-    const {full_name, email, phone, password} = req.body
+    const code = Math.floor(Math.random()*(999999-100000) + 100000)
+    console.log(code)
+    let max_count = 0;
+    if (owner_id == 0){
+        max_count = 3
+    }
+    if(owner_id == 1){
+        max_count = 20000
+    }
+    const {full_name, email, phone, password, owner_id} = req.body
     const hashed_password = await UserHelper.HashPassword(password)
     const query_text = `
-        INSERT INTO users(role_id, full_name, email, phone, password)
-        VALUES ($1, $2, $3, $4, $5) RETURNING *
+        INSERT INTO users(role_id, full_name, email, phone, password, code, owner_id, max_count)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
         `
     try{
-        const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password]);
-        data = {"id":rows[0].id, "full_name":rows[0].full_name, "email":rows[0].email, "phone":rows[0].phone, "role_id":rows[0].role_id}
-        const access_token = await UserHelper.GenerateUserAccessToken(data);
-        const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
-        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+        const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password, code, owner_id, max_count]);
+        data = {"id":rows[0].id}
+        const access_token = await UserHelper.GenerateCodeAccessToken(data);
+        return res.status(status.success).json({"access_token":access_token})
     }catch(e){
         console.log(e)
         return res.status(status.error).json({"message":e.message})
     }
     
+}
+
+const VerifyUserCode = async (req, res) =>{
+    const {code} = req.body
+    const user_id = req.user.id
+    const query_text = `SELECT * FROM users WHERE id = ${user_id} AND code = ${code} AND role_id = 3`
+    try {
+        const {rows} = await database.query(query_text, [])
+        if (!rows){
+            return res.status(status.notfound).send(false)
+        }else{
+            try {
+                await database.query(`UPDATE users SET is_active = true WHERE id = ${user_id}`, [])
+                data = {"id":rows[0].id, "full_name":rows[0].full_name, "email":rows[0].email, "phone":rows[0].phone, "owner_id":rows[0].owner_id}
+                const access_token = await UserHelper.GenerateUserAccessToken(data);
+                const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
+                return res.status(status.success).json({data, access_token, refresh_token})
+            } catch (e) {
+                console.log(e)
+                return res.status(status.error).send(false)
+            }
+        }
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 const UserLogin = async (req, res) =>{
@@ -368,6 +403,7 @@ module.exports = {
 
     UserRegistration,
     UserLogin,
+    VerifyUserCode,
     UserRealEstates,
     AddRealEstate,
     GetUserRealEstateByID,

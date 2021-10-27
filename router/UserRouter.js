@@ -5,11 +5,12 @@ const upload = require('../middleware/upload.js')
 const {SchemaMiddleware} = require('../middleware/SchemaMiddleware.js')
 const Schema = require('../schemas/UserSchema.js')
 const {resize_image} = require('../middleware/resize')
-const { VerifyUserAccessToken } = require('../middleware/AuthMiddleware.js')
+const { VerifyUserAccessToken, VerifyCodeAccessToken } = require('../middleware/AuthMiddleware.js')
 
 
-router.post('/registration', UserController.UserRegistration)
+router.post('/registration', SchemaMiddleware(Schema.Registration), UserController.UserRegistration)
 router.post('/login', UserController.UserLogin)
+router.post('/verify-code', VerifyCodeAccessToken, UserController.VerifyUserCode)
 
 router.post('/:lang/add-real-estate', VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
 

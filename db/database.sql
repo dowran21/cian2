@@ -12,6 +12,23 @@ CREATE TABLE languages(
     language_code VARCHAR (5) NOT NULL,
     UNIQUE("language")
 );
+-----------owner types-----------------
+
+CREATE TABLE owners(
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    "name" VARCHAR (100) NOT NULL 
+);
+
+CREATE TABLE owner_type_translations(
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    language_id SMALLINT NOT NULL,
+    translation VARCHAR (100) NOT NULL,
+    owner_id SMALLINT NOT NULL,
+
+    CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id) ON UPDATE CASCADE
+);
+
+------------users-----------
 
 CREATE TABLE roles(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
@@ -24,9 +41,13 @@ CREATE TABLE users(
     full_name VARCHAR (150) NOT NULL,
     email VARCHAR (100),
     phone NUMERIC(8) NOT NULL,
+    max_count INTEGER,
+    code NUMERIC(6),
+    owner_id SMALLINT,
     "password" VARCHAR (300) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN DEFAULT FALSE,
 
+    CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
 );
  
@@ -161,21 +182,7 @@ CREATE TABLE location_translations(
         FOREIGN KEY (language_id) REFERENCES languages(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
------------owner types-----------------
 
-CREATE TABLE owners(
-    id SMALLSERIAL PRIMARY KEY NOT NULL,
-    "name" VARCHAR (100) NOT NULL 
-);
-
-CREATE TABLE owner_type_translations(
-    id SMALLSERIAL PRIMARY KEY NOT NULL,
-    language_id SMALLINT NOT NULL,
-    translation VARCHAR (100) NOT NULL,
-    owner_id SMALLINT NOT NULL,
-
-    CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id) ON UPDATE CASCADE
-);
 -------------Real Estates-------------
 CREATE TABLE real_estates(
     id SERIAL PRIMARY KEY NOT NULL,
