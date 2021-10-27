@@ -16,6 +16,8 @@ const UserRegistration = async (req, res) =>{
     ************************/
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     console.log(code)
+    const {full_name, email, phone, password, owner_id} = req.body
+
     let max_count = 0;
     if (owner_id == 0){
         max_count = 3
@@ -23,7 +25,6 @@ const UserRegistration = async (req, res) =>{
     if(owner_id == 1){
         max_count = 20000
     }
-    const {full_name, email, phone, password, owner_id} = req.body
     const hashed_password = await UserHelper.HashPassword(password)
     const query_text = `
         INSERT INTO users(role_id, full_name, email, phone, password, code, owner_id, max_count)

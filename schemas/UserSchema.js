@@ -63,7 +63,6 @@ const Schema = {
                         then : Joi.when('is_multiple', {is:false, then: Joi.array().required().max(1) }) })
                 }),
             )
-
     }),
 
     Registration:Joi.object({
@@ -72,13 +71,30 @@ const Schema = {
             'string.min':"{#label} minimum 3 sany bolmaly",
             'string.max':"{#label} maksimum 150 sany bomaly"
         }),
-        email: Joi.string().email().min(6).max(100).label('Email').messages({
+        email: Joi.string().email().min(1).max(100).label('Email').messages({
             'string.pattern.base': '{#label} talaba laýyk däl!',
             'string.email': `{#label} talaba laýyk däl!`,
-            'string.empty': `{#label} hökman gerek!`,
             'string.min': `{#label} azyndan {#limit} simwol bolmaly!`,
             'string.max': `{#label} maksimum {#limit} simwol bolmaly!`,
         }),
+        phone:Joi.string().min(8).max(8).label("phone number").required().messages({
+            'any.required':"{#label} hokman gerek"
+        }),
+        password: Joi.string().min(8).max(200).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/).required().label('Açar söz').messages({
+            'string.pattern.base': '{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly',
+            'string.base': `{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly`,
+            'string.empty': `{#label} boş bolmaly däl`,
+            'string.min': `{#label} azyndan {#limit} harp bolmaly`,
+            'any.required': `{#label} hökman gerek`,
+        }),
+        owner_id:Joi.number().min(1).max(2).required().label("owner_id").messages({
+            'any.required':"{#label} hokman gerek",
+            'number.min':"{#label} dine 1 we 0 bolup biler",
+            'number.min':"{#label} dine 1 we 0 bolup biler"
+        }),
+    }),
+
+    Login:Joi.object({
         phone:Joi.number().min(10000000).max(99999999).label("phone number").required().messages({
             'any.required':"{#label} hokman gerek"
         }),
@@ -88,11 +104,6 @@ const Schema = {
             'string.empty': `{#label} boş bolmaly däl`,
             'string.min': `{#label} azyndan {#limit} harp bolmaly`,
             'any.required': `{#label} hökman gerek`,
-        }),
-        owner_id:Joi.number().min(0).max(1).required().label("owner_id").messages({
-            'any.required':"{#label} hokman gerek",
-            'number.min':"{#label} dine 1 we 0 bolup biler",
-            'number.min':"{#label} dine 1 we 0 bolup biler"
         }),
     })
 }

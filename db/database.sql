@@ -50,7 +50,7 @@ CREATE TABLE users(
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
 );
- 
+
 CREATE TABLE categories(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
     absolute_name CHARACTER VARYING(30) NOT NULL

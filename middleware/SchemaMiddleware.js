@@ -15,7 +15,7 @@ const SchemaMiddleware = (schema) => {
           resp = resp.concat(err)
         });
         console.log(resp);
-        res.json({ error: resp }) 
+        res.status(301).json({ error: resp }) 
       } 
     }
   };
