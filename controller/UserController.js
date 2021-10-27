@@ -1,6 +1,7 @@
 const database = require('../db/index.js')
 const {lang_id} = require('../utils/helpFunctions.js');
 const UserHelper = require('../utils/index.js');
+const { SendSMS } = require('../utils/sms.js');
 const {status} = require('../utils/status.js')
 
 const UserRegistration = async (req, res) =>{
@@ -31,6 +32,8 @@ const UserRegistration = async (req, res) =>{
     try{
         const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password, code, owner_id, max_count]);
         data = {"id":rows[0].id}
+        const mess = `Code: ${code}`
+        SendSMS({phone, mess})
         const access_token = await UserHelper.GenerateCodeAccessToken(data);
         return res.status(status.success).json({"access_token":access_token})
     }catch(e){
@@ -60,6 +63,21 @@ const VerifyUserCode = async (req, res) =>{
                 return res.status(status.error).send(false)
             }
         }
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const SendCodeAgain = async (req, res) =>{
+    const user_id = req.user.id
+    const code = Math.floor(Math.random()*(999999-100000) + 100000)
+    const query_text = `
+        UPDATE users SET code = ${code} WHERE id = ${user_id}
+        `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -99,6 +117,49 @@ const UserLogin = async (req, res) =>{
         return res.status(status.error).json({"message":"Error"})
     }
 
+}
+
+const ForgotPassword = async (req, res) =>{
+    const {phone} = req.body
+    const code = Math.floor(Math.random()*(999999-100000) + 100000)
+    console.log(code)
+    const query_text = `
+        WITH updated AS(
+            UPDATE users SET is_active = false, code =${code} WHERE phone = ${phone}
+        ) 
+            SELECT * FROM users WHERE phone = ${phone}
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        if (rows){
+            data = {"id":rows[0].id}
+            const mess = `Code: ${code}`
+            SendSMS({phone, mess})
+            const access_token = await UserHelper.GenerateCodeAccessToken(data);
+            return res.status(status.success).json({"access_token":access_token})
+        }else{
+            return res.status(status.notfound).send(false)
+        }
+    } catch (e) {
+        console.log(e)
+        return res.status(status.success).send(false)
+    }
+}
+
+const ChangePassword = async (req, res) =>{
+    const {password} = req.body
+    const user_id = req.user.id
+    const hashed_password = UserHelper.HashPassword(password)
+    const query_text = `
+        UPDATE users SET password = ${hashed_password}
+        `
+    try {
+        await database(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 const UserRealEstates = async (req, res) =>{
@@ -250,14 +311,6 @@ const GetUserRealEstateByID = async (req, res) =>{
     }
 }
 
-const UpdateRealEstate = async (req, res) =>{
-    try {
-
-    } catch (e) {
-
-    }
-}
-
 const AddWishList = async (req, res) =>{
     const {id} = req.params
     const uuid = req.user.id
@@ -400,19 +453,18 @@ const UpateRealEstate = async (req, res) =>{
 }
 
 module.exports = {
-
     UserRegistration,
     UserLogin,
     VerifyUserCode,
     UserRealEstates,
     AddRealEstate,
     GetUserRealEstateByID,
-    UpdateRealEstate,
+    ForgotPassword,
     AddWishList,
     GetWishList,
     AddImage,
     AddToVIP,
     UpateRealEstate,
-    
-
+    ChangePassword,
+    SendCodeAgain
 }
