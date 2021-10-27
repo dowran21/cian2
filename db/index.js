@@ -1,13 +1,13 @@
-require('dotenv').config();
+const dbconst = require('../utils/consts.js')
 const Pool = require('pg').Pool;
 
 const pool = new Pool(
 {
-  user: process.env.DB_USER || 'dowran',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'cian',
-  password: process.env.DB_PASSWORD || '61123141dow',
-  port: process.env.DB_PORT || 5432
+  user: dbconst.DATABASE_USER,
+  host: dbconst.DATABASE_HOST,
+  database: dbconst.DATABASE_NAME,
+  password: dbconst.DATABASE_PASSWORD,
+  port: dbconst.DATABASE_PORT,
 });    
   
    
