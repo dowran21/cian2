@@ -10,25 +10,25 @@ const resize_image  = async (req, res, next) =>{
         let dir = `./uploads/${id}`
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir);
-        }
-        console.log(req.files)
+        } 
         for (i =0; i<req.files.length; i++){
-        const date = moment().format('DDMMYYYY-HHmmss_SSS');
-        const name = req.files[i].originalname.split('.')[0];
-        req.files[i].path = `uploads/${id}/${date}-${name}`
+            const date = moment().format('DDMMYYYY-HHmmss_SSS');
+            const name = req.files[i].originalname.replace(' ', '').split('.')[0];
+            req.files[i].path = `uploads/${id}/${date}-${name}`
 
-        await sharp(req.files[i].buffer)
-            .resize(150, 150)
-            .toFile(`./uploads/${id}/${date}-${name}-mini.webp`)
+            await sharp(`./uploads/${req.files[i].filename}`)
+                .resize(150, 150)
+                .toFile(`./uploads/${id}/${date}-${name}-mini.webp`)
 
-        await sharp(req.files[i].buffer)
-            .resize(450, 450)
-            .toFile(`./uploads/${id}/${date}-${name}-big.webp`)
+            await sharp(`./uploads/${req.files[i].filename}`)
+                .resize(450, 450)
+                .toFile(`./uploads/${id}/${date}-${name}-big.webp`)
 
-        await sharp(req.files[i].buffer)
-            .toFile(`./uploads/${id}/${date}-${name}-large.webp`)
-        }
-
+            await sharp(`./uploads/${req.files[i].filename}`)
+                .toFile(`./uploads/${id}/${date}-${name}-large.webp`)
+            
+            fs.unlinkSync(`./uploads/${req.files[i].filename}`)
+        }        
     }else{
         next()
     }

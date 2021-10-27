@@ -368,6 +368,7 @@ const AddImage = async (req, res) =>{
     console.log(req.files)
     const {id} = req.params
     if (files.length){
+        console.log(files)
         const query_text = `
             INSERT INTO real_estate_images (real_estate_id, destination)
                 VALUES ${files.map(item => `(${id}, '${item.path}')`).join(',')}

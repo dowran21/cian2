@@ -18,11 +18,12 @@ router.post('/change-password', VerifyUserAccessToken, UserController.ChangePass
 
 router.post('/:lang/add-real-estate', VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
 
+
 router.get('/:lang/user_real_estates', VerifyUserAccessToken,  UserController.UserRealEstates)
 router.get('/:lang/user_real_estate/:id', VerifyUserAccessToken, UserController.GetUserRealEstateByID)
-router.put('/:lang/real_estate/:id', VerifyUserAccessToken,  UserController.UpdateRealEstate)
-router.post('/:lang/add-real-estate-images/:id', VerifyUserAccessToken, upload.array("picture", 15), resize_image, UserController.AddImage )
+router.post('/:lang/add-real-estate-images/:id',VerifyUserAccessToken, upload.array("picture", 15), resize_image, UserController.AddImage )
 router.post('/:lang/update_real_estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
+
 
 router.post('/:lang/add_to_vip/:id', VerifyUserAccessToken, UserController.AddToVIP)
 router.get('/:lang/get_wish_list', VerifyUserAccessToken, UserController.GetWishList)
