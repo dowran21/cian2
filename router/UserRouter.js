@@ -9,7 +9,7 @@ const { VerifyUserAccessToken, VerifyCodeAccessToken } = require('../middleware/
 
 
 router.post('/registration', SchemaMiddleware(Schema.Registration), UserController.UserRegistration)
-router.post('/login', UserController.UserLogin)
+router.post('/login', SchemaMiddleware(Schema.Login), UserController.UserLogin)
 router.post('/verify-code', VerifyCodeAccessToken, UserController.VerifyUserCode)
 router.post('/send-code-again', VerifyCodeAccessToken, UserController.SendCodeAgain)
 router.post('/forgot-password', UserController.ForgotPassword)
