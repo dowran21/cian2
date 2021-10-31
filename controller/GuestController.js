@@ -389,55 +389,7 @@ const AllRealEstate = async (req, res) =>{
         offSet = ` OFFSET ${(page-1)*limit} LIMIT ${limit}`
     }else{
         offSet = ``
-    }
-    const real_estate_name = `
-    concat(
-        CASE WHEN 
-                (SELECT sv.absolute_value
-                FROM specification_values sv
-                    INNER JOIN specifications s 
-                        ON s.id = sv.spec_id
-                    INNER JOIN real_estate_specification_values resv 
-                        ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-                WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id)  IS NOT NULL THEN 
-                    (SELECT sv.absolute_value
-                    FROM specification_values sv
-                        INNER JOIN specifications s 
-                            ON s.id = sv.spec_id
-                        INNER JOIN real_estate_specification_values resv 
-                            ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-                WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id) ||
-            CASE 
-                WHEN l.id = 1 THEN ' otagly '
-                WHEN l.id = 2 THEN 
-                    CASE 
-                        WHEN tt.name = 'Дом' THEN '-и комнатный '
-                        ELSE '-х комнатная '
-                    END
-            END
-        END,
-        tt.name, ', ' ||
-        
-        CASE WHEN            
-        (SELECT sv.absolute_value
-            FROM specification_values sv
-                INNER JOIN specifications s 
-                    ON s.id = sv.spec_id
-                INNER JOIN real_estate_specification_values resv 
-                    ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-        WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) IS NOT NULL THEN 
-        (SELECT sv.absolute_value
-            FROM specification_values sv
-                INNER JOIN specifications s ON s.id = sv.spec_id
-                INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-        WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) ||
-            CASE 
-                WHEN l.id = 1 THEN '-nji gat'
-                WHEN l.id = 2 THEN '-й этаж'
-            END 
-        END          
-    )AS real_estate_name,`
-    
+    }    
     let vip_estates = `
     selected_vip AS (
         SELECT re.id, rep.price, re.created_at, vre.id AS VIP,
@@ -446,7 +398,7 @@ const AllRealEstate = async (req, res) =>{
                 WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
                 END ||
             lt.translation) AS location,
-    ${real_estate_name}
+        (SELECT real_estate_name(re.id, l.id, tt.name, re.area)),
     
     (SELECT json_agg(dest) FROM (
         SELECT rei.destination FROM real_estate_images rei
@@ -474,14 +426,12 @@ const AllRealEstate = async (req, res) =>{
         AND re.status_id <> 4 AND vre.id IS NOT NULL 
     ORDER BY random() LIMIT ${vip_limit}
     )`
-    console.log(req.query)
-    console.log(where_part)
     const query_text =`
     WITH selected AS 
-        (SELECT re.id, rep.price::text, vre.id AS VIP, re.phone::text,
+        (SELECT re.id, rep.price::text, vre.id AS VIP, 
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
-        ${real_estate_name}
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
         
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei

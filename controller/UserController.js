@@ -4,6 +4,8 @@ const UserHelper = require('../utils/index.js');
 const { SendSMS } = require('../utils/sms.js');
 const {status} = require('../utils/status.js')
 
+
+/////////Registration and login//////////////////
 const UserRegistration = async (req, res) =>{
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
@@ -21,10 +23,10 @@ const UserRegistration = async (req, res) =>{
     const {full_name, email, phone, password, owner_id} = req.body
 
     let max_count = 0;
-    if (owner_id == 0){
+    if (owner_id == 1){
         max_count = 3
     }
-    if(owner_id == 1){
+    if(owner_id == 2){
         max_count = 20000
     }
     try {
@@ -298,6 +300,7 @@ const ChangePassword = async (req, res) =>{
     }
 }
 
+////////User real estates///////////
 const UserRealEstates = async (req, res) =>{
     const {uuid, lang} = req.params
     const language_id = await lang_id(lang)
@@ -332,8 +335,7 @@ req.body should be like this;
             "area":"5412",
             "position":{"lng":51.251, "lat":152.625},
             "price":45624862,
-            "phone":61123141,
-            "location_id":null
+            "location_id":9б
             "descriptions" : [{"language_id":1, "description":"something about this home what you need to know"},
                             {"language_id":2, "description":"something about this home what you need to know, "}],
             "specifications":[{"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]},
@@ -343,6 +345,24 @@ req.body should be like this;
 
     const {type_id, category_id, phone, area, position, price, descriptions, owner_id, specifications, location_id } = req.body
     const user_id = req.user.id
+    try {
+        const user_query = `
+            SELECT u.id, u.max_count, u.owner_id, 
+                
+                (SELECT COUNT(*) 
+                    FROM real_estates
+                WHERE user_id = ${user_id}) AS count
+
+            FROM users u WHERE u.id = ${user_id}
+            `
+        const {rows} = await database.query(user_query, [])
+        console.log(rows[0])
+        if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
+            return res.status(422).send("Da ty ******* woobshe stolko raz delat obyawleniye")
+        }
+    } catch (e) {
+        console.log(e)
+    }
     let status_id = 0
     if (category_id== 1){
         status_id = 1
@@ -378,8 +398,8 @@ req.body should be like this;
                 SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id}
 
             ),inserted AS (
-                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id, phone, is_active, owner_type_id)
-                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5, $6,  'false', $7) RETURNING id
+                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id, is_active)
+                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5,  'false') RETURNING id
 
             ),ins AS (
                 INSERT INTO real_estate_prices (real_estate_id, price)
@@ -391,12 +411,12 @@ req.body should be like this;
 
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
-        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id, phone, owner_id])
-        return res.json(rows[0])
+        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
+        return res.status(status.success).json(rows[0])
 
     } catch(e) {
         console.log(e)
-        throw e;
+        return res.status(status.error).send(false)
 
     }
 }

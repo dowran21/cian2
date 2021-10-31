@@ -23,6 +23,64 @@ CREATE TRIGGER access_ip_update
     EXECUTE PROCEDURE update_denied_count();
 
 
+
+CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_name VARCHAR, area NUMERIC(8)) 
+    RETURNS VARCHAR AS $real_name$
+    DECLARE
+        real_name VARCHAR (250);
+    BEGIN
+        SELECT 
+            concat(
+            CASE WHEN 
+                    (SELECT sv.absolute_value
+                    FROM specification_values sv
+                        INNER JOIN specifications s 
+                            ON s.id = sv.spec_id
+                        INNER JOIN real_estate_specification_values resv 
+                            ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                    WHERE resv.spec_id = 1 AND resv.real_estate_id = re_id)  IS NOT NULL THEN 
+                        (SELECT sv.absolute_value
+                        FROM specification_values sv
+                            INNER JOIN specifications s 
+                                ON s.id = sv.spec_id
+                            INNER JOIN real_estate_specification_values resv 
+                                ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+                    WHERE resv.spec_id = 1 AND resv.real_estate_id = re_id) ||
+                CASE 
+                    WHEN language_id = 1 THEN ' otagly '
+                    WHEN language_id = 2 THEN ' комнатная '
+                END
+            END,
+            t_name, ', ', area, ' ' ||
+            
+            CASE WHEN            
+            (SELECT sv.absolute_value
+                FROM specification_values sv
+                    INNER JOIN specifications s 
+                        ON s.id = sv.spec_id
+                    INNER JOIN real_estate_specification_values resv 
+                        ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+            WHERE resv.spec_id = 3 AND resv.real_estate_id = re_id) IS NOT NULL THEN 
+            (SELECT sv.absolute_value
+                FROM specification_values sv
+                    INNER JOIN specifications s ON s.id = sv.spec_id
+                    INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+            WHERE resv.spec_id = 3 AND resv.real_estate_id = re_id) ||
+            '/' ||
+            (SELECT sv.absolute_value
+                FROM specification_values sv
+                    INNER JOIN specifications s ON s.id = sv.spec_id
+                    INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
+            WHERE resv.spec_id = 2 AND resv.real_estate_id = re_id)
+            END          
+        )
+        INTO real_name;
+    RETURN real_name;
+    END;
+
+$real_name$ LANGUAGE plpgsql;
+
+
 -- CREATE OR REPLACE FUNCTION add_to_view_count() RETURNS TRIGGER AS $day_view_count$
     
 --     BEGIN

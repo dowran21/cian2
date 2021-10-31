@@ -10,15 +10,6 @@ const Schema = {
             'number.base':'{#label} is not correct',
             'any.required':'{#label} is required',
         }),
-        owner_id:Joi.number().label("Type of owner").required("{#label} required").messages({
-            'any.required':'{#label} is required'
-        }),
-        phone:Joi.number().required().label('Telephone number').min(10000000).max(99999999).messages({
-            'number.base':'{#label} is not correct',
-            'any.required':'{#label} is required',
-            'number.string':'must be min 8',
-            'number.max':'must be max 8'
-        }),
         location_id:Joi.number().label("location").required("{#label} required").messages({
             'number.base':"{#label} is not correct"
         }),

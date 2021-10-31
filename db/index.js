@@ -3,11 +3,11 @@ const Pool = require('pg').Pool;
 
 const pool = new Pool(
 {
-  user: dbconst.DATABASE_USER,
-  host: dbconst.DATABASE_HOST,
-  database: dbconst.DATABASE_NAME,
-  password: dbconst.DATABASE_PASSWORD,
-  port: dbconst.DATABASE_PORT,
+  user: dbconst.DATABASE_USER || 'dowran',
+  host: dbconst.DATABASE_HOST || 'localhost',
+  database: dbconst.DATABASE_NAME || 'cian',
+  password: dbconst.DATABASE_PASSWORD || '61123141dow',
+  port: dbconst.DATABASE_PORT || 5432,
 });    
   
    

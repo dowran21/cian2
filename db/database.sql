@@ -207,11 +207,9 @@ CREATE TABLE real_estates(
     ctype_id SMALLINT NOT NULL,
     area NUMERIC(8,2) NOT NULL,
     position point,
-    phone NUMERIC(8) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     status_id SMALLINT NOT NULL,
     location_id SMALLINT NOT NULL,
-    owner_type_id SMALLINT NOT NULL,
 
     CONSTRAINT owner_type_id_fk
         FOREIGN KEY (owner_type_id) REFERENCES owners(id) ON UPDATE CASCADE,

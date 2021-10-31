@@ -78,7 +78,6 @@ const AddSpecification = async (req, res) =>{
     }
       *********************************************************/
     const {absolute_name, is_required, is_multiple, translations, absolute_values, values_translations} = req.body 
-    console.log("I am in controller")
     let spec_values = ``
 
     for (let i=0; i<absolute_values.length; i++){
@@ -116,9 +115,10 @@ const AddSpecification = async (req, res) =>{
                         ON specifications.id = specification_translations.spec_id 
                 WHERE language_id = 1 AND id = ${rows[0].id}`
             const so = await database.query(qt, [])
-            return res.status(status.success).json({"rows":spec})
+            return res.status(status.success).json({"rows":so.rows[0]})
         }catch(e){
-
+            console.log(e)
+            return res.status(status.error).json({"Message":"Added but coudlnt show you"})
         }
     } catch (e) {
         console.log(e)

@@ -195,6 +195,96 @@ SELECT nextval('specifications_id_seq'::regclass);
 SELECT nextval('specifications_id_seq'::regclass);
 SELECT nextval('specifications_id_seq'::regclass);
 
+------------it is just a for the test after the deploying it must be deleted---------- 
+WITH inserted AS (
+            INSERT INTO specifications (absolute_name, is_required, is_multiple) 
+                VALUES ('type of telephone line', false, false) RETURNING id
+        ), insert_translations AS (
+            INSERT INTO specification_translations(name, language_id, spec_id)
+                VALUES 
+                ('Telefon liniyanyn gornusi', 1, (SELECT id FROM inserted)),('Виды телефонной линии', 2, (SELECT id FROM inserted)) 
+        ), insert_value0 AS (
+            INSERT INTO specification_values (spec_id, absolute_value)
+                VALUES ((SELECT id FROM inserted), 'ADSL') RETURNING id
+    ), insert_val_trans0 AS (
+            INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                VALUES 
+                    ('ADSL', 1, (SELECT id FROM insert_value0)),('АДСЛ', 2, (SELECT id FROM insert_value0))
+        ), insert_value1 AS (
+            INSERT INTO specification_values (spec_id, absolute_value)
+                VALUES ((SELECT id FROM inserted), 'FIBEROPTIC') RETURNING id
+    ), insert_val_trans1 AS (
+            INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                VALUES 
+                    ('optiki Suyum', 1, (SELECT id FROM insert_value1)),('Оптоволокно', 2, (SELECT id FROM insert_value1))
+        ), insert_value2 AS (
+            INSERT INTO specification_values (spec_id, absolute_value)
+                VALUES ((SELECT id FROM inserted), 'LAN') RETURNING id
+    ), insert_val_trans2 AS (
+            INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                VALUES 
+                    ('LAN', 1, (SELECT id FROM insert_value2)),('LAN', 2, (SELECT id FROM insert_value2))
+        ) 
+            SELECT id FROM inserted;
 
+WITH inserted AS (
+                INSERT INTO specifications (absolute_name, is_required, is_multiple) 
+                    VALUES ('type of security', false, true) RETURNING id
+            ), insert_translations AS (
+                INSERT INTO specification_translations(name, language_id, spec_id)
+                    VALUES 
+                    ('Goragy[ gornusi', 1, (SELECT id FROM inserted)),('Виды охранной системы', 2, (SELECT id FROM inserted)) 
+            ), insert_value0 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), 'Signalization') RETURNING id
+        ), insert_val_trans0 AS (
+                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                    VALUES 
+                        ('Signalizasiya', 1, (SELECT id FROM insert_value0)),('сигнализация', 2, (SELECT id FROM insert_value0))
+            ), insert_value1 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), 'Dog') RETURNING id
+        ), insert_val_trans1 AS (
+                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                    VALUES 
+                        ('Gujuk', 1, (SELECT id FROM insert_value1)),('Собака', 2, (SELECT id FROM insert_value1))
+            ), insert_value2 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), 'fire Signalization') RETURNING id
+        ), insert_val_trans2 AS (
+                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                    VALUES 
+                        ('Ot signalizasiyasy', 1, (SELECT id FROM insert_value2)),('пожарная сигнализация', 2, (SELECT id FROM insert_value2))
+            ) 
+                SELECT id FROM inserted
 
-
+WITH inserted AS (
+                INSERT INTO specifications (absolute_name, is_required, is_multiple) 
+                    VALUES ('type of constructor', 'false', 'false') RETURNING id
+            ), insert_translations AS (
+                INSERT INTO specification_translations(name, language_id, spec_id)
+                    VALUES 
+                    ('Gurluşyň gornusi', 1, (SELECT id FROM inserted)),('Виды строения', 2, (SELECT id FROM inserted)) 
+            ), insert_value0 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), 'Monolit') RETURNING id
+        ), insert_val_trans0 AS (
+                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                    VALUES 
+                        ('Monolit', 1, (SELECT id FROM insert_value0)),('Монолит', 2, (SELECT id FROM insert_value0))
+            ), insert_value1 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), 'Betonoblok') RETURNING id
+        ), insert_val_trans1 AS (
+                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                    VALUES 
+                        ('Betonblok', 1, (SELECT id FROM insert_value1)),('Бетонный блок', 2, (SELECT id FROM insert_value1))
+            ), insert_value2 AS (
+                INSERT INTO specification_values (spec_id, absolute_value)
+                    VALUES ((SELECT id FROM inserted), 'Kerpic') RETURNING id
+        ), insert_val_trans2 AS (
+                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                    VALUES 
+                        ('Kerpic', 1, (SELECT id FROM insert_value2)),('Керпич', 2, (SELECT id FROM insert_value2))
+            ) 
+                SELECT id FROM inserted
