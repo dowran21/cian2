@@ -15,7 +15,7 @@ const GenerateUserAccessToken = async(data) =>{
 };
 
 const GenerateCodeAccessToken = async(data) =>{
-    return JWT.sign(data, process.env.CODE_ACCESS_KEY, {expiresIn:"3m"})
+    return JWT.sign(data, process.env.CODE_ACCESS_KEY, {expiresIn:"10m"})
 }
 
 const GenerateUserRefreshToken = async(data) =>{

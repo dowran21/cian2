@@ -19,14 +19,14 @@ router.post('/change-password', VerifyUserAccessToken, UserController.ChangePass
 router.post('/:lang/add-real-estate', VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
 
 
-router.get('/:lang/user_real_estates', VerifyUserAccessToken,  UserController.UserRealEstates)
-router.get('/:lang/user_real_estate/:id', VerifyUserAccessToken, UserController.GetUserRealEstateByID)
+router.get('/:lang/user-real-estates', VerifyUserAccessToken,  UserController.UserRealEstates)
+router.get('/:lang/user-real-estate/:id', VerifyUserAccessToken, UserController.GetUserRealEstateByID)
 router.post('/:lang/add-real-estate-images/:id',VerifyUserAccessToken, upload.array("picture", 15), resize_image, UserController.AddImage )
-router.post('/:lang/update_real_estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
+router.post('/:lang/update-real-estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
 
 
-router.post('/:lang/add_to_vip/:id', VerifyUserAccessToken, UserController.AddToVIP)
-router.get('/:lang/get_wish_list', VerifyUserAccessToken, UserController.GetWishList)
-router.post('/:lang/add_to_wish_list/:id', VerifyUserAccessToken, UserController.AddWishList)
+router.post('/:lang/add-to-vip/:id', VerifyUserAccessToken, UserController.AddToVIP)
+router.get('/:lang/get-wish-list', VerifyUserAccessToken, UserController.GetWishList)
+router.post('/:lang/add-to-wish-list/:id', VerifyUserAccessToken, UserController.AddWishList)
 
 module.exports = router

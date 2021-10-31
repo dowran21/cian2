@@ -5,7 +5,9 @@ const { SendSMS } = require('../utils/sms.js');
 const {status} = require('../utils/status.js')
 
 const UserRegistration = async (req, res) =>{
-    /********************
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
+   /********************
         {
             "full_name": "SOme full name of moderator",
             "email" : "ddowran2106@gmail.com",
@@ -25,13 +27,27 @@ const UserRegistration = async (req, res) =>{
     if(owner_id == 1){
         max_count = 20000
     }
+    try {
+        const s = await database.query(`SELECT * FROM users WHERE phone = ${phone}`, [])
+        if (!s.rows){
+            return res.status(status.bad).json({"message":"User with this phone has already exist"})
+        }
+    } catch (e) {
+        return res.status(status.error).json({"message":e.message})
+    }
     const hashed_password = await UserHelper.HashPassword(password)
     const query_text = `
-        INSERT INTO users(role_id, full_name, email, phone, password, code, owner_id, max_count)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+        WITH inserted AS(
+            INSERT INTO users(role_id, full_name, email, phone, password, owner_id, max_count)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
+        ), inserted_code AS (
+            INSERT INTO access_ip(ip_address, user_id, code)
+            VALUES ($8,(SELECT id FROM inserted), $9)
+        ) SELECT id FROM inserted
+
         `
     try{
-        const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password, code, owner_id, max_count]);
+        const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password, owner_id, max_count, ip, code]);
         data = {"id":rows[0].id}
         const mess = `Code: ${code}`
         SendSMS({phone, mess})
@@ -45,16 +61,33 @@ const UserRegistration = async (req, res) =>{
 }
 
 const VerifyUserCode = async (req, res) =>{
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
     const {code} = req.body
     const user_id = req.user.id
-    const query_text = `SELECT * FROM users WHERE id = ${user_id} AND code = ${code} AND role_id = 3`
+    console.log(user_id, ip, code)
+    const query_text = `
+        SELECT u.id, u.full_name, u.email, u.phone, u.owner_id
+            FROM users u
+            INNER JOIN access_ip ai
+                ON u.id = ai.user_id 
+        WHERE u.id = ${user_id} AND ai.code = ${code} AND ai.ip_address = '${ip}' AND u.role_id = 3`
+
     try {
         const {rows} = await database.query(query_text, [])
-        if (!rows){
+        console.log(rows)
+        if (!rows[0]){
+            console.log("I am in if")
             return res.status(status.notfound).send(false)
         }else{
             try {
-                await database.query(`UPDATE users SET is_active = true WHERE id = ${user_id}`, [])
+                const update_query = `
+                    WITH updated AS (
+                            UPDATE access_ip SET activated = true 
+                            WHERE user_id = ${user_id} AND ip_address = '${ip}'
+                        ) UPDATE users SET is_active = true WHERE id = ${user_id}
+                    `
+                await database.query(update_query, [])
                 data = {"id":rows[0].id, "full_name":rows[0].full_name, "email":rows[0].email, "phone":rows[0].phone, "owner_id":rows[0].owner_id}
                 const access_token = await UserHelper.GenerateUserAccessToken(data);
                 const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
@@ -72,13 +105,21 @@ const VerifyUserCode = async (req, res) =>{
 
 const SendCodeAgain = async (req, res) =>{
     const user_id = req.user.id
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     const query_text = `
-        UPDATE users SET code = ${code} WHERE id = ${user_id}
+        WITH updated AS(
+            UPDATE access_ip SET code = ${code} 
+            WHERE user_id = ${user_id} AND ip_address = '${ip}'
+        ) SELECT * FROM users WHERE id = ${user_id}
         `
     try {
-        await database.query(query_text, [])
-        return res.status(status.success).send(true)
+        const {rows} = await database.query(query_text, [])
+        const mess = `Code: ${code}`
+        SendSMS({phone:rows[0].phone, mess})
+        const access_token = await UserHelper.GenerateCodeAccessToken(data);
+        return res.status(status.success).json({"access_token":access_token})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -92,25 +133,106 @@ const UserLogin = async (req, res) =>{
          "password":"somepassword"
      }
      *****************/
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
     const {phone, password} = req.body
+    console.log(phone, password)
+    const code = Math.floor(Math.random()*(999999-100000) + 100000)
+    console.log(code)
     const query_text = `
-        SELECT * FROM users WHERE phone = ${phone} AND role_id = 3
+        SELECT u.id, u.phone, u.full_name, u.password, u.role_id, ai.ip_address, ai.denied_count, ai.activated,
+            (CASE 
+                WHEN ai.validity IS NULL THEN false
+                ELSE ai.validity:: tsrange @> localtimestamp
+            END) AS bann
+        FROM users u
+            LEFT JOIN access_ip ai
+                ON u.id = ai.user_id
+        WHERE u.phone = ${phone} 
         `
     try {
         const {rows} = await database.query(query_text, [])
         const user = rows[0];
+        console.log(user)
         if(!user){
-            return res.status(status.notfound).json({"message":"Not found"})
+            return res.status(status.bad).json({"message":"Phone or password incorrect"})
         }
-        if (UserHelper.ComparePassword(password, user.password)){
-            data = {"id":user.id, "full_name":user.full_name, "email":user.email, "phone":user.phone, "role_id":user.role_id}
-            const access_token = await UserHelper.GenerateUserAccessToken(data);
-            const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
-            return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
-        }
-        if(!UserHelper.ComparePassword(password, user.password)){
-            const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
-            return res.status(status.bad).json(message)
+
+        if (!user.bann){
+            let compare = await UserHelper.ComparePassword(password, user.password)
+            
+            if(!user.ip_address || !user.activated){
+                console.log("I am i first if")
+                let count = 0;
+                const ip_query = `
+                    INSERT INTO access_ip (ip_address, user_id, code, denied_count) 
+                    VALUES('${ip}', ${user.id}, ${code}, $1) 
+                    ON CONFLICT(ip_address, user_id) DO UPDATE SET denied_count = access_ip.denied_count + EXCLUDED.denied_count, code = EXCLUDED.code`;
+                
+                if(!compare){
+                    count = 1;
+                    try {
+                        await database.query(ip_query, [count])
+                        return res.status(status.bad).json({"message":"Phone or password incorrect"})        
+                    } catch (e) {
+                        console.log(e)
+                        return res.status(status.error).send("ERROR")
+                    }
+                }                  
+                try {
+                    await database.query(ip_query, [count])
+                    data = {"id":user.id}
+                    const mess = `Code: ${code}`
+                    SendSMS({phone:user.phone, mess})
+                    const access_token = await UserHelper.GenerateCodeAccessToken(data);
+                    return res.status(status.success).json({"access_token":access_token})    
+                } catch (e) {
+                    console.log(e)
+                    return res.status(status.error).send("ERROR")
+                }
+                
+            }else{
+                if(compare){
+                    try{
+                        data = {"id":user.id, "full_name":user.full_name, "email":user.email, "phone":user.phone, "role_id":user.role_id}
+                        const access_token = await UserHelper.GenerateUserAccessToken(data);
+                        const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
+                        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+                    }catch(e){
+                        console.log(e)
+                        return res.status(status.error).send("ERROR")
+                    }
+                }else{
+                    if(user.denied_count == 2){
+                        try {
+                            const ban_query = `
+                                UPDATE access_ip 
+                                SET denied_count = 3, 
+                                 WHERE ip_address = '${ip}' AND user_id = ${user.id}`
+                            await database.query(ban_query, [])
+                            return res.status(status.bad).send("Indi bar bir sagat dynjyny al")
+                        } catch (e) {
+                            console.log(e)
+                            return res.status(status.error).send(false)
+                        }  
+                    }else{
+                        try {
+                            const count_query = `UPDATE access_ip 
+                                SET denied_count = ${user.denied_count+1}
+                                WHERE ip_address = '${ip}' AND user_id = ${user.id}`
+                            await database.query(count_query, [])
+                            return res.status(status.bad).send("hay guy passwor dor phone incorrect")
+                        } catch (e) {
+                            
+                        }
+                    }
+                    
+                }
+
+            }
+                        
+        }else{
+            return res.status(status.bad).send("Hey you are in bann please login a little later")
         }
 
     } catch (e) {
@@ -124,11 +246,24 @@ const ForgotPassword = async (req, res) =>{
     const {phone} = req.body
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     console.log(code)
+    let user = {}
+    const user_query = `
+        SELECT * FROM users WHERE phone = ${phone}
+        `
+    try {
+        const {rows} = await database.query()
+        let user = rows[0]
+        if(!user){
+            return res.status(status.notfound).json({"Message":"Users with this phone doesnt exist"})
+        }
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send("Error")
+    }
     const query_text = `
-        WITH updated AS(
-            UPDATE users SET is_active = false, code =${code} WHERE phone = ${phone}
-        ) 
-            SELECT * FROM users WHERE phone = ${phone}
+        INSERT INTO access_ip (ip_address, user_id, code)
+        VALUES(${ip}, ${user.id}, ${code})
+        ON CONFLICT (ip_address, user_id) DO UPDATE SET code = EXCLUDED.code
         `
     try {
         const {rows} = await database.query(query_text, [])

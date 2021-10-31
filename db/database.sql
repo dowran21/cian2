@@ -42,13 +42,27 @@ CREATE TABLE users(
     email VARCHAR (100),
     phone NUMERIC(8) NOT NULL,
     max_count INTEGER,
-    code NUMERIC(6),
     owner_id SMALLINT,
     "password" VARCHAR (300) NOT NULL,
     is_active BOOLEAN DEFAULT FALSE,
+    UNIQUE(phone),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
+);
+
+-----------ACCESS IP ADDRESS----------------
+CREATE TABLE access_ip(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    ip_address VARCHAR(150) NOT NULL,
+    user_id BIGINT NOT NULL,
+    denied_count SMALLINT NOT NULL DEFAULT 0,
+    validity tsrange,
+    code NUMERIC(6),
+    activated BOOLEAN DEFAULT FALSE,
+    UNIQUE(user_id, ip_address),
+
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id)  REFERENCES users(id)
 );
 
 CREATE TABLE categories(
