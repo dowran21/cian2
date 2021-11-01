@@ -1,96 +1,5 @@
 const database = require('../db/index.js')
-const {lang_id} = require('../utils/helpFunctions.js')
 const {status} = require('../utils/status')
-
-const GetRealEstateByFilter = async (req, res) =>{
-    const {specifications, type_id, category_id, price, area, images, position, page, limit} = req.query
-    const {lang} = req.params
-    const language_id = lang_id(lang)
-    let offSet = ``
-    let ctype_part =``
-    let spec_part = ``
-    let where_part = `WHERE `
-    let image_part =``
-    let order_part = `ORDER BY re.id DESC`
-    
-    //--------------------Pagination part ---------------------//
-    if (page !== 'null' && limit !== 'null'){
-        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
-    }
-    
-    //---------------------ctype part -----------------------//
-    if (type_id !== 'null' && category_id !== 'null'){
-        ctype_part = `AND ctype.type_id = ${type_id} AND ctype.category_id = ${category_id}` 
-    }
-    
-    //-------------------specification part-----------------//
-    if (specifications.length){
-        for (let i=0; i<specifications.length; i++){
-            values = specifications[i].values
-            spec_part += `AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
-        }        
-    }
-    
-    //----------------area part--------------------//
-    if (area.min && area.max){
-        where_part += `(re.area > ${area.min} AND re.are < ${area.max})`
-    }else if(area.min && !area.max){
-        where_part += `re.area > ${area.min}`
-    }else if(!area.min && area.max){
-        where_part += `re.area < ${area.max}`
-    }else{
-        where_part +=``
-    }
-    
-    //---------------price-----------------------//
-    if (price.min && price.max){
-        where_part += `AND (rep.price > ${price.min} AND rep.are < ${price.max})`
-    }else if(price.min && !price.max){
-        where_part += `AND rep.price > ${price.min}`
-    }else if(!price.min && price.max){
-        where_part += `AND rep.price < ${price.max}`
-    }else{
-        where_part +=``
-    }
-    
-    //----------about to have an image---------// 
-    if (image){
-        image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
-    }else{
-        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
-    }
-
-    const query_text =`
-    SELECT
-        (SELECT COUNT(re.id) 
-        FROM real_estate re
-            INNER JOIN ctype 
-                ON re.ctype_id = ctype.id
-            LEFT JOIN real_estate_prices rep 
-                ON rep.real_estate_id = re.id
-            LEFT JOIN real_estate_translations ret 
-                ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
-            INNER JOIN real_estate_specification_values resv 
-                ON resv.real_estate_id = re.id AND resv.is_active = true
-            ${image_part}
-            ${where_part} ${spec_part} ${ctype_part}
-        ) AS count,
-        (SELECT json_agg(real_estate) FROM (
-            SELECT re.id, re.area, rep.price, ret.description, re.position, re.created_at
-            FROM real_estate re 
-                INNER JOIN ctype 
-                    ON re.ctype_id = ctype.id
-                LEFT JOIN real_estate_prices rep 
-                    ON rep.real_estate_id = re.id
-                LEFT JOIN real_estate_translations ret 
-                    ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
-                INNER JOIN real_estate_specification_values resv 
-                    ON resv.real_estate_id = re.id AND resv.is_active = true
-                ${image_part}
-                ${where_part} ${spec_part} ${ctype_part} ${order_part} ${offSet}
-        ) 
-        `            
-}
 
 const GetSpecificationsForType = async (req, res) =>{
     const {type_id, lang} = req.params
@@ -103,15 +12,18 @@ const GetSpecificationsForType = async (req, res) =>{
                         FROM specification_values sv
                             LEFT JOIN specification_value_translations svt 
                                 ON svt.spec_value_id = sv.id AND svt.language_id = l.id
-                        WHERE sv.spec_id = s.id
-                        ORDER BY case when sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                        WHERE sv.spec_id = s.id AND sv.enabled = true
+                        ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
                             integer) ELSE null END ASC, sv.absolute_value ASC
                 )value) AS values
                 
             FROM specifications s
-                    INNER JOIN languages l ON l.language_code = $1
-                    LEFT JOIN specification_translations st ON st.spec_id = s.id AND st.language_id = l.id
-                    INNER JOIN type_specifications ts ON ts.spec_id = s.id
+                    INNER JOIN languages l 
+                        ON l.language_code = $1
+                    LEFT JOIN specification_translations st 
+                        ON st.spec_id = s.id AND st.language_id = l.id
+                    INNER JOIN type_specifications ts 
+                        ON ts.spec_id = s.id
             WHERE ts.type_id = $2 
             ORDER BY s.is_required DESC
     ` 
@@ -168,145 +80,6 @@ const Languages = async (req, res) =>{
         console.log(e)
         throw e
     }
-}
-
-const GetAllRealEstateWithFilters = async (req, res) =>{
-    const {specifications, type_id, category_id, price, area, images, position, page, limit} = req.query
-    const {lang} = req.params
-    const language_id = lang_id(lang)
-    let offSet = ``
-    let ctype_part =``
-    let spec_part = ``
-    let where_part = `WHERE `
-    let image_part =``
-    let order_part = `ORDER BY re.id DESC`
-    
-    //--------------------Pagination part ---------------------//
-    if (page !== 'null' && limit !== 'null'){
-        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
-    }
-    
-    //---------------------ctype part -----------------------//
-    if (type_id !== 'null' && category_id !== 'null'){
-        ctype_part = `AND ctype.type_id = ${type_id} AND ctype.category_id = ${category_id}` 
-    }
-    
-    //-------------------specification part-----------------//
-    if (specifications.length){
-        for (let i=0; i<specifications.length; i++){
-            values = specifications[i].values
-            spec_part += `AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
-        }        
-    }
-    
-    //----------------area part--------------------//
-    if (area.min && area.max){
-        where_part += `(re.area > ${area.min} AND re.are < ${area.max})`
-    }else if(area.min && !area.max){
-        where_part += `re.area > ${area.min}`
-    }else if(!area.min && area.max){
-        where_part += `re.area < ${area.max}`
-    }else{
-        where_part +=``
-    }
-    
-    //---------------price-----------------------//
-    if (price.min && price.max){
-        where_part += `AND (rep.price > ${price.min} AND rep.are < ${price.max})`
-    }else if(price.min && !price.max){
-        where_part += `AND rep.price > ${price.min}`
-    }else if(!price.min && price.max){
-        where_part += `AND rep.price < ${price.max}`
-    }else{
-        where_part +=``
-    }
-    
-    //----------about to have an image---------// 
-    if (image){
-        image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
-    }else{
-        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
-    }
-
-    const real_estate_name = `
-        concat(
-            CASE WHEN 
-                    (SELECT sv.absolute_value
-                    FROM specification_values sv
-                        INNER JOIN specifications s 
-                            ON s.id = sv.spec_id
-                        INNER JOIN real_estate_specification_values resv 
-                            ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-                    WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id)  IS NOT NULL THEN 
-                        (SELECT sv.absolute_value
-                        FROM specification_values sv
-                            INNER JOIN specifications s 
-                                ON s.id = sv.spec_id
-                            INNER JOIN real_estate_specification_values resv 
-                                ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-                    WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id) ||
-                CASE 
-                    WHEN l.id = 1 THEN ' otagly '
-                    WHEN l.id = 2 THEN 
-                        CASE 
-                            WHEN tt.name = 'Дом' THEN '-и комнатный '
-                            ELSE '-х комнатная '
-                        END
-                END
-            END,
-            tt.name, ', ' ||
-            
-            CASE WHEN            
-            (SELECT sv.absolute_value
-                FROM specification_values sv
-                    INNER JOIN specifications s 
-                        ON s.id = sv.spec_id
-                    INNER JOIN real_estate_specification_values resv 
-                        ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-            WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) IS NOT NULL THEN 
-            (SELECT sv.absolute_value
-                FROM specification_values sv
-                    INNER JOIN specifications s ON s.id = sv.spec_id
-                    INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-            WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) ||
-                CASE 
-                    WHEN l.id = 1 THEN '-nji gat'
-                    WHEN l.id = 2 THEN '-й этаж'
-                END 
-            END          
-        )AS real_estate_name,`
-
-    const query_text =`
-        SELECT
-            (SELECT COUNT(re.id) 
-            FROM real_estate re
-                INNER JOIN ctype 
-                    ON re.ctype_id = ctype.id
-                LEFT JOIN real_estate_prices rep 
-                    ON rep.real_estate_id = re.id
-                LEFT JOIN real_estate_translations ret 
-                    ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
-                INNER JOIN real_estate_specification_values resv 
-                    ON resv.real_estate_id = re.id AND resv.is_active = true
-                ${image_part}
-                ${where_part} ${spec_part} ${ctype_part}
-            ) AS count,
-            (SELECT json_agg(real_estate) FROM (
-                SELECT re.id, re.area, rep.price, ret.description, re.position, re.created_at
-                FROM real_estate re 
-                    INNER JOIN ctype 
-                        ON re.ctype_id = ctype.id
-                    LEFT JOIN real_estate_prices rep 
-                        ON rep.real_estate_id = re.id
-                    LEFT JOIN real_estate_translations ret 
-                        ON ret.real_estate_id = re.id AND ret.language_id = ${language_id};
-                    INNER JOIN real_estate_specification_values resv 
-                        ON resv.real_estate_id = re.id AND resv.is_active = true
-                    ${image_part}
-                    ${where_part} ${spec_part} ${ctype_part} ${order_part} ${offSet}
-            ) 
-        `
-
 }
 
 
@@ -634,78 +407,30 @@ const GetRealEstateByID = async (req, res) => {
             FROM real_estates 
             WHERE real_estates.id = $1                 
     )pos) AS position,`
-    const real_estate_name = `
-    concat(
-        CASE WHEN 
-                (SELECT sv.absolute_value
-                FROM specification_values sv
-                    INNER JOIN specifications s ON s.id = sv.spec_id
-                    INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-                WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id)  IS NOT NULL THEN 
-                    (SELECT sv.absolute_value
-                    FROM specification_values sv
-                        INNER JOIN specifications s ON s.id = sv.spec_id
-                        INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-                WHERE resv.spec_id = 1 AND resv.real_estate_id = re.id) ||
-            CASE 
-                WHEN l.id = 1 THEN ' otagly '
-                WHEN l.id = 2 THEN 
-                    CASE 
-                        WHEN tt.name = 'Дом' THEN '-и комнатный '
-                        ELSE '-х комнатная '
-                    END
-            END
-        END,
-        tt.name, ', ' ||
-        
-        CASE WHEN            
-        (SELECT sv.absolute_value
-            FROM specification_values sv
-                INNER JOIN specifications s ON s.id = sv.spec_id
-                INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-        WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) IS NOT NULL THEN 
-        (SELECT sv.absolute_value
-            FROM specification_values sv
-                INNER JOIN specifications s ON s.id = sv.spec_id
-                INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-        WHERE resv.spec_id = 3 AND resv.real_estate_id = re.id) || 
-            CASE 
-                WHEN l.id = 1 THEN '-nji gat, '
-                WHEN l.id = 2 THEN '-й этаж, '
-            END 
-        END         
-    )AS real_estate_name,`
-    let delete_show_vips = ``
-    // console.log(ip)
+
     const query_text = `
         WITH inserted AS (
             INSERT INTO view_address VALUES ($3, $1, 2)
             ON CONFLICT DO NOTHING)
 
-        SELECT re.area, rep.price, re.area, ret.description, re.urgency, ${real_estate_name} vre.id AS VIP, phone,
+        SELECT re.area, rep.price, re.area, ret.description, vre.id AS VIP,
             re.created_at,
-            (SELECT COUNT(*) FROM user_wish_list uwl WHERE uwl.real_estate_id = $1) AS bookmark_count,    
-
             concat(
                 CASE 
                     WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
                     END ||
                 lt.translation
             ) AS location,
+            real_estate_name($1, l.id, tt.name, area), u.phone, ott.translation AS owner_tyoe,
 
             (SELECT COUNT(count) 
                 FROM view_count WHERE real_estate_id = re.id AND view_type_id = 2 AND is_active=true) AS view_count,
             
             (SELECT json_agg(image) FROM (
                 SELECT destination FROM real_estate_images rei
-                WHERE rei.real_estate_id = $1 AND rei.file_type_id = 1 AND rei.is_active = 'true'
+                WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
             )image) AS images, 
 
-            (SELECT json_agg(panoramic) FROM (
-                SELECT destination FROM real_estate_images rei
-                WHERE rei.real_estate_id = $1 AND rei.file_type_id = 3 AND rei.is_active = 'true'
-            ) panoramic) AS panoramic_images,
-            
             (SELECT json_agg(specification) FROM(
                 SELECT DISTINCT ON (resvv.spec_id) st.name, 
                    
@@ -726,8 +451,12 @@ const GetRealEstateByID = async (req, res) => {
             )specification) AS specifications
 
         FROM real_estates re
+            INNER JOIN users u
+                ON u.id = re.user_id
             INNER JOIN languages l 
                 ON l.language_code = $2
+            INNER JOIN owner_type_translations ott
+                ON ott.owner_id = u.owner_id AND ott.language_id = l.id
             INNER JOIN ctypes ctp 
                 ON ctp.id = re.ctype_id 
             LEFT JOIN vip_real_estates vre 
@@ -816,7 +545,6 @@ const GetRegions = async (req, res) =>{
 }
 
 module.exports = {
-    GetRealEstateByFilter,
     GetSpecificationsForType,
     GetNotRequiredSpecificationsForType,
     Languages,

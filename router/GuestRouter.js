@@ -6,7 +6,6 @@ const GuestController = require('../controller/GuestController.js')
 router.get('/languages', GuestController.Languages)
 router.get('/:lang/all-real-estates', GuestController.AllRealEstate)
 router.get('/:lang/categories-types', GuestController.TypeCategoryController)
-router.get('/:lang/real-estates', GuestController.GetRealEstateByFilter)
 router.get('/:lang/real-estate/:id', GuestController.GetRealEstateByID)
 router.get('/:lang/get-filter-count', GuestController.CountForFilter)
 

@@ -25,8 +25,17 @@ const GenerateUserRefreshToken = async(data) =>{
 const GenerateAdminAccessToken = async(data) =>{
     return JWT.sign(data, process.env.ADMIN_ACCESS_KEY, {expiresIn:"1d"})
 };
+
 const GenerateAdminRefreshToken = async(data) =>{
     return JWT.sign(data, process.env.ADMIN_REFRESH_KEY, {expiresIn:"15d"})
+};
+
+const GenerateOperatorAccessToken = async(data) =>{
+    return JWT.sign(data, process.env.OPERATOR_ACCESS_KEY, {expiresIn:"1d"})
+};
+
+const GenerateOperatorRefreshToken = async(data) =>{
+    return JWT.sign(data, process.env.OPERATOR_REFRESH_KEY, {expiresIn:"15d"})
 };
 module.exports = {
     HashPassword,
@@ -35,5 +44,7 @@ module.exports = {
     GenerateUserRefreshToken,
     GenerateAdminAccessToken,
     GenerateAdminRefreshToken,
-    GenerateCodeAccessToken
+    GenerateCodeAccessToken,
+    GenerateOperatorAccessToken,
+    GenerateOperatorRefreshToken
 }

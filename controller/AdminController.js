@@ -152,7 +152,7 @@ const GetSpecificationByID = async (req, res)=>{
 
     try {
         const {rows} = await database.query(query_text, [])
-        console.log(rows)
+        // console.log(rows)
         return res.json(rows)
     } catch (e) {
         
@@ -296,6 +296,7 @@ const AddSpecificationToType = async (req, res) =>{
     const {type_id} = req.params
     const {specifications} = req.body
     console.log(specifications)
+    //specifications = []
 
     try{
         const query_text = `
@@ -377,12 +378,12 @@ const AddMainLocation = async (req, res)=>{
      const query_text = `
          WITH inserted AS (
              INSERT INTO locations(absolute_name)
-              VALUES ($1) RETURNING id
+              VALUES ('${absolute_name}') RETURNING id
          ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
              ${translations.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
      `
      try {
-         const {rows} = await database.query(query_text, [absolute_name])
+         const {rows} = await database.query(query_text, [])
          return res.status(status.success).send(true)
      } catch (e) {
          console.log(e)
@@ -390,11 +391,11 @@ const AddMainLocation = async (req, res)=>{
      }
 }
 
-const AddLocation = async (req, res) =>{
+const AddLocation = async (req, res) =>{ 
     /************************
      {
          "absolute_name":"11 mikrayon",
-         "main_location_id":null or can be welayat or 1 or 2 or 3
+         "main_location_id": 3
          "translations":[
              {"lang_id" : "1", "name" : "11 kici etrapca"},
              {"lang_id" : "2", "name" : "11 микрорайон"},
@@ -418,8 +419,6 @@ const AddLocation = async (req, res) =>{
         return res.status(status.error).json({"message":"Error"})
     }
 }
-
-
 
 module.exports = {
     AddOperator,

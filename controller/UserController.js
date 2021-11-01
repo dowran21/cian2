@@ -302,27 +302,36 @@ const ChangePassword = async (req, res) =>{
 
 ////////User real estates///////////
 const UserRealEstates = async (req, res) =>{
-    const {uuid, lang} = req.params
-    const language_id = await lang_id(lang)
+    const {lang} = req.params
+    const user_id = req.user.id
     try {
         const query_text = `
-            SELECT re.id, re.area, rep.price,
+            SELECT re.id, re.area, rep.price, 
+                real_estate_name(re.id, l.id, tt.name, re.area)
+                
                 (SELECT json_agg(image) FROM (
                     SELECT rei.destination FROM real_estate_images rei
                     WHERE rei.real_estate_id = re.id
                 )image) AS images, ret.description
-            FROM real_estate re
-            LEFT JOIN real_estate_translations ret ON ret.real_estate_id = re.id AND ret.language_id = ${language_id}
-            INNER JOIN real_estate_prices rep ON rep.real_estate_id = re.id AND rep.is_active = false
-            WHERE re.user_id = ${uuid}
+            
+                FROM real_estate re
+
+            INNER JOIN languages l 
+                ON l.language_code = ${lang}
+            INNER JOIN ctypes cp
+                    ON cp.id = re.ctype_id
+            INNER JOIN type_translations tt
+                    ON tt.type_id = cp.type_id AND tt.language_id = l.id 
+            INNER JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = false
+            WHERE re.user_id = ${user_id}
         `
         const {rows} = await database.query(query_text, [])
-        return res.json(rows)
+        return res.status(status.success).json(rows)
 
     } catch (e) {
         console.log(e)
-        throw e
-
+        return res.status(status.error).send(false)
     }
 }
 
@@ -421,6 +430,27 @@ req.body should be like this;
     }
 }
 
+const AddImage = async (req, res) =>{
+    const files = req.files
+    console.log(req.files)
+    const {id} = req.params
+    if (files.length){
+        console.log(files)
+        const query_text = `
+            INSERT INTO real_estate_images (real_estate_id, destination)
+                VALUES ${files.map(item => `(${id}, '${item.path}')`).join(',')}
+        `
+        try {
+            const {rows} = await database.query(query_text, [])
+            return res.status(200).json(true)
+        } catch (e) {
+            console.log(e)
+            return res.status(400).json(false)
+        }
+    }
+    return res.json({"message":"there is no file"})
+}
+
 const GetUserRealEstateByID = async (req, res) =>{
     const {id} = req.body
     const {uuid} = req.params
@@ -517,27 +547,6 @@ const GetWishList = async (req, res) =>{
         console.log(e)
         throw e
     }
-}
-
-const AddImage = async (req, res) =>{
-    const files = req.files
-    console.log(req.files)
-    const {id} = req.params
-    if (files.length){
-        console.log(files)
-        const query_text = `
-            INSERT INTO real_estate_images (real_estate_id, destination)
-                VALUES ${files.map(item => `(${id}, '${item.path}')`).join(',')}
-        `
-        try {
-            const {rows} = await database.query(query_text, [])
-            return res.status(200).json(true)
-        } catch (e) {
-            console.log(e)
-            return res.status(400).json(false)
-        }
-    }
-    return res.json({"message":"there is no file"})
 }
 
 const AddToVIP = async (req, res) =>{
