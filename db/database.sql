@@ -95,6 +95,7 @@ CREATE TABLE type_translations(
     language_id SMALLINT NOT NULL,
     "type_id" SMALLINT NOT NULL,
     UNIQUE(language_id, "type_id"),
+    
     CONSTRAINT type_translations_language_id_fk 
         FOREIGN KEY(language_id) REFERENCES  languages(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT type_translations_type_id_fk 
@@ -207,12 +208,10 @@ CREATE TABLE real_estates(
     ctype_id SMALLINT NOT NULL,
     area NUMERIC(8,2) NOT NULL,
     position point,
-    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN,
     status_id SMALLINT NOT NULL,
     location_id SMALLINT NOT NULL,
 
-    CONSTRAINT owner_type_id_fk
-        FOREIGN KEY (owner_type_id) REFERENCES owners(id) ON UPDATE CASCADE,
     CONSTRAINT location_id_fk 
         FOREIGN KEY(location_id) REFERENCES locations(id) ON UPDATE CASCADE,
     CONSTRAINT real_estate_ctype_id_fk 
@@ -229,6 +228,7 @@ CREATE TABLE real_estate_prices(
     real_estate_id INTEGER NOT NULL,
     price NUMERIC(13,2) NOT NUll,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
     CONSTRAINT real_estate_price_real_estate_id_fk 
         FOREIGN KEY(real_estate_id) REFERENCES  real_estates(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
