@@ -31,7 +31,7 @@ const UserRegistration = async (req, res) =>{
     }
     try {
         const s = await database.query(`SELECT * FROM users WHERE phone = ${phone}`, [])
-        if (!s.rows){
+        if (s.rows){
             return res.status(409).json({"message":"User with this phone has already exist"})
         }
     } catch (e) {
@@ -289,7 +289,7 @@ const ChangePassword = async (req, res) =>{
     const user_id = req.user.id
     const hashed_password = UserHelper.HashPassword(password)
     const query_text = `
-        UPDATE users SET password = ${hashed_password}
+        UPDATE users SET password = ${hashed_password} WHERE id = ${user_id}
         `
     try {
         await database(query_text, [])
