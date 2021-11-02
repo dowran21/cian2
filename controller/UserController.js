@@ -209,7 +209,7 @@ const UserLogin = async (req, res) =>{
                         try {
                             const ban_query = `
                                 UPDATE access_ip 
-                                SET denied_count = 3, 
+                                SET denied_count = 3 
                                  WHERE ip_address = '${ip}' AND user_id = ${user.id}`
                             await database.query(ban_query, [])
                             return res.status(status.bad).send("Indi bar bir sagat dynjyny al")
