@@ -43,7 +43,7 @@ INSERT INTO vip_types(id, name, days) VALUES
 
 
 INSERT INTO event_types VALUES 
-(1, 'activation real estate'),
+(1, 'activation or deactivation real estate'),
 (2, 'activation vip');
 
 INSERT INTO tables VALUES 

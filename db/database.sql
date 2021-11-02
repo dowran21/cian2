@@ -209,6 +209,8 @@ CREATE TABLE real_estates(
     area NUMERIC(8,2) NOT NULL,
     position point,
     is_active BOOLEAN,
+    selected BOOLEAN DEFAULT FALSE,
+    selected_time tsrange,
     status_id SMALLINT NOT NULL,
     location_id SMALLINT NOT NULL,
 
@@ -343,7 +345,7 @@ CREATE TABLE logs(
     "user_id" INTEGER,
     event_type_id SMALLINT,
     table_id SMALLINT,
-    data jsonb,
+    "data" jsonb,
     
     CONSTRAINT event_type_id_fk 
         FOREIGN KEY (event_type_id) REFERENCES event_types(id) ON UPDATE CASCADE ON DELETE SET null,

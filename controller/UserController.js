@@ -32,7 +32,7 @@ const UserRegistration = async (req, res) =>{
     try {
         const s = await database.query(`SELECT * FROM users WHERE phone = ${phone}`, [])
         if (!s.rows){
-            return res.status(status.bad).json({"message":"User with this phone has already exist"})
+            return res.status(409).json({"message":"User with this phone has already exist"})
         }
     } catch (e) {
         return res.status(status.error).json({"message":e.message})
@@ -50,11 +50,11 @@ const UserRegistration = async (req, res) =>{
         `
     try{
         const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password, owner_id, max_count, ip, code]);
-        data = {"id":rows[0].id}
+        data = {"id":rows[0].id, "code":code}
         const mess = `Code: ${code}`
         SendSMS({phone, mess})
         const access_token = await UserHelper.GenerateCodeAccessToken(data);
-        return res.status(status.success).json({"access_token":access_token})
+        return res.status(status.success).json({"access_token":access_token, code})
     }catch(e){
         console.log(e)
         return res.status(status.error).json({"message":e.message})
@@ -183,11 +183,11 @@ const UserLogin = async (req, res) =>{
                 }                  
                 try {
                     await database.query(ip_query, [count])
-                    data = {"id":user.id}
+                    data = {"id":user.id, "code":code}
                     const mess = `Code: ${code}`
                     SendSMS({phone:user.phone, mess})
                     const access_token = await UserHelper.GenerateCodeAccessToken(data);
-                    return res.status(status.success).json({"access_token":access_token})    
+                    return res.status(status.success).json({"access_token":access_token, code})    
                 } catch (e) {
                     console.log(e)
                     return res.status(status.error).send("ERROR")
@@ -347,9 +347,11 @@ req.body should be like this;
             "location_id":9б
             "descriptions" : [{"language_id":1, "description":"something about this home what you need to know"},
                             {"language_id":2, "description":"something about this home what you need to know, "}],
-            "specifications":[{"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]},
-                {"id":251, "is_required":"TRUE/FALSE", "is_multiple":"TRUE/FALSE", "values":[]}] ,
-    }
+            "specifications":[{"id":1, "is_required":"TRUE", "is_multiple":"FALSE", "values":[8]},
+                {"id":2, "is_required":"TRUE", "is_multiple":"FALSE", "values":[15]},
+                {"id":3, "is_required":"TRUE", "is_multiple":"FALSE", "values":[33]}
+                ]
+    } 
 *****************************/
 
     const {type_id, category_id, phone, area, position, price, descriptions, owner_id, specifications, location_id } = req.body
@@ -407,8 +409,8 @@ req.body should be like this;
                 SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id}
 
             ),inserted AS (
-                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id, is_active)
-                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5,  'false') RETURNING id
+                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id)
+                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5) RETURNING id
 
             ),ins AS (
                 INSERT INTO real_estate_prices (real_estate_id, price)
