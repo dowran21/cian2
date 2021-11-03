@@ -213,6 +213,7 @@ CREATE TABLE real_estates(
     selected_time tsrange,
     status_id SMALLINT NOT NULL,
     location_id SMALLINT NOT NULL,
+    selected_vip BOOLEAN DEFAULT FALSE,
 
     CONSTRAINT location_id_fk 
         FOREIGN KEY(location_id) REFERENCES locations(id) ON UPDATE CASCADE,

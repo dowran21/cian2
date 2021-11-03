@@ -350,7 +350,8 @@ req.body should be like this;
             "specifications":[{"id":1, "is_required":"TRUE", "is_multiple":"FALSE", "values":[8]},
                 {"id":2, "is_required":"TRUE", "is_multiple":"FALSE", "values":[15]},
                 {"id":3, "is_required":"TRUE", "is_multiple":"FALSE", "values":[33]}
-                ]
+                ],
+            "vip":true/false
     } 
 *****************************/
 
@@ -409,8 +410,8 @@ req.body should be like this;
                 SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id}
 
             ),inserted AS (
-                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id)
-                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5) RETURNING id
+                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id, selected_vip)
+                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5, $6) RETURNING id
 
             ),ins AS (
                 INSERT INTO real_estate_prices (real_estate_id, price)
@@ -422,7 +423,7 @@ req.body should be like this;
 
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
-        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
+        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id, vip])
         return res.status(status.success).json(rows[0])
 
     } catch(e) {
