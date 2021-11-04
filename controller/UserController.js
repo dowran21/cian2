@@ -175,7 +175,7 @@ const UserLogin = async (req, res) =>{
                     count = 1;
                     try {
                         await database.query(ip_query, [count])
-                        return res.status(status.bad).json({"message":"Phone or password incorrect"})        
+                        return res.status(405).json({"message":"Phone or password incorrect"})        
                     } catch (e) {
                         console.log(e)
                         return res.status(status.error).send("ERROR")
@@ -205,30 +205,16 @@ const UserLogin = async (req, res) =>{
                         return res.status(status.error).send("ERROR")
                     }
                 }else{
-                    if(user.denied_count == 2){
-                        try {
-                            const ban_query = `
-                                UPDATE access_ip 
-                                SET denied_count = 3 
-                                 WHERE ip_address = '${ip}' AND user_id = ${user.id}`
-                            await database.query(ban_query, [])
-                            return res.status(status.bad).send("Indi bar bir sagat dynjyny al")
-                        } catch (e) {
-                            console.log(e)
-                            return res.status(status.error).send(false)
-                        }  
-                    }else{
-                        try {
-                            const count_query = `UPDATE access_ip 
-                                SET denied_count = ${user.denied_count+1}
-                                WHERE ip_address = '${ip}' AND user_id = ${user.id}`
-                            await database.query(count_query, [])
-                            return res.status(status.bad).send("hay guy passwor dor phone incorrect")
-                        } catch (e) {
-                            
-                        }
+                    try {
+                        const count_query = `UPDATE access_ip 
+                            SET denied_count = ${user.denied_count+1}
+                            WHERE ip_address = '${ip}' AND user_id = ${user.id}`
+                        await database.query(count_query, [])
+                        return res.status(408).send("hay guy passwor dor phone incorrect")
+                    } catch (e) {
+                        console.log(e)
+                        return res.status(status.error).send(false)   
                     }
-                    
                 }
 
             }
