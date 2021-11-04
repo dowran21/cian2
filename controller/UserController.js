@@ -31,7 +31,7 @@ const UserRegistration = async (req, res) =>{
     }
     try {
         const s = await database.query(`SELECT * FROM users WHERE phone = ${phone}`, [])
-        if (s.rows){
+        if (s.rows[0]){
             return res.status(409).json({"message":"User with this phone has already exist"})
         }
     } catch (e) {
