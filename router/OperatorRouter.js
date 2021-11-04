@@ -9,5 +9,6 @@ router.get('/load-operator', OperatorHelper.VerifyOperatorRefreshToken, Operator
 router.get('/get-confirm-real-estates', OperatorHelper.VerifyOperatorAccessToken, OperatorController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', OperatorHelper.VerifyOperatorAccessToken, OperatorController.RealestateByID )
 router.post('/activation-real-estate/:id', OperatorHelper.VerifyOperatorAccessToken, OperatorController.ActivateRealEstate)
+router.post('/get-confirm-vip', OperatorHelper.VerifyOperatorAccessToken, OperatorController.GetConfirmRealEstates)
 
 module.exports = router

@@ -92,9 +92,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                     ON lc.id = re.location_id
                 LEFT JOIN location_translations ltt
                     ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            WHERE re.is_active IS NULL 
-                AND re.status_id <> 2 AND re.status_id <> 4 
-                AND selected = 'false' AND (selected_time::tsrange @> localtimestamp IS NULL) OR (NOT (selected_time::tsrange @> localtimestamp))
+            WHERE re.is_active IS NULL AND re.status_id <> 2 AND re.status_id <> 4 AND (selected = 'false'
+                OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
             ORDER BY  re.updated_at DESC  
             LIMIT 15
         ), updated AS (
@@ -108,6 +107,7 @@ const GetConfirmRealEstates = async (req, res) =>{
         `
     try {
         const {rows} = await database.query(query_text, [])
+        console.log(rows)
         return res.status(status.success).json(rows)
     } catch (e) {
         console.log(e)
@@ -203,6 +203,7 @@ const RealestateByID = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [id])
+        console.log(rows)
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
@@ -244,7 +245,6 @@ const NotActivatedEstates = async (req, res) =>{
                         ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
                 WHERE re.is_active = 'false' 
                     AND re.status_id <> 2 AND re.status_id <> 4 
-                    AND selected = 'false' AND (selected_time::tsrange @> localtimestamp IS NULL) OR (NOT (selected_time::tsrange @> localtimestamp))
                 ORDER BY  re.updated_at DESC  
                 LIMIT 15
             ) SELECT * FROM selected;   

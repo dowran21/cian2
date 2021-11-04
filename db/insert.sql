@@ -52,153 +52,153 @@ INSERT INTO tables VALUES
 
 --------------------This is the type of real_estates----------------
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name) VALUES ('Live') RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Ýaşalýan', 1, (SELECT id FROM inserted)),('Жилая', 2, (SELECT id FROM inserted))
-            ) SELECT id FROM inserted;
+        INSERT INTO types(absolute_name) VALUES ('Live') RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Ýaşalýan', 1, (SELECT id FROM inserted)),('Жилая', 2, (SELECT id FROM inserted))
+    ) SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name) VALUES ('Commerce') RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Täjirçilik', 1, (SELECT id FROM inserted)),('Комерческая', 2, (SELECT id FROM inserted))
-            ) SELECT id FROM inserted;
+        INSERT INTO types(absolute_name) VALUES ('Commerce') RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Täjirçilik', 1, (SELECT id FROM inserted)),('Комерческая', 2, (SELECT id FROM inserted))
+    ) SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('Flat', 1) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Kwartira', 1, (SELECT id FROM inserted)),('Квартира', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('Flat', 1) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Kwartira', 1, (SELECT id FROM inserted)),('Квартира', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('House', 1) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Öý', 1, (SELECT id FROM inserted)),('Дом', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('House', 1) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Öý', 1, (SELECT id FROM inserted)),('Дом', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('Daca', 1) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Daça', 1, (SELECT id FROM inserted)),('Дача', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('Daca', 1) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Daça', 1, (SELECT id FROM inserted)),('Дача', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('Room', 1) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Otag', 1, (SELECT id FROM inserted)),('Комната', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('Room', 1) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Otag', 1, (SELECT id FROM inserted)),('Комната', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('Office', 2) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Ofis', 1, (SELECT id FROM inserted)),('Офис', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('Office', 2) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Ofis', 1, (SELECT id FROM inserted)),('Офис', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('Sklad', 2) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Ammar', 1, (SELECT id FROM inserted)),('Склад', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('Sklad', 2) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Ammar', 1, (SELECT id FROM inserted)),('Склад', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 WITH inserted AS ( 
-                INSERT INTO types(absolute_name, main_type_id) VALUES ('Proizwodstwo', 2) RETURNING id
-            ), inserte AS (
-                INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ('Önümçilik', 1, (SELECT id FROM inserted)),('Производство', 2, (SELECT id FROM inserted))
-            ), insert_ctype AS 
-                (INSERT INTO ctypes(category_id, type_id) 
-                VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
-                SELECT id FROM inserted;
+        INSERT INTO types(absolute_name, main_type_id) VALUES ('Proizwodstwo', 2) RETURNING id
+    ), inserte AS (
+        INSERT INTO type_translations(name, language_id, type_id) 
+        VALUES 
+        ('Önümçilik', 1, (SELECT id FROM inserted)),('Производство', 2, (SELECT id FROM inserted))
+    ), insert_ctype AS 
+        (INSERT INTO ctypes(category_id, type_id) 
+        VALUES (1, (SELECT id FROM inserted)),(2, (SELECT id FROM inserted)))
+        SELECT id FROM inserted;
 
 -----------------It is just for locations-----------
 WITH inserted AS (
-             INSERT INTO locations(absolute_name)
-              VALUES ('Ashgabat city') RETURNING id
-         ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-             ('Aşgabat', 1, (SELECT id FROM inserted)),('Ашгабат', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name)
+        VALUES ('Ashgabat city') RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('Aşgabat', 1, (SELECT id FROM inserted)),('Ашгабат', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-             INSERT INTO locations(absolute_name)
-              VALUES ('Mary welayaty') RETURNING id
-         ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-             ('Mary welayat', 1, (SELECT id FROM inserted)),('Марыйский велаят', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name)
+        VALUES ('Mary welayaty') RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('Mary welayat', 1, (SELECT id FROM inserted)),('Марыйский велаят', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-             INSERT INTO locations(absolute_name)
-              VALUES ('Lebap welayaty') RETURNING id
-         ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-             ('Lebap welayat', 1, (SELECT id FROM inserted)),('Лебапский велаят', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name)
+        VALUES ('Lebap welayaty') RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('Lebap welayat', 1, (SELECT id FROM inserted)),('Лебапский велаят', 2, (SELECT id FROM inserted));
 
 ------------------Add sublocations ---------------
 WITH inserted AS (
-            INSERT INTO locations(absolute_name, main_location_id)
-             VALUES ('11mkr', 1) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ('11 mkr', 1, (SELECT id FROM inserted)),('11 mkr', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name, main_location_id)
+            VALUES ('11mkr', 1) RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('11 mkr', 1, (SELECT id FROM inserted)),('11 mkr', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-            INSERT INTO locations(absolute_name, main_location_id)
-             VALUES ('10mkr', 1) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ('10 mkr', 1, (SELECT id FROM inserted)),('10 mkr', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name, main_location_id)
+            VALUES ('10mkr', 1) RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('10 mkr', 1, (SELECT id FROM inserted)),('10 mkr', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-            INSERT INTO locations(absolute_name, main_location_id)
-             VALUES ('9mkr', 1) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ('9 mkr', 1, (SELECT id FROM inserted)),('9 mkr', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name, main_location_id)
+            VALUES ('9mkr', 1) RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('9 mkr', 1, (SELECT id FROM inserted)),('9 mkr', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-            INSERT INTO locations(absolute_name, main_location_id)
-             VALUES ('8 mkr', 1) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ('8 mkr', 1, (SELECT id FROM inserted)),('8 mkr', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name, main_location_id)
+            VALUES ('8 mkr', 1) RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('8 mkr', 1, (SELECT id FROM inserted)),('8 mkr', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-            INSERT INTO locations(absolute_name, main_location_id)
-             VALUES ('7 mkr', 1) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ('7 mkr', 1, (SELECT id FROM inserted)),('7 mkr', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name, main_location_id)
+            VALUES ('7 mkr', 1) RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('7 mkr', 1, (SELECT id FROM inserted)),('7 mkr', 2, (SELECT id FROM inserted));
 
 WITH inserted AS (
-            INSERT INTO locations(absolute_name, main_location_id)
-             VALUES ('6 mkr', 1) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ('6 mkr', 1, (SELECT id FROM inserted)),('6 mkr', 2, (SELECT id FROM inserted));
+        INSERT INTO locations(absolute_name, main_location_id)
+            VALUES ('6 mkr', 1) RETURNING id
+    ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ('6 mkr', 1, (SELECT id FROM inserted)),('6 mkr', 2, (SELECT id FROM inserted));
 
 --------This inserts for specifications----------------------
 WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
@@ -239,7 +239,7 @@ WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is
                     VALUES ((SELECT id FROM inserted), '10') RETURNING id
         ) SELECT id FROM inserted;
 
-WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
+    WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
         VALUES (2, 'quantity of floors of tower', 'true', 'false') RETURNING id
             ), insert_translations AS (
                 INSERT INTO specification_translations(name, language_id, spec_id)
@@ -292,7 +292,7 @@ WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is
                     VALUES ((SELECT id FROM inserted), '15') RETURNING id
         ) SELECT id FROM inserted;
 
-WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
+    WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is_multiple) 
                 VALUES (3, 'floor of the flat', 'true', 'false') RETURNING id
             ), insert_translations AS (
                 INSERT INTO specification_translations(name, language_id, spec_id)
@@ -345,13 +345,13 @@ WITH inserted AS (INSERT INTO specifications (id, absolute_name, is_required, is
                     VALUES ((SELECT id FROM inserted), '15') RETURNING id
         ) SELECT id FROM inserted;
 
-----just continue----
-SELECT nextval('specifications_id_seq'::regclass);
-SELECT nextval('specifications_id_seq'::regclass);
-SELECT nextval('specifications_id_seq'::regclass);
+    ----just continue----
+    SELECT nextval('specifications_id_seq'::regclass);
+    SELECT nextval('specifications_id_seq'::regclass);
+    SELECT nextval('specifications_id_seq'::regclass);
 
-------------it is just a for the test after the deploying it must be deleted---------- 
-WITH inserted AS (
+    ------------it is just a for the test after the deploying it must be deleted---------- 
+    WITH inserted AS (
             INSERT INTO specifications (absolute_name, is_required, is_multiple) 
                 VALUES ('type of telephone line', false, false) RETURNING id
         ), insert_translations AS (
@@ -382,7 +382,7 @@ WITH inserted AS (
         ) 
             SELECT id FROM inserted;
 
-WITH inserted AS (
+    WITH inserted AS (
                 INSERT INTO specifications (absolute_name, is_required, is_multiple) 
                     VALUES ('type of security', false, true) RETURNING id
             ), insert_translations AS (
@@ -413,7 +413,7 @@ WITH inserted AS (
             ) 
                 SELECT id FROM inserted;
 
-WITH inserted AS (
+    WITH inserted AS (
                 INSERT INTO specifications (absolute_name, is_required, is_multiple) 
                     VALUES ('type of constructor', 'false', 'false') RETURNING id
             ), insert_translations AS (

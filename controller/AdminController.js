@@ -12,7 +12,7 @@ const AdminLogin = async (req, res) =>{
     // console.log("I am in admin login controller")
     const {password, phone} = req.body
     const query_text = `
-        SELECT * FROM users u WHERE u.phone = $1 AND role_id = 1
+        SELECT * FROM users u WHERE u.phone = $1
     `
     try {
         const {rows} = await database.query(query_text, [phone])
@@ -26,9 +26,22 @@ const AdminLogin = async (req, res) =>{
             const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
             return res.status(status.bad).json(message)
         }
-        const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
-        const access_token = await AdminHelper.GenerateAdminAccessToken(data)
-        const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
+        let data = {}
+        let access_token = ``;
+        let refresh_token = ``
+        if(user.role_id==1){
+            data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
+            access_token = await AdminHelper.GenerateAdminAccessToken(data)
+            refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
+        }
+        if(user.role_id == 2){
+            data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
+            access_token = await AdminHelper.GenerateOperatorAccessToken(data)
+            refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
+        }
+        if(user.role_id == 3){
+            return res.status(499).json({"message":"Idi otsuda eto ne twoye mesto"})
+        }
         return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
     } catch (e) {
         console.log(e)

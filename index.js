@@ -12,6 +12,8 @@ const port = process.env.PORT || 3000
 
 let dir = path.join(__dirname, 'uploads')
 
+app.use(morgan('dev'))
+
 const allowedOrigins = ['http://localhost:3000','http://192.168.31.250:3001'];
 //const allowedOrigins = ['http://localhost:8090', 'http://10.60.1.20:9062', 'http://95.85.97.206:9062'];
 app.use(cors({
@@ -28,7 +30,6 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/api', Routers)
-app.use(morgan('dev'))
 app.use('/uploads', express.static(dir))
 app.use(cookieParser())
 
