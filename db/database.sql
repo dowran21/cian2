@@ -44,7 +44,7 @@ CREATE TABLE users(
     max_count INTEGER,
     owner_id SMALLINT,
     "password" VARCHAR (300) NOT NULL,
-    is_active BOOLEAN DEFAULT FALSE,
+    deleted BOOLEAN DEFAULT FALSE,
     UNIQUE(phone),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
@@ -145,6 +145,8 @@ CREATE TABLE type_specifications(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
     "type_id" SMALLINT NOT NULL,
     spec_id SMALLINT NOT NULL,
+    queue_position SMALLINT,
+    
     UNIQUE(spec_id, "type_id"),
     CONSTRAINT type_specification_spec_id_fk 
         FOREIGN KEY(spec_id) REFERENCES  specifications(id) ON UPDATE CASCADE,

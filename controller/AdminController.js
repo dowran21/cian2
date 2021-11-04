@@ -49,6 +49,34 @@ const AdminLogin = async (req, res) =>{
     }
 }
 
+const LoadAdmin = async (req, res) =>{
+    const user_id = req.user.id
+    try {
+        const {rows} = await database.query(`SELECT * FROM users WHERE id = ${user_id} AND role_id = 1`, [])
+        const user = rows[0]
+        const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
+        const access_token = await AdminHelper.GenerateAdminAccessToken(data)
+        const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
+        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetOperators = async (req, res) =>{
+    const query_text = `
+        SELECT id, full_name, email, phone FROM users WHERE role_id = 2 AND deleted = false
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json(rows)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const AddOperator = async (req, res) =>{
     /*******
      {
@@ -70,6 +98,67 @@ const AddOperator = async (req, res) =>{
     }catch(e){
         console.log(e)
         return res.status(status.error).send(false)
+    }
+}
+
+const DeleteOperator = async (req, res) =>{
+    const {id} = req.params
+    const query_text = `UPDATE users SET deleted = true WHERE id = ${id}`
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        
+    }
+}
+
+const UpdateOperator = async (req, res) =>{
+    /********
+     {
+         "full_name" = "something",
+         "phone" = 61123141
+         "email"="some@gmail.com"
+     }
+     ********/
+    
+    const {id} = req.params
+    const {full_name, phone, email} = req.body
+    const query_text = `
+        UPDATE users SET full_name = $1, phone = $2, email= $3 WHERE id = $4
+        `
+    try {
+        const {rows} = await database.query(query_text, [full_name, phone, email, id])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
+}
+
+const GetDeletedOperators = async (req, res) =>{
+    // const {id} = req.params
+    const query_text = `
+        SELECT id, full_name, email, phone FROM users WHERE role_id = 2 AND deleted = true
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json(rows)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const RecoveryOperator = async (req, res) =>{
+    const {id} = req.params
+    const query_text = `
+        UPDATE users SET deleted = false WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database
+    } catch (e) {
+        
     }
 }
 
@@ -173,6 +262,10 @@ const GetSpecificationByID = async (req, res)=>{
 
 } 
 
+const DisableEnableValue = async (req, res) =>{
+
+}
+
 const GetAllSpecifications = async (req, res)=>{
     const {page, limit} = req.query
     let offset = ``
@@ -194,10 +287,10 @@ const GetAllSpecifications = async (req, res)=>{
                     WHERE language_id = 1 ${offset})specification) AS specifications`
         const {rows} = await database.query(query_text, [])
         
-        return res.json({"rows":rows})
+        return res.status(status.success).json({"rows":rows})
     }catch(e){
         console.log(e)
-        throw e
+        return res.status(status.error).send(false)
     }
 }
 
@@ -212,10 +305,10 @@ const GetAllTypes = async (req, res) =>{
         FROM types; 
         `
         const {rows} = await database.query(query_text, [])
-        return res.json({"rows":rows})
+        return res.status(status.success).json({"rows":rows})
     }catch(e){
         console.log(e)
-        throw e;
+        return res.status(status.error).send(false)
     }
 }
 
@@ -268,8 +361,7 @@ const AddType = async (req, res) =>{
                 INSERT INTO types(absolute_name, main_type_id) VALUES ($1, $2) RETURNING id
             ), inserte AS (
                 INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES 
-                ${translations.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
+                VALUES ${translations.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
             ), insert_ctype AS 
                 (INSERT INTO ctypes(category_id, type_id) 
                 VALUES ${categories.map(item => `(${item}, (SELECT id FROM inserted))`)})
@@ -297,10 +389,10 @@ const GetTypeByID = async (req, res) =>{
         `
     try{
         const {rows} = await database.query(query_text, [])
-        return res.json({"rows":rows})
+        return res.status(status.success).json({"rows":rows})
     }catch(e){
         console.log(e)
-        throw e
+        return res.status(status.error).send(false)
     }
 } 
 
@@ -434,8 +526,13 @@ const AddLocation = async (req, res) =>{
 }
 
 module.exports = {
-    AddOperator,
     AdminLogin,
+    LoadAdmin,
+    AddOperator,
+    DeleteOperator,
+    UpdateOperator,
+    GetDeletedOperators,
+    RecoveryOperator,
     AddSpecification,
     GetSpecificationByID,
     GetAllSpecifications,
@@ -448,4 +545,5 @@ module.exports = {
     AddMainLocation,
     AddLocation,
     AddMaintype,
+    GetOperators,
 }

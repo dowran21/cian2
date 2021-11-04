@@ -2,12 +2,18 @@ const express = require('express')
 const router = new express.Router()
 const AdminController = require('../controller/AdminController.js')
 const upload = require('../middleware/upload.js')
-const {VerifyAdminAccessToken} = require('../middleware/AuthMiddleware.js')
+const {VerifyAdminAccessToken, VerifyAdminRefreshToken} = require('../middleware/AuthMiddleware.js')
 
 router.post('/login', AdminController.AdminLogin)
-
+router.get('/load-admin', VerifyAdminRefreshToken, AdminController.LoadAdmin )
 
 router.post('/add-operator',VerifyAdminAccessToken, AdminController.AddOperator)
+router.post('/delete-operator/:id', VerifyAdminAccessToken, AdminController.DeleteOperator)
+router.post('/update-operator/:id', VerifyAdminAccessToken, AdminController.UpdateOperator)
+router.get('/get-deleted-operators', VerifyAdminAccessToken, AdminController.GetDeletedOperators)
+router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.RecoveryOperator)
+
+router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators)
 router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
 
 router.get('/specifications/:id', VerifyAdminAccessToken, AdminController.GetSpecificationByID)

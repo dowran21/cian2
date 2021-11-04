@@ -86,8 +86,8 @@ const VerifyUserCode = async (req, res) =>{
                 const update_query = `
                     WITH updated AS (
                             UPDATE access_ip SET activated = true 
-                            WHERE user_id = ${user_id} AND ip_address = '${ip}'
-                        ) UPDATE users SET is_active = true WHERE id = ${user_id}
+                            WHERE user_id = ${user_id} AND ip_address = '${ip}' RETURNING *
+                        ) SELECT id FROM updated
                     `
                 await database.query(update_query, [])
                 data = {"id":rows[0].id, "full_name":rows[0].full_name, "email":rows[0].email, "phone":rows[0].phone, "owner_id":rows[0].owner_id}
