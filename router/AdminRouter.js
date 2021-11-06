@@ -17,10 +17,10 @@ router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.Rec
 router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators)
 
 router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
-router.get('/specifications/:id', VerifyAdminAccessToken, AdminController.GetSpecificationByID)
+router.get('/get-specification/:id', VerifyAdminAccessToken, AdminController.GetSpecificationByID)
 router.get('/get-all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
 router.post('/activation-specification', VerifyAdminAccessToken, AdminController.SpecificationActivation)
-router.post('/disable-enable-spec-val', VerifyAdminAccessToken, AdminController.DisableEnableValue)
+router.post('/disable-enable-spec-val/:id', VerifyAdminAccessToken, AdminController.DisableEnableValue)
 router.post('/add-spec-val/:id', VerifyAdminAccessToken, AdminController.AddSpecVal)
 
 router.post('/add-main-type', VerifyAdminAccessToken, AdminController.AddMaintype)

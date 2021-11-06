@@ -30,7 +30,7 @@ const UserRegistration = async (req, res) =>{
         max_count = 20000
     }
     try {
-        const s = await database.query(`SELECT * FROM users WHERE phone = ${phone}`, [])
+        const s = await database.query(`SELECT * FROM users WHERE phone = '${phone}'`, [])
         if (s.rows[0]){
             return res.status(409).json({"message":"User with this phone has already exist"})
         }
@@ -93,7 +93,7 @@ const VerifyUserCode = async (req, res) =>{
                 data = {"id":rows[0].id, "full_name":rows[0].full_name, "email":rows[0].email, "phone":rows[0].phone, "owner_id":rows[0].owner_id}
                 const access_token = await UserHelper.GenerateUserAccessToken(data);
                 const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
-                return res.status(status.success).json({data, access_token, refresh_token})
+                return res.status(status.success).json({data, "token":access_token, refresh_token})
             } catch (e) {
                 console.log(e)
                 return res.status(status.error).send(false)
@@ -150,7 +150,7 @@ const UserLogin = async (req, res) =>{
         FROM users u
             LEFT JOIN access_ip ai
                 ON u.id = ai.user_id
-        WHERE u.phone = ${phone} 
+        WHERE u.phone = '${phone}' 
         `
     try {
         const {rows} = await database.query(query_text, [])
@@ -172,10 +172,11 @@ const UserLogin = async (req, res) =>{
                     ON CONFLICT(ip_address, user_id) DO UPDATE SET denied_count = access_ip.denied_count + EXCLUDED.denied_count, code = EXCLUDED.code`;
                 
                 if(!compare){
+                    const error = {type:"manual", name:"phone", message:"'Phone ' ýada 'Açar söz' ýalňyş"}
                     count = 1;
                     try {
                         await database.query(ip_query, [count])
-                        return res.status(405).json({"message":"Phone or password incorrect"})        
+                        return res.status(405).send(error)        
                     } catch (e) {
                         console.log(e)
                         return res.status(status.error).send("ERROR")
@@ -199,18 +200,19 @@ const UserLogin = async (req, res) =>{
                         data = {"id":user.id, "full_name":user.full_name, "email":user.email, "phone":user.phone, "role_id":user.role_id}
                         const access_token = await UserHelper.GenerateUserAccessToken(data);
                         const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
-                        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+                        return res.status(status.success).json({"token":access_token, "refresh_token":refresh_token, "data":data})
                     }catch(e){
                         console.log(e)
                         return res.status(status.error).send("ERROR")
                     }
                 }else{
                     try {
+                        const error = {type:"manual", name:"phone", message:"'Phone ' ýada 'Açar söz' ýalňyş"}
                         const count_query = `UPDATE access_ip 
                             SET denied_count = ${user.denied_count+1}
                             WHERE ip_address = '${ip}' AND user_id = ${user.id}`
                         await database.query(count_query, [])
-                        return res.status(408).send("hay guy passwor dor phone incorrect")
+                        return res.status(405).send(error)
                     } catch (e) {
                         console.log(e)
                         return res.status(status.error).send(false)   

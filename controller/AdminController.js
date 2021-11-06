@@ -267,22 +267,36 @@ const GetSpecificationByID = async (req, res)=>{
             
             (SELECT json_agg(value) FROM (
                 SELECT sv.id, sv.absolute_value, sv.enable,
+                    
                     (SELECT json_agg(value_translation) FROM 
                         (SELECT svt.language_id, svt.name 
                         FROM specification_value_translations svt 
                         WHERE svt.spec_value_id = sv.id
                     )value_translation) AS value_translations
-                FROM specification_values sv WHERE sv.spec_id = spec.id
-                )value) AS values 
+                
+                FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = true
+            )value) AS enabled_values,
+
+            (SELECT json_agg(dvalue) FROM (
+                SELECT sv.id, sv.absolute_value, sv.enable,
+                    
+                    (SELECT json_agg(value_translation) FROM 
+                        (SELECT svt.language_id, svt.name 
+                        FROM specification_value_translations svt 
+                        WHERE svt.spec_value_id = sv.id
+                    )value_translation) AS value_translations
+                
+                FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = false
+            )dvalue) AS disabled_values
 
         FROM specifications spec WHERE spec.id = ${id}`
 
     try {
         const {rows} = await database.query(query_text, [])
-        // console.log(rows)
         return res.json(rows)
     } catch (e) {
-        
+        console.log(e)
+        return res.status(status.success).send(false)
     }
 
 } 
@@ -360,7 +374,7 @@ const GetAllSpecifications = async (req, res)=>{
     const {name} = req.query
     let WherePart = ``
     if(name && name != null && name != undefined){
-        WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}')`
+        WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}' OR stt.name ~* '${name}')`
 
     }
     try{
@@ -378,8 +392,6 @@ const GetAllSpecifications = async (req, res)=>{
                     )tr) AS translations  
                     
                     FROM specifications s
-                        INNER JOIN specification_translations st
-                            ON s.id = st.spec_id 
                     WHERE s.id>0 ${WherePart}  ${offset})specification) AS specifications`
         const {rows} = await database.query(query_text, [])
         

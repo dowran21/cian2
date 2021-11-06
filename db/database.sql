@@ -40,7 +40,7 @@ CREATE TABLE users(
     role_id SMALLINT NOT NULL,
     full_name VARCHAR (150) NOT NULL,
     email VARCHAR (100),
-    phone NUMERIC(8) NOT NULL,
+    phone VARCHAR(8) NOT NULL,
     max_count INTEGER,
     owner_id SMALLINT,
     "password" VARCHAR (300) NOT NULL,
