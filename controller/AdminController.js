@@ -287,6 +287,21 @@ const GetSpecificationByID = async (req, res)=>{
 
 } 
 
+const SpecificationActivation = async (req, res) =>{
+    const {id} = req.params
+    const {bool} = req.body
+    const query_text = `
+        UPDATE specifications SET is_active = ${bool} WHERE id = ${id}
+        `
+    try {
+        const {rows}= await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const DisableEnableValue = async (req, res) =>{
     const {id} = req.params
     const {bool} = req.body
@@ -616,9 +631,12 @@ module.exports = {
     UpdateOperator,
     GetDeletedOperators,
     RecoveryOperator,
+
     AddSpecification,
     GetSpecificationByID,
     GetAllSpecifications,
+    SpecificationActivation,
+
     GetAllTypes,
     AddType,
     GetTypeByID,
