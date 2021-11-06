@@ -351,6 +351,8 @@ const CountForFilter = async (req, res) =>{
                 ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
             INNER JOIN ctypes cp 
                 ON cp.id = re.ctype_id
+            INNER JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL 
                 ${where_part} ${spec_part}   
     `
@@ -362,6 +364,36 @@ const CountForFilter = async (req, res) =>{
         return res.status(status.error).json({"message":e.message})
     }
 
+}
+
+const SaleFlatFilter = async (req, res) =>{
+
+    const query_text = `
+        SELECT c.id AS category_id, 
+            
+            (SELECT json_agg(co) FROM (
+                SELECT COUNT(re.id) AS real_estate_count, sv.absolute_value, sv.id
+                FROM real_estates re
+                    INNER JOIN ctypes cp
+                        ON cp.category_id = c.id AND cp.type_id = 3
+                    INNER JOIN real_estate_specification_values resv
+                        ON resv.real_estate_id = re.id
+                    INNER JOIN specification_values sv 
+                        ON resv.spec_value_id = sv.id 
+                    WHERE sv.spec_id = 1
+                    ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                        integer) ELSE null END ASC, sv.absolute_value ASC
+            )co) AS ready_search
+        
+        FROM categories c 
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 const TypeCategoryController = async (req, res) =>{
@@ -554,6 +586,7 @@ module.exports = {
     GetTypesCategory,
     GetLocations,
     GetRegions,
-    CountForFilter
+    CountForFilter,
+    SaleFlatFilter
 
 }   
