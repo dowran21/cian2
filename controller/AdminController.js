@@ -65,12 +65,37 @@ const LoadAdmin = async (req, res) =>{
 }
 
 const GetOperators = async (req, res) =>{
+    const {page, limit} = req.query
+    const {full_name, phone} = req.query
+    let OffSet = ``
+    if (page && limit) {
+        OffSet = ` OFFSET ${(page-1)*limit} LIMIT ${limit}`
+    }else{
+        OffSet = ``
+    }
+    let WherePart = ``
+    if(full_name && full_name != 'null' && full_name != 'undefined'){
+        WherePart += ` AND full_name ~* '${full_name}'`
+    }
+    if(phone && phone != 'null' && phone != 'undefined'){
+        WherePart += ` AND phone = '${phone}'`
+    }
+    
     const query_text = `
-        SELECT id, full_name, email, phone FROM users WHERE role_id = 2 AND deleted = false
+        SELECT
+            (SELECT COUNT(*) 
+                FROM users 
+                WHERE role_id = 2 AND deleted = false ${WherePart}),
+            (SELECT json_agg(op) FROM (
+                SELECT id, full_name, email, phone 
+                FROM users 
+                    WHERE role_id = 2 AND deleted = false ${WherePart}
+                ${OffSet}
+            )op) AS operators
         `
     try {
         const {rows} = await database.query(query_text, [])
-        return res.status(status.success).json(rows)
+        return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -263,7 +288,50 @@ const GetSpecificationByID = async (req, res)=>{
 } 
 
 const DisableEnableValue = async (req, res) =>{
+    const {id} = req.params
+    const {bool} = req.body
+    const query_text = ` 
+        UPDATE specification_values SET enable = ${bool} WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
 
+const AddSpecVal = async (req, res) =>{
+    /*********************************
+    
+    "absolute_value" :"FIBEROPTIC",
+      "value_translations" : 
+          [{"lang_id" : "1", "name" : "ADSL"}, {"lang_id" : "2", "name" : "АДСЛ"}]
+          
+    *****************************/
+    const {id} = req.params
+    const {absolute_value, value_translations} = req.body
+    let val_trans_part = ``
+    if (value_translations){
+        val_trans_part = `, insert_val_trans(
+            INSERT INTO specification_value_translations(name, language_id, spec_id)
+            VALUES ${value_translations.map(item =>`('${item.name}', ${item.lang_id}, SELECT id FROM inserted)`).join(',')}
+        )`
+    }
+    const query_text = `
+        WITH inserted AS (
+            INSERT INTO specification_values(spec_id, absolute_value) 
+            VALUES(${id}, ${absolute_value})
+        ) ${val_trans_part} SELECT id FROM inserted
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(rows[0].id)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 const GetAllSpecifications = async (req, res)=>{
@@ -546,4 +614,6 @@ module.exports = {
     AddLocation,
     AddMaintype,
     GetOperators,
+    DisableEnableValue,
+    AddSpecVal
 }

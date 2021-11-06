@@ -14,12 +14,13 @@ router.post('/delete-operator/:id', VerifyAdminAccessToken, SchemaMiddleware(Sch
 router.post('/update-operator/:id', VerifyAdminAccessToken, AdminController.UpdateOperator)
 router.get('/get-deleted-operators', VerifyAdminAccessToken, AdminController.GetDeletedOperators)
 router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.RecoveryOperator)
-
 router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators)
-router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
 
+router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
 router.get('/specifications/:id', VerifyAdminAccessToken, AdminController.GetSpecificationByID)
 router.get('/all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
+router.post('/disable-enable-spec-val', VerifyAdminAccessToken, AdminController.DisableEnableValue)
+router.post('/add-spec-val/:id', VerifyAdminAccessToken, AdminController.AddSpecVal)
 
 router.post('/add-main-type', VerifyAdminAccessToken, AdminController.AddMaintype)
 router.post('/add-type', VerifyAdminAccessToken, AdminController.AddType)
