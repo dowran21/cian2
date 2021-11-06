@@ -266,7 +266,7 @@ const GetSpecificationByID = async (req, res)=>{
                 )translation) AS translations, 
             
             (SELECT json_agg(value) FROM (
-                SELECT sv.id, sv.absolute_value,
+                SELECT sv.id, sv.absolute_value, sv.enable,
                     (SELECT json_agg(value_translation) FROM 
                         (SELECT svt.language_id, svt.name 
                         FROM specification_value_translations svt 
@@ -342,17 +342,30 @@ const GetAllSpecifications = async (req, res)=>{
     }else{
         offset = ``
     }
+    const {name} = req.query
+    let WherePart = ``
+    if(name && name != null && name != undefined){
+        WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}')`
+
+    }
     try{
         const query_text = `
             SELECT 
                 (SELECT COUNT(*) FROM specifications ) AS count,
                 
                 (SELECT json_agg(specification) FROM (
-                    SELECT id, absolute_name, name 
-                    FROM specifications 
-                        INNER JOIN specification_translations 
-                            ON specifications.id = specification_translations.spec_id 
-                    WHERE language_id = 1 ${offset})specification) AS specifications`
+                    SELECT s.id, s.absolute_name, s.is_multiple, s.is_required, is_active,
+                    
+                    (SELECT json_agg(tr) FROM(
+                        SELECT language_id, name 
+                        FROM specification_translations
+                        WHERE spec_id = s.id 
+                    )tr) AS translations  
+                    
+                    FROM specifications s
+                        INNER JOIN specification_translations st
+                            ON s.id = st.spec_id 
+                    WHERE s.id>0 ${WherePart}  ${offset})specification) AS specifications`
         const {rows} = await database.query(query_text, [])
         
         return res.status(status.success).json({"rows":rows})
@@ -465,7 +478,9 @@ const GetTypeByID = async (req, res) =>{
 } 
 
 const AddSpecificationToType = async (req, res) =>{
-
+    /**********
+     "specifications":[{"spec_id":12, "position":1}]
+     */
     const {type_id} = req.params
     const {specifications} = req.body
     console.log(specifications)
@@ -473,8 +488,8 @@ const AddSpecificationToType = async (req, res) =>{
 
     try{
         const query_text = `
-                INSERT INTO type_specifications (type_id, spec_id) VALUES 
-                    ${specifications.map(item => `(${type_id}, ${item})`).join(',')}
+                INSERT INTO type_specifications (type_id, spec_id, queue_position) 
+                VALUES ${specifications.map(item => `(${type_id}, ${item.spec_id}, ${item.position})`).join(',')}
             `
         console.log(query_text)
         const {rows} = await database.query(query_text, [])

@@ -4,7 +4,6 @@ const {status} = require ('../utils/status.js')
 
 const VerifyAdminAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log()
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }
@@ -23,7 +22,6 @@ const VerifyAdminAccessToken = async (req, res, next) =>{
 
 const VerifyAdminRefreshToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log()
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }
@@ -42,7 +40,6 @@ const VerifyAdminRefreshToken = async (req, res, next) =>{
 
 const VerifyUserAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log()
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }
@@ -60,7 +57,6 @@ const VerifyUserAccessToken = async (req, res, next) =>{
 }
 const VerifyCodeAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log()
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }
@@ -79,7 +75,6 @@ const VerifyCodeAccessToken = async (req, res, next) =>{
 
 const VerifyOperatorAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log()
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }
@@ -97,7 +92,6 @@ const VerifyOperatorAccessToken = async (req, res, next) =>{
 
 const VerifyOperatorRefreshToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log()
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }

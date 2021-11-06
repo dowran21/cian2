@@ -18,7 +18,7 @@ router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOper
 
 router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
 router.get('/specifications/:id', VerifyAdminAccessToken, AdminController.GetSpecificationByID)
-router.get('/all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
+router.get('/get-all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
 router.post('/disable-enable-spec-val', VerifyAdminAccessToken, AdminController.DisableEnableValue)
 router.post('/add-spec-val/:id', VerifyAdminAccessToken, AdminController.AddSpecVal)
 
