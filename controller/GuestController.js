@@ -82,9 +82,8 @@ const Languages = async (req, res) =>{
     }
 }
 
-
 const AllRealEstate = async (req, res) =>{
-    const {specifications, location_id, type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {specification_values, location_id, type_id, category_id, price, area, images, position, page, limit} = req.query
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -113,12 +112,8 @@ const AllRealEstate = async (req, res) =>{
     }
     
     //-------------------specification part-----------------//
-    if (specifications?.length){
-        for (let i=0; i<specifications.length; i++){
-            values = specifications[i].values
-            console.log(specifications)
-            spec_part += ` AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
-        }        
+    if (specification_values?.length){
+        spec_part += ` AND (${specification_values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
     }
     
     //----------------area part--------------------//
@@ -369,22 +364,32 @@ const CountForFilter = async (req, res) =>{
 const SaleFlatFilter = async (req, res) =>{
 
     const query_text = `
-        SELECT c.id AS category_id, 
+        SELECT 
+            (SELECT json_agg(flat) FROM(
+
             
-            (SELECT json_agg(co) FROM (
-                SELECT COUNT(re.id) AS real_estate_count, sv.absolute_value, sv.id
-                FROM real_estates re
-                    INNER JOIN ctypes cp
-                        ON cp.category_id = c.id AND cp.type_id = 3
-                    INNER JOIN real_estate_specification_values resv
-                        ON resv.real_estate_id = re.id
-                    INNER JOIN specification_values sv 
-                        ON resv.spec_value_id = sv.id 
-                    WHERE sv.spec_id = 1
-                    ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
-                        integer) ELSE null END ASC, sv.absolute_value ASC
-            )co) AS ready_search
-        
+                (SELECT c.id AS category_id, 
+                    
+                    (SELECT json_agg(co) FROM (
+                        SELECT sv.absolute_value, sv.id AS spec_id, 
+                            
+                            (SELECT json_agg(cou) FROM (
+                                
+                                SELECT COUNT(*) 
+                                FROM real_estates re
+                                INNER JOIN ctypes cp
+                                    ON cp.category_id = c.id AND cp.type_id = 3
+                                INNER JOIN real_estate_specification_values resv
+                                    ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
+                            )cou) AS estate_count
+                        
+                        FROM specification_values sv 
+                        WHERE sv.spec_id = 1
+                            ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                                integer) ELSE null END ASC, sv.absolute_value ASC
+                    )co) AS ready_search)
+                    
+            )flat) AS flat_ready_filter
         FROM categories c 
     `
     try {

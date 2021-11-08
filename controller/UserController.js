@@ -233,6 +233,8 @@ const UserLogin = async (req, res) =>{
 }
 
 const ForgotPassword = async (req, res) =>{
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
     const {phone} = req.body
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     console.log(code)

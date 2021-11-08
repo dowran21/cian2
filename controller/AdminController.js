@@ -374,7 +374,7 @@ const GetAllSpecifications = async (req, res)=>{
     const {name} = req.query
     let WherePart = ``
     if(name && name != null && name != undefined){
-        WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}' OR stt.name ~* '${name}')`
+        WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}')`
 
     }
     try{
@@ -383,7 +383,7 @@ const GetAllSpecifications = async (req, res)=>{
                 (SELECT COUNT(*) FROM specifications ) AS count,
                 
                 (SELECT json_agg(specification) FROM (
-                    SELECT s.id, s.absolute_name, s.is_multiple, s.is_required, is_active,
+                    SELECT DISTINCT ON (s.id) s.id, s.absolute_name, s.is_multiple, s.is_required, is_active,
                     
                     (SELECT json_agg(tr) FROM(
                         SELECT language_id, name 
@@ -392,6 +392,8 @@ const GetAllSpecifications = async (req, res)=>{
                     )tr) AS translations  
                     
                     FROM specifications s
+                        INNER JOIN specification_translations st
+                            ON st.spec_id = s.id
                     WHERE s.id>0 ${WherePart}  ${offset})specification) AS specifications`
         const {rows} = await database.query(query_text, [])
         
