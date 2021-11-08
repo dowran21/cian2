@@ -206,20 +206,35 @@ const AddSpecification = async (req, res) =>{
       *********************************************************/
     const {absolute_name, is_required, is_multiple, translations, absolute_values, values_translations} = req.body 
     let spec_values = ``
-
+    console.log(req.body)
+    console.log(values_translations)
     for (let i=0; i<absolute_values.length; i++){
         spec_values += `, insert_value${i} AS (
                 INSERT INTO specification_values (spec_id, absolute_value)
                     VALUES ((SELECT id FROM inserted), '${absolute_values[i]}') RETURNING id
         )`
-        if (values_translations && values_translations.length){
-            let value_translation = values_translations[i]
-            spec_values += `, insert_val_trans${i} AS (
-                INSERT INTO specification_value_translations(name, language_id, spec_value_id)
-                    VALUES 
-                        ${value_translation.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM insert_value${i}))`)}
-            )`
-        }
+        if (values_translations[i] && values_translations.length){
+            let val_trans = values_translations[i]
+            if(val_trans[0].name !== '' || val_trans[1].name !== ''){
+                spec_values += `, insert_val_trans${i} AS (
+                    INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                        VALUES 
+                `
+                let k=0;
+                for(let j=0; j<val_trans.length; j++){
+                    if(val_trans[j].name !== ''){
+                        if(k !== 0){
+                            spec_values += ','
+                        }
+                        spec_values += `('${val_trans[j].name}', ${val_trans[j].lang_id}, (SELECT id FROM insert_value${i}))`
+                        k++;
+                    }
+                }
+                spec_values += `
+                )`
+            }
+            
+        } 
     }
     const query_text = `
             WITH inserted AS (
@@ -233,6 +248,7 @@ const AddSpecification = async (req, res) =>{
                 SELECT id FROM inserted
         `
     try {
+        console.log(query_text)
         const {rows} = await database.query(query_text, [absolute_name, is_required, is_multiple ])
         try{
             const qt = `

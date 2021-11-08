@@ -361,7 +361,7 @@ const CountForFilter = async (req, res) =>{
 
 }
 
-const SaleFlatFilter = async (req, res) =>{
+const FlatFilter = async (req, res) =>{
 
     const query_text = `
         SELECT 
@@ -388,7 +388,7 @@ const SaleFlatFilter = async (req, res) =>{
                             ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
                                 integer) ELSE null END ASC, sv.absolute_value ASC
                     )co) AS ready_search)
-                    
+
             )flat) AS flat_ready_filter
         FROM categories c 
     `
@@ -407,29 +407,29 @@ const TypeCategoryController = async (req, res) =>{
         SELECT c.id, ct.name, 
             
             (SELECT json_agg(type) FROM 
-                (SELECT t.id, tt.name,
-                    
-                    (SELECT COUNT(re.id) FROM real_estates re
-                        INNER JOIN ctypes ctp ON ctypes.id = re.ctype_id
-                    WHERE ctp.category_id = c.id AND ctp.type_id = t.id)    
+                (SELECT t.id, tt.name   
                 
                 FROM types t
-                    INNER JOIN ctypes ON ctypes.type_id = t.id 
-                    INNER JOIN type_translations tt ON tt.type_id = t.id 
+                    INNER JOIN ctypes 
+                        ON ctypes.type_id = t.id 
+                    INNER JOIN type_translations tt 
+                        ON tt.type_id = t.id 
                 WHERE ctypes.category_id = c.id AND tt.language_id = l.id
+
             )type) AS types
             
             FROM categories c
-                INNER JOIN languages l ON l.language_code = $1
-                INNER JOIN category_translations ct ON ct.category_id = c.id
-            WHERE ct.language_id = l.id
+                INNER JOIN languages l 
+                    ON l.language_code = $1
+                INNER JOIN category_translations ct 
+                    ON ct.category_id = c.id AND ct.language_id = l.id
     `
     try {
         const {rows} = await database.query(query_text, [lang])
-        return res.json({"rows":rows})
+        return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)
-        throw e        
+        return res.status(status.error).send(false)
     }
 }
 
@@ -592,6 +592,6 @@ module.exports = {
     GetLocations,
     GetRegions,
     CountForFilter,
-    SaleFlatFilter
+    FlatFilter
 
 }   

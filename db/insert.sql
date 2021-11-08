@@ -41,6 +41,10 @@ INSERT INTO vip_types(id, name, days) VALUES
 (2, '5-gunluk', 5),
 (3, '7-gunluk', 7);
 
+INSERT INTO image_places(id, place) VALUES
+(1, 'Main Page'),
+(2, 'Готовый поиск купить квартиру'),
+(3, 'Готовый поиск арендовать квартиру');
 
 INSERT INTO event_types VALUES 
 (1, 'activation or deactivation real estate'),

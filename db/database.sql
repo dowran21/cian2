@@ -330,6 +330,29 @@ CREATE TABLE view_count(
 
 CREATE UNIQUE INDEX ON view_count(real_estate_id, count_date, is_active, view_type_id) WHERE (is_active);
 
+-----------------images for websites-------
+CREATE TABLE image_places(
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    place VARCHAR(50)
+);
+
+CREATE TABLE place_images(
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    image_place_id SMALLINT NOT NULL,
+    destination VARCHAR(150) NOT NULL,
+
+    CONSTRAINT image_place_id_fk FOREIGN KEY (image_place_id) REFERENCES image_places(id) 
+);
+
+------------------image for type -------------
+CREATE TABLE type_image(
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    type_id SMALLINT NOT NULL,
+    destination VARCHAR(150) NOT NULL,
+
+    CONSTRAINT type_id_fk FOREIGN KEY (type_id) REFERENCES types(id)
+);
+
 -----------------logs-------------------
 CREATE TABLE event_types(
     id SMALLINT NOT NULL PRIMARY KEY,

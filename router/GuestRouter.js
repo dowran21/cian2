@@ -8,7 +8,7 @@ router.get('/:lang/all-real-estates', GuestController.AllRealEstate)
 router.get('/:lang/categories-types', GuestController.TypeCategoryController)
 router.get('/:lang/real-estate/:id', GuestController.GetRealEstateByID)
 router.get('/:lang/get-filter-count', GuestController.CountForFilter)
-router.get('/flat-filter', GuestController.SaleFlatFilter)
+router.get('/:lang/flat-filter', GuestController.FlatFilter)
 
 router.get('/:lang/types-of-category/:id', GuestController.GetTypesCategory)
 router.get('/:lang/main-locations', GuestController.GetLocations)
