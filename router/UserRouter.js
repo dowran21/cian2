@@ -13,7 +13,7 @@ router.post('/login', SchemaMiddleware(Schema.Login), UserController.UserLogin)
 router.post('/verify-code', VerifyCodeAccessToken, UserController.VerifyUserCode)
 router.post('/send-code-again', VerifyCodeAccessToken, UserController.SendCodeAgain)
 router.post('/forgot-password', UserController.ForgotPassword)
-router.post('/change-password', VerifyUserAccessToken, UserController.ChangePassword)
+router.post('/change-password', VerifyCodeAccessToken, UserController.ChangePassword)
 
 
 router.post('/:lang/add-real-estate', VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)

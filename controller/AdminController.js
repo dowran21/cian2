@@ -720,6 +720,11 @@ const GetRegions = async (req, res) =>{
     }
 }
 
+const UploadPageImages = async (req, res) =>{
+    const {id} = req.params
+    
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -747,5 +752,7 @@ module.exports = {
     DisableEnableValue,
     AddSpecVal,
     GetLocations,
-    GetRegions
+    GetRegions,
+
+    UploadPageImages
 }

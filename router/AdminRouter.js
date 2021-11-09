@@ -40,5 +40,7 @@ router.post('/add-location', VerifyAdminAccessToken, AdminController.AddLocation
 router.get('/main-locations',VerifyAdminAccessToken, AdminController.GetLocations)
 router.get('/region-locations/:id', VerifyAdminAccessToken, AdminController.GetRegions)
 
+router.post('/add-page-image/:id', VerifyAdminAccessToken, AdminController.UploadPageImages)
+
 
 module.exports = router

@@ -276,19 +276,37 @@ const ForgotPassword = async (req, res) =>{
 }
 
 const ChangePassword = async (req, res) =>{
-    const {password} = req.body
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
+    const {password, code} = req.body
     const user_id = req.user.id
     const hashed_password = UserHelper.HashPassword(password)
-    const query_text = `
-        UPDATE users SET password = ${hashed_password} WHERE id = ${user_id}
+    let ipr = {}
+    const ip_query = `
+        SELECT * FROM access_ip WHERE user_id = ${user_id} AND ip_address = '${ip}' AND code = ${code}
         `
     try {
-        await database(query_text, [])
-        return res.status(status.success).send(true)
+        const k = await database.query(ip_query, [])
+        ipr = k.rows[0]
+        if(ipr){
+                    const query_text = `
+                UPDATE users SET password = '${hashed_password}' WHERE id = ${user_id}
+                `
+            try {
+                await database.query(query_text, [])
+                return res.status(status.success).send(true)
+            } catch (e) {
+                console.log(e)
+                return res.status(status.error).send(false)
+            }
+        }else{
+            return res.status(status.bad).send(false)
+        }
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
     }
+    
 }
 
 ////////User real estates///////////
