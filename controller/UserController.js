@@ -32,7 +32,8 @@ const UserRegistration = async (req, res) =>{
     try {
         const s = await database.query(`SELECT * FROM users WHERE phone = '${phone}'`, [])
         if (s.rows[0]){
-            return res.status(409).json({"message":"User with this phone has already exist"})
+            const error = {type:"manual", name:"phone", message:"User with this phone has already exist"}
+            return res.status(409).send(false)
         }
     } catch (e) {
         return res.status(status.error).json({"message":e.message})
@@ -77,7 +78,6 @@ const VerifyUserCode = async (req, res) =>{
 
     try {
         const {rows} = await database.query(query_text, [])
-        console.log(rows)
         if (!rows[0]){
             console.log("I am in if")
             return res.status(status.notfound).send(false)
@@ -222,7 +222,8 @@ const UserLogin = async (req, res) =>{
             }
                         
         }else{
-            return res.status(status.bad).send("Hey you are in bann please login a little later")
+            const error = {type:"manual", name:"", message:"you are in bann for one hour"}
+            return res.status(status.bad).send(error)
         }
 
     } catch (e) {
@@ -240,13 +241,13 @@ const ForgotPassword = async (req, res) =>{
     console.log(code)
     let user = {}
     const user_query = `
-        SELECT * FROM users WHERE phone = ${phone}
+        SELECT * FROM users WHERE phone = '${phone}'
         `
     try {
-        const {rows} = await database.query()
-        let user = rows[0]
+        const {rows} = await database.query(user_query, [])
+        user = rows[0]
         if(!user){
-            return res.status(status.notfound).json({"Message":"Users with this phone doesnt exist"})
+            return res.status(status.notfound).send(false)
         }
     } catch (e) {
         console.log(e)
@@ -254,23 +255,23 @@ const ForgotPassword = async (req, res) =>{
     }
     const query_text = `
         INSERT INTO access_ip (ip_address, user_id, code)
-        VALUES(${ip}, ${user.id}, ${code})
+        VALUES('${ip}', ${user.id}, ${code})
         ON CONFLICT (ip_address, user_id) DO UPDATE SET code = EXCLUDED.code
         `
     try {
         const {rows} = await database.query(query_text, [])
         if (rows){
-            data = {"id":rows[0].id}
+            data = {"id":user.id}
             const mess = `Code: ${code}`
             SendSMS({phone, mess})
             const access_token = await UserHelper.GenerateCodeAccessToken(data);
-            return res.status(status.success).json({"access_token":access_token})
+            return res.status(status.success).json({"access_token":access_token, code})
         }else{
             return res.status(status.notfound).send(false)
         }
     } catch (e) {
         console.log(e)
-        return res.status(status.success).send(false)
+        return res.status(status.error).send(false)
     }
 }
 
