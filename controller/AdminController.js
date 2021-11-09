@@ -613,12 +613,26 @@ const AddMainLocation = async (req, res)=>{
          WITH inserted AS (
              INSERT INTO locations(absolute_name)
               VALUES ('${absolute_name}') RETURNING id
-         ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ), insert_trans AS (
+             INSERT INTO location_translations(translation, language_id, location_id) VALUES
              ${translations.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
+        ) SELECT id FROM inserted
      `
      try {
          const {rows} = await database.query(query_text, [])
-         return res.status(status.success).send(true)
+         try {
+            const qt = `SELECT l.id, lt.translation AS name
+            FROM locations l
+            INNER JOIN location_translations lt
+                ON lt.location_id = l.id AND lt.language_id = 1
+            WHERE l.id = ${rows[0].id}`
+            const k = await database.query(qt, [])
+            const s = k.rows[0]
+            return res.status(status.success).json({"rows":s})
+        } catch (e) {
+            console.log(e)
+            return res.status(status.error).send(false)
+        }
      } catch (e) {
          console.log(e)
          return res.status(status.error).json({"message":"Error"})
@@ -642,12 +656,26 @@ const AddLocation = async (req, res) =>{
         WITH inserted AS (
             INSERT INTO locations(absolute_name, main_location_id)
              VALUES ($1, $2) RETURNING id
-        ) INSERT INTO location_translations(translation, language_id, location_id) VALUES
+        ), insert_trans AS (INSERT INTO location_translations(translation, language_id, location_id) VALUES
             ${translations.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
-    `
+        ) SELECT id FROM inserted
+        
+        `
     try {
         const {rows} = await database.query(query_text, [absolute_name, main_location_id])
-        return res.status(status.success).send(true)
+        try {
+            const qt = `SELECT l.id, lt.translation AS name
+            FROM locations l
+            INNER JOIN location_translations lt
+                ON lt.location_id = l.id AND lt.language_id = 1
+            WHERE l.id = ${rows[0].id}`
+            const k = await database.query(qt, [])
+            const s = k.rows[0]
+            return res.status(status.success).json({"rows":s})
+        } catch (e) {
+            console.log(e)
+            return res.status(status.error).send(false)
+        }
     } catch (e) {
         console.log(e)
         return res.status(status.error).json({"message":"Error"})
