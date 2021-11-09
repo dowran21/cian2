@@ -393,6 +393,7 @@ const GetAllSpecifications = async (req, res)=>{
         WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}')`
 
     }
+    console.log(WherePart)
     try{
         const query_text = `
             SELECT 
@@ -406,7 +407,7 @@ const GetAllSpecifications = async (req, res)=>{
                         FROM specification_translations
                         WHERE spec_id = s.id 
                     )tr) AS translations  
-                    
+
                     FROM specifications s
                         INNER JOIN specification_translations st
                             ON st.spec_id = s.id
@@ -653,6 +654,44 @@ const AddLocation = async (req, res) =>{
     }
 }
 
+const GetLocations = async (req, res) =>{
+    const {lang} = req.params
+    console.log("hello getlocations")
+    const query_text = `
+        SELECT l.id, lt.translation AS name
+        FROM locations l
+            INNER JOIN location_translations lt
+                ON lt.location_id = l.id AND lt.language_id = 1
+        WHERE l.main_location_id IS NULL
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(200).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        throw e
+    }
+}
+
+const GetRegions = async (req, res) =>{
+    console.log("hello getregions")
+    const {id} = req.params
+    const query_text = `
+        SELECT l.id, lt.translation AS name
+        FROM locations l
+            INNER JOIN location_translations lt
+                ON lt.location_id = l.id AND lt.language_id = 1 
+        WHERE l.main_location_id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(200).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        return res.json(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -678,5 +717,7 @@ module.exports = {
     AddMaintype,
     GetOperators,
     DisableEnableValue,
-    AddSpecVal
+    AddSpecVal,
+    GetLocations,
+    GetRegions
 }

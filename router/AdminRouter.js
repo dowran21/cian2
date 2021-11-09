@@ -19,7 +19,7 @@ router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOper
 router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
 router.get('/get-specification/:id', VerifyAdminAccessToken, AdminController.GetSpecificationByID)
 router.get('/get-all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
-router.post('/activation-specification', VerifyAdminAccessToken, AdminController.SpecificationActivation)
+router.post('/activation-of-specification/:id', VerifyAdminAccessToken, AdminController.SpecificationActivation)
 router.post('/disable-enable-spec-val/:id', VerifyAdminAccessToken, AdminController.DisableEnableValue)
 router.post('/add-spec-val/:id', VerifyAdminAccessToken, AdminController.AddSpecVal)
 
@@ -37,6 +37,8 @@ router.post('/add-to-vip/:id', VerifyAdminAccessToken, AdminController.AddToVIP)
 
 router.post('/add-main-location', VerifyAdminAccessToken, AdminController.AddMainLocation)
 router.post('/add-location', VerifyAdminAccessToken, AdminController.AddLocation)
+router.get('/main-locations',VerifyAdminAccessToken, AdminController.GetLocations)
+router.get('/region-locations/:id', VerifyAdminAccessToken, AdminController.GetRegions)
 
 
 module.exports = router
