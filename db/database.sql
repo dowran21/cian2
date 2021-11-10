@@ -349,6 +349,7 @@ CREATE TABLE type_image(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
     type_id SMALLINT NOT NULL,
     destination VARCHAR(150) NOT NULL,
+    UNIQUE(type_id),
 
     CONSTRAINT type_id_fk FOREIGN KEY (type_id) REFERENCES types(id)
 );

@@ -47,6 +47,6 @@ router.get('/get-page-images/:id', VerifyAdminAccessToken, AdminController.GetPa
 router.post('/add-page-image/:id', upload.single('picture'), resize_page_images, VerifyAdminAccessToken, AdminController.UploadPageImages)
 router.post('/delete-place-image/:id', VerifyAdminAccessToken, AdminController.DeleteImagePlace)
 
-router.get('/')
+router.get('/add-image-to-type/:id', VerifyAdminAccessToken, AdminController.AddTypeImage)
 
 module.exports = router

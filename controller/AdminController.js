@@ -777,6 +777,22 @@ const DeleteImagePlace = async (req, res) =>{
     }
 }
 
+const AddTypeImage = async (req, res)=>{
+    const {id} = req.params
+    const query_text = `
+        INSERT INTO type_image(type_id, destination) 
+            VALUES($1, $2) RETURNING *
+            ON CONFLICT (type_id) DO UPDATE SET destination = EXCLUDED.destination
+    `
+    try {
+        const {rows} = await database.query(query_text, [id, req.file.path])
+        return res.status(status.success).json({"rows":rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -809,5 +825,7 @@ module.exports = {
     UploadPageImages,
     GetImagePlaces,
     GetPageImages,
-    DeleteImagePlace
+    DeleteImagePlace,
+
+    AddTypeImage,
 }
