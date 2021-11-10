@@ -29,9 +29,11 @@ router.post('/add-main-type', VerifyAdminAccessToken, AdminController.AddMaintyp
 router.post('/add-type', VerifyAdminAccessToken, AdminController.AddType)
 
 router.get('/all-types',VerifyAdminAccessToken, AdminController.GetAllTypes)
-router.get('/type/:id', VerifyAdminAccessToken, AdminController.GetTypeByID)
 
+router.get('/type/:id', VerifyAdminAccessToken, AdminController.GetTypeByID)
 router.post('/add-specifications-to-type/:type_id', VerifyAdminAccessToken, AdminController.AddSpecificationToType)
+router.post('/delete-type-specification/:id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
+router.get('/add-image-to-type/:id', VerifyAdminAccessToken, upload.single('picture'), resize_page_images, AdminController.AddTypeImage)
 
 router.post('/update-real-estate/:id', VerifyAdminAccessToken, AdminController.UpdateRealEstate)
 
@@ -47,6 +49,6 @@ router.get('/get-page-images/:id', VerifyAdminAccessToken, AdminController.GetPa
 router.post('/add-page-image/:id', upload.single('picture'), resize_page_images, VerifyAdminAccessToken, AdminController.UploadPageImages)
 router.post('/delete-place-image/:id', VerifyAdminAccessToken, AdminController.DeleteImagePlace)
 
-router.get('/add-image-to-type/:id', VerifyAdminAccessToken, AdminController.AddTypeImage)
+
 
 module.exports = router

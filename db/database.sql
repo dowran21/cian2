@@ -147,6 +147,7 @@ CREATE TABLE type_specifications(
     "type_id" SMALLINT NOT NULL,
     spec_id SMALLINT NOT NULL,
     queue_position SMALLINT,
+    deleted BOOLEAN DEFAULT FALSE,
     
     UNIQUE(spec_id, "type_id"),
     CONSTRAINT type_specification_spec_id_fk 

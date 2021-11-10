@@ -425,12 +425,22 @@ const GetAllSpecifications = async (req, res)=>{
 const GetAllTypes = async (req, res) =>{
     try{
         const query_text = `
-        SELECT types.id, types.main_type_id, absolute_name, 
+        SELECT t.id, tt.name AS main_type, t.absolute_name, ti.destination, 
+
             (SELECT json_agg(translation) FROM (
                 SELECT language_id, name FROM type_translations tp 
-                WHERE tp.type_id = types.id
+                WHERE tp.type_id = t.id
             )translation) AS translations  
-        FROM types; 
+        
+        FROM types t
+            LEFT JOIN type_image ti
+                ON ti.id = t.id
+            INNER JOIN types tp
+                ON tp.main_type_id = t.id
+            INNER JOIN type_translations tt
+                ON tt.type_id = tp.id AND tt.language_id = 2
+        WHERE t.main_type_id IS NULL
+        ORDER BY t.id ASC
         `
         const {rows} = await database.query(query_text, [])
         return res.status(status.success).json({"rows":rows})
@@ -511,12 +521,41 @@ const GetTypeByID = async (req, res) =>{
                 
                 (SELECT json_agg(translation) FROM (
                     SELECT name, language_id FROM type_translations
-                )translation) AS translations 
+                )translation) AS translations,
+                
+                (SELECT json_agg(spec) FROM(
+                    SELECT s.id, s.absolute_name, ts.id,
+                        (SELECT json_agg(tr) FROM (
+                            SELECT st.name, st.language_id 
+                            FROM specification_translations st
+                            WHERE st.spec_id = s.id
+                        )tr) AS spec_translations
+                    
+                    FROM specifications s
+                        INNER JOIN type_specifications ts
+                            ON ts.spec_id = s.id
+                        WHERE ts.type_id = $1 AND ts.deleted = false 
+                )spec) AS active_type_specifications,
+                
+                (SELECT json_agg(spec) FROM(
+                    SELECT s.id, s.absolute_name, ts.id,
+                        (SELECT json_agg(tr) FROM (
+                            SELECT st.name, st.language_id 
+                            FROM specification_translations st
+                            WHERE st.spec_id = s.id
+                        )tr) AS spec_translations
+                    
+                    FROM specifications s
+                        INNER JOIN type_specifications ts
+                            ON ts.spec_id = s.id
+                        WHERE ts.type_id = $1 AND ts.deleted = true 
+                )spec) AS deleted_type_specifications
             
-            FROM types  
+            FROM types
+            WHERE types.id = $1
         `
     try{
-        const {rows} = await database.query(query_text, [])
+        const {rows} = await database.query(query_text, [id])
         return res.status(status.success).json({"rows":rows})
     }catch(e){
         console.log(e)
@@ -545,6 +584,22 @@ const AddSpecificationToType = async (req, res) =>{
         console.log(e)
         return res.status(status.error).send(false)
     }
+}
+
+const DeleteTypeSpecification = async (req, res) =>{
+    const {id} = req.params
+    const {bool} = req.body
+    const query_text = `
+        UPDATE type_specifications SET deleted = ${bool} WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+    
 }
 
 const UpdateRealEstate = async (req, res) =>{
@@ -812,6 +867,8 @@ module.exports = {
     GetTypeByID,
     UpdateRealEstate,
     AddSpecificationToType,
+    DeleteTypeSpecification,
+
     AddToVIP,
     AddMainLocation,
     AddLocation,
