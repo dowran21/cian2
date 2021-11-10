@@ -35,6 +35,27 @@ const resize_image  = async (req, res, next) =>{
     next()
 }
 
+const resize_page_images = async (req, res, next) =>{
+    let dir = `./uploads/page-images`
+    if(!fs.existsSync(dir)){
+        fs.mkdirSync(dir)
+    }
+    if(req.file){
+        const date = moment().format('DDMMYYYY-HHmmss_SSS');
+        const name = req.file.originalname.replace(' ', '');
+        req.file.path = `uploads/page-images/${date}-${name}`
+        await sharp(`./uploads/${req.file.filename}`)
+            .resize(600, 600)
+            .toFile(`./uploads/page-images/${date}-${name}`)
+        
+        fs.unlinkSync(`./uploads/${req.file.filename}`)
+        next()
+    }else{
+        return res.status(402).send(false)
+    }
+}
+
 module.exports = {
     resize_image,
+    resize_page_images,
     }

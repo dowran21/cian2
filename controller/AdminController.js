@@ -1,6 +1,7 @@
 const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
+const fs = require('fs')
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -9,7 +10,7 @@ const AdminLogin = async (req, res) =>{
          "phone":61123141
      }
      *********/
-    // console.log("I am in admin login controller")
+    console.log("I am in admin login controller")
     const {password, phone} = req.body
     const query_text = `
         SELECT * FROM users u WHERE u.phone = $1
@@ -722,7 +723,58 @@ const GetRegions = async (req, res) =>{
 
 const UploadPageImages = async (req, res) =>{
     const {id} = req.params
-    
+    const query_text = `
+        INSERT INTO place_images(image_place_id, destination) VALUES($1, $2) RETURNING *
+    `
+
+    try {
+        const {rows} = await database.query(query_text, [id, req.file.path])
+        return res.status(status.success).json({"rows":rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetPageImages = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        SELECT id, destination FROM place_images WHERE image_place_id = ${id} 
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e);
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetImagePlaces = async (req, res) =>{
+    const query_text = `
+        SELECT * FROM image_places
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const DeleteImagePlace = async (req, res) =>{
+    const {id} = req.params
+    const query_text = `
+        DELETE FROM place_images WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 module.exports = {
@@ -754,5 +806,8 @@ module.exports = {
     GetLocations,
     GetRegions,
 
-    UploadPageImages
+    UploadPageImages,
+    GetImagePlaces,
+    GetPageImages,
+    DeleteImagePlace
 }

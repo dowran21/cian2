@@ -14,7 +14,7 @@ let dir = path.join(__dirname, 'uploads')
 
 app.use(morgan('dev'))
 
-const allowedOrigins = ['http://localhost:3000','http://192.168.31.250:3001'];
+const allowedOrigins = ['http://localhost:3000','http://192.168.31.250:3001', 'http://localhost:2000', 'http://109.106.244.215:2000'];
 //const allowedOrigins = ['http://localhost:8090', 'http://10.60.1.20:9062', 'http://95.85.97.206:9062'];
 app.use(cors({
     origin: function (origin, callback) {
@@ -29,7 +29,15 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'build')))
 app.use('/api', Routers)
+
+// app.get('/admin', function (req, res) {
+//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// });
+app.get('*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 app.use('/uploads', express.static(dir))
 app.use(cookieParser())
 

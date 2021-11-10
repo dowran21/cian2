@@ -1,10 +1,12 @@
 const express = require('express')
 const router = new express.Router()
 const AdminController = require('../controller/AdminController.js')
-// const upload = require('../middleware/upload.js')
+const {resize_page_images} = require('../middleware/resize.js')
 const {VerifyAdminAccessToken, VerifyAdminRefreshToken} = require('../middleware/AuthMiddleware.js')
 const Schema = require('../schemas/AdminSchema');
 const {SchemaMiddleware} = require('../middleware/SchemaMiddleware')
+const upload = require('../middleware/upload')
+
 
 router.post('/login', AdminController.AdminLogin)
 router.get('/load-admin', VerifyAdminRefreshToken, AdminController.LoadAdmin )
@@ -40,7 +42,11 @@ router.post('/add-location', VerifyAdminAccessToken, AdminController.AddLocation
 router.get('/main-locations',VerifyAdminAccessToken, AdminController.GetLocations)
 router.get('/region-locations/:id', VerifyAdminAccessToken, AdminController.GetRegions)
 
-router.post('/add-page-image/:id', VerifyAdminAccessToken, AdminController.UploadPageImages)
+router.get('/page-image-places', VerifyAdminAccessToken, AdminController.GetImagePlaces)
+router.get('/get-page-images/:id', VerifyAdminAccessToken, AdminController.GetPageImages)
+router.post('/add-page-image/:id', upload.single('picture'), resize_page_images, VerifyAdminAccessToken, AdminController.UploadPageImages)
+router.post('/delete-place-image/:id', VerifyAdminAccessToken, AdminController.DeleteImagePlace)
 
+router.get('/')
 
 module.exports = router
