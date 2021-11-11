@@ -35,10 +35,12 @@ app.use('/api', Routers)
 // app.get('/admin', function (req, res) {
 //     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 // });
+app.use('/uploads', express.static(dir))
+
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
-app.use('/uploads', express.static(dir))
+
 app.use(cookieParser())
 
 cron_job()

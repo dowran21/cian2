@@ -426,6 +426,7 @@ const TypeCategoryController = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [lang])
+        // console.log(rows)
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)

@@ -434,12 +434,12 @@ const GetAllTypes = async (req, res) =>{
         
         FROM types t
             LEFT JOIN type_image ti
-                ON ti.id = t.id
+                ON ti.type_id = t.id
             INNER JOIN types tp
-                ON tp.main_type_id = t.id
+                ON t.main_type_id = tp.id
             INNER JOIN type_translations tt
                 ON tt.type_id = tp.id AND tt.language_id = 2
-        WHERE t.main_type_id IS NULL
+        WHERE t.main_type_id IS NOT NULL
         ORDER BY t.id ASC
         `
         const {rows} = await database.query(query_text, [])
@@ -517,14 +517,14 @@ const GetTypeByID = async (req, res) =>{
     const {id} = req.params
     console.log(id)
     const query_text = `
-            SELECT absolute_name, 
+            SELECT absolute_name, destination,
                 
                 (SELECT json_agg(translation) FROM (
                     SELECT name, language_id FROM type_translations
                 )translation) AS translations,
                 
                 (SELECT json_agg(spec) FROM(
-                    SELECT s.id, s.absolute_name, ts.id,
+                    SELECT s.id AS spec_id, s.absolute_name, ts.id AS type_spec_id, ts.deleted, ts.queue_position,
                         (SELECT json_agg(tr) FROM (
                             SELECT st.name, st.language_id 
                             FROM specification_translations st
@@ -538,7 +538,7 @@ const GetTypeByID = async (req, res) =>{
                 )spec) AS active_type_specifications,
                 
                 (SELECT json_agg(spec) FROM(
-                    SELECT s.id, s.absolute_name, ts.id,
+                    SELECT s.id AS spec_id, s.absolute_name, ts.id AS type_spec_id, ts.deleted,
                         (SELECT json_agg(tr) FROM (
                             SELECT st.name, st.language_id 
                             FROM specification_translations st
@@ -552,11 +552,13 @@ const GetTypeByID = async (req, res) =>{
                 )spec) AS deleted_type_specifications
             
             FROM types
+                LEFT JOIN type_image ti
+                    ON ti.type_id = types.id
             WHERE types.id = $1
         `
     try{
         const {rows} = await database.query(query_text, [id])
-        return res.status(status.success).json({"rows":rows})
+        return res.status(status.success).json(rows[0])
     }catch(e){
         console.log(e)
         return res.status(status.error).send(false)
@@ -587,10 +589,10 @@ const AddSpecificationToType = async (req, res) =>{
 }
 
 const DeleteTypeSpecification = async (req, res) =>{
-    const {id} = req.params
+    const {ts_id} = req.params
     const {bool} = req.body
     const query_text = `
-        UPDATE type_specifications SET deleted = ${bool} WHERE id = ${id}
+        UPDATE type_specifications SET deleted = ${bool} WHERE id = ${ts_id}
     `
     try {
         await database.query(query_text, [])
@@ -836,11 +838,12 @@ const AddTypeImage = async (req, res)=>{
     const {id} = req.params
     const query_text = `
         INSERT INTO type_image(type_id, destination) 
-            VALUES($1, $2) RETURNING *
+            VALUES($1, $2)
             ON CONFLICT (type_id) DO UPDATE SET destination = EXCLUDED.destination
     `
     try {
-        const {rows} = await database.query(query_text, [id, req.file.path])
+        await database.query(query_text, [id, req.file.path])
+        const {rows} = await database.query(`SELECT destination FROM type_image WHERE type_id = ${id}`, [])
         return res.status(status.success).json({"rows":rows[0]})
     } catch (e) {
         console.log(e)

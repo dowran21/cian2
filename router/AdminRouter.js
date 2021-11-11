@@ -32,8 +32,8 @@ router.get('/all-types',VerifyAdminAccessToken, AdminController.GetAllTypes)
 
 router.get('/type/:id', VerifyAdminAccessToken, AdminController.GetTypeByID)
 router.post('/add-specifications-to-type/:type_id', VerifyAdminAccessToken, AdminController.AddSpecificationToType)
-router.post('/delete-type-specification/:id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
-router.get('/add-image-to-type/:id', VerifyAdminAccessToken, upload.single('picture'), resize_page_images, AdminController.AddTypeImage)
+router.post('/activation-type-specification/:ts_id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
+router.post('/add-image-to-type/:id', VerifyAdminAccessToken, upload.single('picture'), resize_page_images, AdminController.AddTypeImage)
 
 router.post('/update-real-estate/:id', VerifyAdminAccessToken, AdminController.UpdateRealEstate)
 
