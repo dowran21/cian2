@@ -15,6 +15,7 @@ router.get('/:lang/main-locations', GuestController.GetLocations)
 router.get('/:lang/region-locations/:id', GuestController.GetRegions)
 
 router.get('/:lang/specifications-for-type/:type_id', GuestController.GetSpecificationsForType)
+router.get('/:lang/spec-for-type-search/:type_id', GuestController.GetSpecForTypeSearch)
 router.get('/:lang/not-required-specifications-for-type/:type_id', GuestController.GetNotRequiredSpecificationsForType)
 
 module.exports = router

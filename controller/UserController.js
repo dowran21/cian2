@@ -1,3 +1,4 @@
+const { relativeTimeRounding } = require('moment');
 const database = require('../db/index.js')
 const {lang_id} = require('../utils/helpFunctions.js');
 const UserHelper = require('../utils/index.js');
@@ -379,10 +380,11 @@ req.body should be like this;
         const {rows} = await database.query(user_query, [])
         console.log(rows[0])
         if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
-            return res.status(422).send("Da ty ******* woobshe stolko raz delat obyawleniye")
+            return res.status(422).send(false)
         }
     } catch (e) {
         console.log(e)
+        return res.status(status.error).send(false)
     }
     let status_id = 0
     if (category_id== 1){
@@ -391,7 +393,6 @@ req.body should be like this;
     if (category_id == 2){
         status_id = 3
     }
-    const uuid = req.user.id
     let i = 0;
     let j=0;
     let spec_value_part = `INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
@@ -419,8 +420,8 @@ req.body should be like this;
                 SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id}
 
             ),inserted AS (
-                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id, selected_vip)
-                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5, $6) RETURNING id
+                INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id)
+                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5) RETURNING id
 
             ),ins AS (
                 INSERT INTO real_estate_prices (real_estate_id, price)
@@ -432,7 +433,7 @@ req.body should be like this;
 
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
-        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id, vip])
+        const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
         return res.status(status.success).json(rows[0])
 
     } catch(e) {

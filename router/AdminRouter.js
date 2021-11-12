@@ -31,6 +31,7 @@ router.post('/add-type', VerifyAdminAccessToken, AdminController.AddType)
 router.get('/all-types',VerifyAdminAccessToken, AdminController.GetAllTypes)
 
 router.get('/type/:id', VerifyAdminAccessToken, AdminController.GetTypeByID)
+router.get('/not-contained-spec/:id', VerifyAdminAccessToken, AdminController.GetNotContainedSpec)
 router.post('/add-specifications-to-type/:type_id', VerifyAdminAccessToken, AdminController.AddSpecificationToType)
 router.post('/activation-type-specification/:ts_id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
 router.post('/add-image-to-type/:id', VerifyAdminAccessToken, upload.single('picture'), resize_page_images, AdminController.AddTypeImage)

@@ -24,12 +24,47 @@ const GetSpecificationsForType = async (req, res) =>{
                         ON st.spec_id = s.id AND st.language_id = l.id
                     INNER JOIN type_specifications ts 
                         ON ts.spec_id = s.id
-            WHERE ts.type_id = $2 
-            ORDER BY s.is_required DESC
+            WHERE ts.type_id = $2 AND ts.deleted = false AND s.is_active = false
+            ORDER BY ts.queue_position ASC
     ` 
         const {rows} = await database.query(query_text, [lang, type_id])
 
         res.json({"rows":rows})
+    } catch (e) {
+        res.json({"message":"something went wrog"})
+        throw e
+    }
+}
+
+const GetSpecForTypeSearch = async (req, res) =>{
+    const {type_id, lang} = req.params
+    try {
+        const query_text = `
+            SELECT s.id AS specification_id, st.name,
+
+                (SELECT json_agg(value) FROM (
+                    SELECT sv.id AS value_id, sv.absolute_value, svt.name 
+                        FROM specification_values sv
+                            LEFT JOIN specification_value_translations svt 
+                                ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                        WHERE sv.spec_id = s.id AND sv.enabled = true
+                        ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                            integer) ELSE null END ASC, sv.absolute_value ASC
+                )value) AS values
+                
+            FROM specifications s
+                    INNER JOIN languages l 
+                        ON l.language_code = $1
+                    LEFT JOIN specification_translations st 
+                        ON st.spec_id = s.id AND st.language_id = l.id
+                    INNER JOIN type_specifications ts 
+                        ON ts.spec_id = s.id
+            WHERE ts.type_id = $2 AND ts.deleted = false AND s.is_active = false
+            ORDER BY ts.queue_position ASC
+    ` 
+        const {rows} = await database.query(query_text, [lang, type_id])
+
+        res.status(status.success).json({"rows":rows})
     } catch (e) {
         res.json({"message":"something went wrog"})
         throw e
@@ -140,7 +175,7 @@ const AllRealEstate = async (req, res) =>{
     
     //----------about to have an image---------// 
     if (images && images !== null && images !== 'undefined'){
-        image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+        image_part = `INNER JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }else{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
@@ -148,13 +183,13 @@ const AllRealEstate = async (req, res) =>{
     const ip = requestip.getClientIp(req)
     let vip_limit = ``
     if (limit){
-        console.log("i am in limit if")
+        // console.log("i am in limit if")
         vip_limit = limit/2;
     }else{
         vip_limit = 5;
     }
     if (page && limit){
-        offSet = ` OFFSET ${(page-1)*limit} LIMIT ${limit}`
+        offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
     }else{
         offSet = ``
     }    
@@ -223,7 +258,7 @@ const AllRealEstate = async (req, res) =>{
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
-        ORDER BY  re.updated_at DESC  ${offSet}), 
+        ORDER BY  re.id DESC  ${offSet}), 
 
                     
     inserted AS (INSERT INTO view_address 
@@ -584,6 +619,7 @@ const GetRegions = async (req, res) =>{
 
 module.exports = {
     GetSpecificationsForType,
+    GetSpecForTypeSearch,
     GetNotRequiredSpecificationsForType,
     Languages,
     AllRealEstate,

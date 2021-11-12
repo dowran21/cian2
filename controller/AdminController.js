@@ -1,7 +1,8 @@
 const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
-const fs = require('fs')
+const fs = require('fs');
+const { compareSync } = require("bcrypt");
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -535,6 +536,7 @@ const GetTypeByID = async (req, res) =>{
                         INNER JOIN type_specifications ts
                             ON ts.spec_id = s.id
                         WHERE ts.type_id = $1 AND ts.deleted = false 
+                        ORDER BY ts.queue_position ASC
                 )spec) AS active_type_specifications,
                 
                 (SELECT json_agg(spec) FROM(
@@ -565,9 +567,33 @@ const GetTypeByID = async (req, res) =>{
     }
 } 
 
+const GetNotContainedSpec = async (req, res) =>{
+    const {id} = req.params
+    const query_text = `
+        SELECT s.id AS spec_id, s.absolute_name,
+            (SELECT json_agg(tr) FROM (
+                SELECT st.name, st.language_id 
+                FROM specification_translations st
+                WHERE st.spec_id = s.id
+            )tr) AS spec_translations
+
+        FROM specifications s
+            LEFT JOIN type_specifications ts
+                ON ts.spec_id = s.id AND ts.type_id = ${id}
+        WHERE ts.id IS NULL
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const AddSpecificationToType = async (req, res) =>{
     /**********
-     "specifications":[{"spec_id":12, "position":1}]
+     "specifications":[{"spec_id":12, "position":1}, {"spec_id":13, "position":2} ]
      */
     const {type_id} = req.params
     const {specifications} = req.body
@@ -864,6 +890,7 @@ module.exports = {
     GetSpecificationByID,
     GetAllSpecifications,
     SpecificationActivation,
+    GetNotContainedSpec,
 
     GetAllTypes,
     AddType,
