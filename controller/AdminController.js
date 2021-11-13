@@ -597,13 +597,11 @@ const AddSpecificationToType = async (req, res) =>{
      */
     const {type_id} = req.params
     const {specifications} = req.body
-    console.log(specifications)
-    //specifications = []
 
     try{
         const query_text = `
                 INSERT INTO type_specifications (type_id, spec_id, queue_position) 
-                VALUES ${specifications.map(item => `(${type_id}, ${item.spec_id}, ${item.position})`).join(',')}
+                VALUES ${specifications.map(item => `(${type_id}, ${item.id}, ${item.position})`).join(',')}
             `
         console.log(query_text)
         const {rows} = await database.query(query_text, [])
@@ -877,6 +875,79 @@ const AddTypeImage = async (req, res)=>{
     }
 }
 
+const GetStatistics = async (req, res) =>{
+    const {specification_values, location_id, type_id, category_id, price, area} = req.query
+    let spec_part = ``
+    let where_part = ``
+    
+    //--------------location part -----------------------//
+    if (location_id && location_id !== 'null'){
+        where_part += ` AND (lc.id = ${location_id} OR lc.main_location_id = ${location_id})`
+    }
+
+    //---------------------ctype part -----------------------//
+    if (type_id !== 'null' && type_id){
+        where_part += ` AND cp.type_id = ${type_id}` 
+    }
+
+    if (category_id && category_id !== 'null'){
+        where_part += ` AND cp.category_id = ${category_id}` 
+    }
+    
+    //-------------------specification part-----------------//
+    if (specification_values?.length){
+        spec_part += ` AND (${specification_values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
+    }
+    
+    //----------------area part--------------------//
+    if (area?.min && area?.max){
+        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
+    }else if(area?.min && !area?.max){
+        where_part += ` AND re.area > ${area?.min}`
+    }else if(!area?.min && area?.max){
+        where_part += ` AND re.area < ${area.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //---------------price-----------------------//
+    if (price?.min && price?.max){
+        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
+    }else if(price?.min && !price?.max){
+        where_part += ` AND rep.price > ${price.min}`
+    }else if(!price?.min && price?.max){
+        where_part += ` AND rep.price < ${price.max}`
+    }else{
+        where_part +=``
+    }
+    const query_text = `
+        SELECT st.id, 
+        (SELECT COUNT(r.id) FROM
+            (SELECT DISTINCT ON (re.id) re.id
+                FROM real_estates re
+                    INNER JOIN ctypes cp 
+                            ON cp.id = re.ctype_id
+                    INNER JOIN real_estate_prices rep 
+                            ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+                    INNER JOIN locations lc 
+                            ON lc.id = re.location_id
+                    INNER JOIN real_estate_specification_values resv
+                            ON resv.real_estate_id = re.id
+                WHERE re.status_id = st.id ${where_part} ${spec_part}
+            ) AS r
+        )
+        FROM statuses st
+
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -915,4 +986,6 @@ module.exports = {
     DeleteImagePlace,
 
     AddTypeImage,
+
+    GetStatistics,
 }

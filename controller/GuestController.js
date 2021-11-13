@@ -118,7 +118,7 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
-    const {specification_values, location_id, type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {spec_values, location_id, type_id, category_id, price, area, images, position, page, limit} = req.query
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -147,8 +147,8 @@ const AllRealEstate = async (req, res) =>{
     }
     
     //-------------------specification part-----------------//
-    if (specification_values?.length){
-        spec_part += ` AND (${specification_values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
+    if (spec_values?.length){
+        spec_part += ` AND (${spec_values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
     }
     
     //----------------area part--------------------//
@@ -231,7 +231,7 @@ const AllRealEstate = async (req, res) =>{
     )`
     const query_text =`
     WITH selected AS 
-        (SELECT re.id, rep.price::text, vre.id AS VIP, 
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, 
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -257,6 +257,8 @@ const AllRealEstate = async (req, res) =>{
                 ON lc.id = re.location_id
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            INNER JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
         ORDER BY  re.id DESC  ${offSet}), 
 
@@ -270,15 +272,17 @@ const AllRealEstate = async (req, res) =>{
         ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING)
     
     SELECT
-        (SELECT COUNT(re.id) FROM real_estates re  
+         (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
             LEFT JOIN vip_real_estates vre 
                 ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
             INNER JOIN ctypes cp 
                 ON cp.id = re.ctype_id
             LEFT JOIN locations lc 
                 ON lc.id = re.location_id
+            INNER JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}   
-        ) AS count,
+        ) AS count),
 
         (SELECT json_agg(res) FROM 
             selected 
@@ -309,7 +313,7 @@ const AllRealEstate = async (req, res) =>{
         }else{
             real_estates_all = rows[0].real_estates_all
         }
-        return res.status(status.success).json({"rows":{"count":rows[0].count, "real_estates_all":real_estates_all}})
+        return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)
         return res.status(status.error).json({"message":e.message})
@@ -617,6 +621,48 @@ const GetRegions = async (req, res) =>{
     }
 }
 
+const GetWishList = async (req, res) =>{
+    const {real_estates} = req.body
+    const query_text = `
+        SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, 
+        concat(
+            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+        
+        (SELECT json_agg(dest) FROM (
+            SELECT rei.destination FROM real_estate_images rei
+            WHERE rei.real_estate_id = re.id AND rei.is_active = true
+        )dest) AS images
+
+        FROM real_estates re 
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            INNER JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+            INNER JOIN languages l ON l.language_code = $2
+            INNER JOIN type_translations tt 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            INNER JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL AND re.id IN (${real_estates.map(`item`).join(',')})
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.success).send(false)
+    }
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecForTypeSearch,
@@ -629,6 +675,7 @@ module.exports = {
     GetLocations,
     GetRegions,
     CountForFilter,
-    FlatFilter
+    FlatFilter,
+    GetWishList
 
 }   
