@@ -231,7 +231,7 @@ const AllRealEstate = async (req, res) =>{
     )`
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, 
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, u.phone,
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -259,6 +259,8 @@ const AllRealEstate = async (req, res) =>{
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
             INNER JOIN real_estate_specification_values resv
                 ON resv.real_estate_id = re.id
+            INNER JOIN users u
+                ON u.id = re.user_id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
         ORDER BY  re.id DESC  ${offSet}), 
 
