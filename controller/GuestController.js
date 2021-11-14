@@ -148,7 +148,7 @@ const AllRealEstate = async (req, res) =>{
     
     //-------------------specification part-----------------//
     if (spec_values?.length){
-        spec_part += ` AND (${spec_values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
+        spec_part += ` AND (${spec_values?.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
     }
     
     //----------------area part--------------------//
@@ -349,7 +349,7 @@ const CountForFilter = async (req, res) =>{
     if (specifications?.length){
         for (let i=0; i<specifications.length; i++){
             values = specifications[i].values
-            spec_part += ` AND (${values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
+            spec_part += ` AND (${values?.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`
         }        
     }
     
@@ -382,15 +382,17 @@ const CountForFilter = async (req, res) =>{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
     const query_text =`
-        SELECT COUNT(re.id) FROM real_estates re  
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            INNER JOIN ctypes cp 
-                ON cp.id = re.ctype_id
-            INNER JOIN real_estate_specification_values resv
-                ON resv.real_estate_id = re.id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL 
-                ${where_part} ${spec_part}   
+        SELECT COUNT (re.id) FROM (
+            SELECT CISTINCT ON (re.id) re.id
+            FROM real_estates re  
+                LEFT JOIN vip_real_estates vre 
+                    ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+                INNER JOIN ctypes cp 
+                    ON cp.id = re.ctype_id
+                INNER JOIN real_estate_specification_values resv
+                    ON resv.real_estate_id = re.id
+                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL 
+                    ${where_part} ${spec_part})   
     `
     try {
         const {rows} = await database.query(query_text, [ip, lang])        
@@ -624,40 +626,50 @@ const GetRegions = async (req, res) =>{
 }
 
 const GetWishList = async (req, res) =>{
+    const {lang} = req.params
     const {real_estates} = req.body
-    const query_text = `
-        SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, 
-        concat(
-            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
-        
-        (SELECT json_agg(dest) FROM (
-            SELECT rei.destination FROM real_estate_images rei
-            WHERE rei.real_estate_id = re.id AND rei.is_active = true
-        )dest) AS images
-
-        FROM real_estates re 
-            INNER JOIN ctypes cp 
-                ON cp.id = re.ctype_id
-            INNER JOIN real_estate_prices rep 
-                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-            INNER JOIN languages l ON l.language_code = $2
-            INNER JOIN type_translations tt 
-                ON tt.type_id = cp.type_id AND tt.language_id = l.id
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            LEFT JOIN location_translations lt
-                ON lt.location_id = re.location_id AND lt.language_id = l.id
-            LEFT JOIN locations lc 
-                ON lc.id = re.location_id
-            LEFT JOIN location_translations ltt
-                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            INNER JOIN real_estate_specification_values resv
-                ON resv.real_estate_id = re.id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL AND re.id IN (${real_estates.map(`item`).join(',')})
-    `
+    console.log(req.body)
+    // console.log(real_estates)
+   
     try {
-        const {rows} = await database.query(query_text, [])
+        const query_text = `
+        SELECT 
+         (SELECT json_agg(res) FROM ( 
+            SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, u.phone,
+             concat(
+                 CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+             (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+             
+             (SELECT json_agg(dest) FROM (
+                 SELECT rei.destination FROM real_estate_images rei
+                 WHERE rei.real_estate_id = re.id AND rei.is_active = true
+             )dest) AS images
+ 
+             FROM real_estates re 
+                 INNER JOIN ctypes cp 
+                     ON cp.id = re.ctype_id
+                 INNER JOIN real_estate_prices rep 
+                     ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+                 INNER JOIN languages l ON l.language_code = $1
+                 INNER JOIN type_translations tt 
+                     ON tt.type_id = cp.type_id AND tt.language_id = l.id
+                 LEFT JOIN vip_real_estates vre 
+                     ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+                 LEFT JOIN location_translations lt
+                     ON lt.location_id = re.location_id AND lt.language_id = l.id
+                 LEFT JOIN locations lc 
+                     ON lc.id = re.location_id
+                 LEFT JOIN location_translations ltt
+                     ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+                 INNER JOIN real_estate_specification_values resv
+                     ON resv.real_estate_id = re.id
+                 INNER JOIN users u
+                     ON u.id = re.user_id
+             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND re.id IN (${real_estates?.map(item => `${item}`).join(',')})
+         ) res) AS real_estates_all
+     `
+        const {rows} = await database.query(query_text, [lang])
+        console.log(rows)
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)

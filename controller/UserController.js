@@ -397,17 +397,17 @@ req.body should be like this;
     let j=0;
     let spec_value_part = `INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
                             VALUES`
-    for (i=0; i<specifications.length; i++){
+    for (i=0; i<specifications?.length; i++){
         let specification = specifications[i]
         if (specification.values){
             const values = specification.values
-            for (j=0; j<values.length; j++){
+            for (j=0; j<values?.length; j++){
                 spec_value_part += ` ((SELECT id FROM inserted), ${specification.id}, ${values[j]})`
-                if (j!=(values.length-1)){
+                if (j!=(values?.length-1)){
                     spec_value_part += `,`;
                 }
             }
-        if (i!=(specifications.length-1)){
+        if (i!=(specifications?.length-1)){
             spec_value_part += `,`
         }
         }
@@ -429,7 +429,7 @@ req.body should be like this;
 
             ),insert2 AS(
                 INSERT INTO real_estate_translations(description, real_estate_id, language_id)
-                VALUES ${descriptions.map(item => `('${item.description}', (SELECT id FROM inserted), ${item.language_id})`).join(',')}
+                VALUES ${descriptions?.map(item => `('${item.description}', (SELECT id FROM inserted), ${item.language_id})`).join(',')}
 
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
@@ -447,11 +447,11 @@ const AddImage = async (req, res) =>{
     const files = req.files
     console.log(req.files)
     const {id} = req.params
-    if (files.length){
+    if (files?.length){
         console.log(files)
         const query_text = `
             INSERT INTO real_estate_images (real_estate_id, destination)
-                VALUES ${files.map(item => `(${id}, '${item.path}')`).join(',')}
+                VALUES ${files?.map(item => `(${id}, '${item.path}')`).join(',')}
         `
         try {
             const {rows} = await database.query(query_text, [])

@@ -245,7 +245,7 @@ const AddSpecification = async (req, res) =>{
             ), insert_translations AS (
                 INSERT INTO specification_translations(name, language_id, spec_id)
                     VALUES 
-                    ${translations.map(item =>`('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`).join(',')} 
+                    ${translations?.map(item =>`('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`).join(',')} 
             )${spec_values} 
                 SELECT id FROM inserted
         `
@@ -363,7 +363,7 @@ const AddSpecVal = async (req, res) =>{
     if (value_translations){
         val_trans_part = `, insert_val_trans(
             INSERT INTO specification_value_translations(name, language_id, spec_id)
-            VALUES ${value_translations.map(item =>`('${item.name}', ${item.lang_id}, SELECT id FROM inserted)`).join(',')}
+            VALUES ${value_translations?.map(item =>`('${item.name}', ${item.lang_id}, SELECT id FROM inserted)`).join(',')}
         )`
     }
     const query_text = `
@@ -468,7 +468,7 @@ const AddMaintype = async (req, res) =>{
             ), inserte AS (
                 INSERT INTO type_translations(name, language_id, type_id) 
                 VALUES 
-                ${translations.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
+                ${translations?.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
             ) SELECT id FROM inserted
             `
         const {rows} = await database.query(query_text, [body.absolute_name])
@@ -500,10 +500,10 @@ const AddType = async (req, res) =>{
                 INSERT INTO types(absolute_name, main_type_id) VALUES ($1, $2) RETURNING id
             ), inserte AS (
                 INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES ${translations.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
+                VALUES ${translations?.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
             ), insert_ctype AS 
                 (INSERT INTO ctypes(category_id, type_id) 
-                VALUES ${categories.map(item => `(${item}, (SELECT id FROM inserted))`)})
+                VALUES ${categories?.map(item => `(${item}, (SELECT id FROM inserted))`)})
                 SELECT id FROM inserted
             `
         const {rows} = await database.query(query_text, [body.absolute_name, body.main_type_id])
@@ -601,7 +601,7 @@ const AddSpecificationToType = async (req, res) =>{
     try{
         const query_text = `
                 INSERT INTO type_specifications (type_id, spec_id, queue_position) 
-                VALUES ${specifications.map(item => `(${type_id}, ${item.id}, ${item.position})`).join(',')}
+                VALUES ${specifications?.map(item => `(${type_id}, ${item.id}, ${item.position})`).join(',')}
             `
         console.log(query_text)
         const {rows} = await database.query(query_text, [])
@@ -697,7 +697,7 @@ const AddMainLocation = async (req, res)=>{
               VALUES ('${absolute_name}') RETURNING id
         ), insert_trans AS (
              INSERT INTO location_translations(translation, language_id, location_id) VALUES
-             ${translations.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
+             ${translations?.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
         ) SELECT id FROM inserted
      `
      try {
@@ -739,7 +739,7 @@ const AddLocation = async (req, res) =>{
             INSERT INTO locations(absolute_name, main_location_id)
              VALUES ($1, $2) RETURNING id
         ), insert_trans AS (INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ${translations.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
+            ${translations?.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
         ) SELECT id FROM inserted
         
         `
@@ -876,7 +876,7 @@ const AddTypeImage = async (req, res)=>{
 }
 
 const GetStatistics = async (req, res) =>{
-    const {specification_values, location_id, type_id, category_id, price, area} = req.query
+    const {specification_values, location_id, type_id, category_id, price, area, start_date, end_date} = req.query
     let spec_part = ``
     let where_part = ``
     
@@ -896,7 +896,7 @@ const GetStatistics = async (req, res) =>{
     
     //-------------------specification part-----------------//
     if (specification_values?.length){
-        spec_part += ` AND (${specification_values.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
+        spec_part += ` AND (${specification_values?.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
     }
     
     //----------------area part--------------------//
@@ -920,6 +920,18 @@ const GetStatistics = async (req, res) =>{
     }else{
         where_part +=``
     }
+
+    //---------------------dates-------------//
+    if(start_date && end_date){
+        where_part += ` AND created_at >= '${start_date}'::date AND created_at <= '${end_date}'::date`
+    }else if(start_date && !end_date){
+        where_part += ` AND created_at >= '${start_date}'::date`
+    }else if(!start_date && end_date){
+        where_part += ` AND created_at <= '${end_date}'::date`
+    }else{
+        where_part += ``
+    }
+    
     const query_text = `
         SELECT st.id, 
         (SELECT COUNT(r.id) FROM
