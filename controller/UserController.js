@@ -361,7 +361,6 @@ req.body should be like this;
                 {"id":2, "is_required":"TRUE", "is_multiple":"FALSE", "values":[15]},
                 {"id":3, "is_required":"TRUE", "is_multiple":"FALSE", "values":[33]}
                 ],
-            "vip":true/false
     } 
 *****************************/
 
@@ -445,10 +444,12 @@ req.body should be like this;
 
 const AddImage = async (req, res) =>{
     const files = req.files
+    // console.log(req)
+    console.log("-------------------------------------------------------------------")
     console.log(req.files)
     const {id} = req.params
     if (files?.length){
-        console.log(files)
+        // console.log(files)
         const query_text = `
             INSERT INTO real_estate_images (real_estate_id, destination)
                 VALUES ${files?.map(item => `(${id}, '${item.path}')`).join(',')}

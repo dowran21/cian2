@@ -10,11 +10,13 @@ router.get('/:lang/real-estate/:id', GuestController.GetRealEstateByID)
 router.get('/:lang/get-filter-count', GuestController.CountForFilter)
 router.get('/:lang/flat-filter', GuestController.FlatFilter)
 
-router.get('/:lang/types-of-category/:id', GuestController.GetTypesCategory)
+router.get('/:lang/types/:cat_id/:main_id', GuestController.GetTypesCategory)
 router.get('/:lang/main-locations', GuestController.GetLocations)
 router.get('/:lang/region-locations/:id', GuestController.GetRegions)
 
 router.post('/:lang/get-wish-list', GuestController.GetWishList)
+
+// router.get('/:lang/types', GuestController.GetTypes)
 
 
 router.get('/:lang/specifications-for-type/:type_id', GuestController.GetSpecificationsForType)

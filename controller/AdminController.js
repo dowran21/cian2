@@ -516,7 +516,7 @@ const AddType = async (req, res) =>{
 
 const GetTypeByID = async (req, res) =>{
     const {id} = req.params
-    console.log(id)
+    // console.log(id)
     const query_text = `
             SELECT absolute_name, destination,
                 
@@ -603,7 +603,7 @@ const AddSpecificationToType = async (req, res) =>{
                 INSERT INTO type_specifications (type_id, spec_id, queue_position) 
                 VALUES ${specifications?.map(item => `(${type_id}, ${item.id}, ${item.position})`).join(',')}
             `
-        console.log(query_text)
+        // console.log(query_text)
         const {rows} = await database.query(query_text, [])
         return res.status(status.success).send(true) 
     }catch(e){
@@ -931,7 +931,7 @@ const GetStatistics = async (req, res) =>{
     }else{
         where_part += ``
     }
-    
+
     const query_text = `
         SELECT st.id, 
         (SELECT COUNT(r.id) FROM

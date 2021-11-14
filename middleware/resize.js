@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 
 const resize_image  = async (req, res, next) =>{
+    // console.log(req.files)
     let i=0;
     const {id} = req.params
     if (req.files.length){

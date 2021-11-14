@@ -12,7 +12,7 @@ const GetSpecificationsForType = async (req, res) =>{
                         FROM specification_values sv
                             LEFT JOIN specification_value_translations svt 
                                 ON svt.spec_value_id = sv.id AND svt.language_id = l.id
-                        WHERE sv.spec_id = s.id AND sv.enabled = true
+                        WHERE sv.spec_id = s.id AND sv.enable = true
                         ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
                             integer) ELSE null END ASC, sv.absolute_value ASC
                 )value) AS values
@@ -24,15 +24,15 @@ const GetSpecificationsForType = async (req, res) =>{
                         ON st.spec_id = s.id AND st.language_id = l.id
                     INNER JOIN type_specifications ts 
                         ON ts.spec_id = s.id
-            WHERE ts.type_id = $2 AND ts.deleted = false AND s.is_active = false
+            WHERE ts.type_id = $2 AND ts.deleted = false AND s.is_active = true
             ORDER BY ts.queue_position ASC
     ` 
         const {rows} = await database.query(query_text, [lang, type_id])
-
-        res.json({"rows":rows})
+        // console.log(rows)
+        res.status(status.success).json({"rows":rows})
     } catch (e) {
-        res.json({"message":"something went wrog"})
-        throw e
+        console.log(e)
+        return res.status(status.error).send(e)
     }
 }
 
@@ -566,22 +566,26 @@ const GetRealEstateByID = async (req, res) => {
 }
 
 const GetTypesCategory = async (req, res) => {
-    const {lang, id} = req.params
+    const {lang} = req.params
+    const {cat_id, main_id} = req.params
     const query_text = `
         SELECT tt.name, t.id 
         FROM ctypes ctp 
-            INNER JOIN languages l ON l.language_code = $1
-            INNER JOIN categories c ON c.id = ctp.category_id
-            INNER JOIN types t ON t.id = ctp.type_id
-            INNER JOIN type_translations tt ON tt.type_id = t.id AND tt.language_id = l.id
-        WHERE c.id = $2
+            INNER JOIN languages l 
+                ON l.language_code = $1
+            INNER JOIN types t 
+                ON t.id = ctp.type_id AND t.main_type_id = $3
+            INNER JOIN type_translations tt 
+                ON tt.type_id = t.id AND tt.language_id = l.id
+        WHERE ctp.category_id = $2
     `
     try {
-        const {rows} = await database.query(query_text, [lang, id])
-        return res.json({"rows":rows})
+        const {rows} = await database.query(query_text, [lang, cat_id, main_id])
+        // console.log(rows)
+        return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)
-        throw e
+        return res.status(status.error).send(e)
     }
 }
 
@@ -598,6 +602,7 @@ const GetLocations = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [])
+        // console.log(rows)
         return res.status(200).json({"rows":rows})
     } catch (e) {
         console.log(e)
