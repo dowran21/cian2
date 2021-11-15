@@ -195,7 +195,7 @@ const AllRealEstate = async (req, res) =>{
     }    
     let vip_estates = `
     selected_vip AS (
-        SELECT re.id, rep.price, re.created_at, vre.id AS VIP,
+        SELECT re.id, rep.price::text, re.created_at::text,
         concat(
             CASE 
                 WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
@@ -231,7 +231,7 @@ const AllRealEstate = async (req, res) =>{
     )`
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, vre.id AS VIP, u.phone,
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone, re.created_at::text,
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -494,18 +494,15 @@ const GetRealEstateByID = async (req, res) => {
             INSERT INTO view_address VALUES ($3, $1, 2)
             ON CONFLICT DO NOTHING)
 
-        SELECT re.area, rep.price, re.area, ret.description, vre.id AS VIP,
-            re.created_at,
+        SELECT DISTINCT ON (re.id) re.area::text, rep.price::text, ret.description, 
+            re.created_at::text, ${position_part}
             concat(
                 CASE 
                     WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
                     END ||
                 lt.translation
             ) AS location,
-            real_estate_name($1, l.id, tt.name, area), u.phone, ott.translation AS owner_tyoe,
-
-            (SELECT COUNT(count) 
-                FROM view_count WHERE real_estate_id = re.id AND view_type_id = 2 AND is_active=true) AS view_count,
+            real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type,
             
             (SELECT json_agg(image) FROM (
                 SELECT destination FROM real_estate_images rei
@@ -558,10 +555,11 @@ const GetRealEstateByID = async (req, res) => {
     `
     try {
         const {rows} = await database.query(query_text, [id, lang, ip])
-        return res.json({"rows":rows[0]})
+        // console.log(rows)
+        return res.status(status.success).json({"rows":rows[0]})
     } catch (e) {
         console.log(e)
-        throw e
+        return res.status(status.error).send(false)
     }
 }
 
