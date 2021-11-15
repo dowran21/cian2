@@ -682,6 +682,28 @@ const GetWishList = async (req, res) =>{
     }
 }
 
+const TypeImages = async (req, res) =>{
+    const {main_type_id, lang} = req.params
+    const query_text = `
+        SELECT t.id, tt.name, ti.destination 
+        FROM types t.id
+            INNER JOIN type_translations 
+                ON tt.type_id = t.id
+            LEFT JOIN type_image ti
+                ON ti.type_id = t.id
+            INNER JOIN languages l 
+                ON l.language_code = '${lang}' AND tt.language_id = l.id 
+            WHERE t.main_type_id = ${main_type_id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(e)
+    }
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecForTypeSearch,
@@ -695,6 +717,7 @@ module.exports = {
     GetRegions,
     CountForFilter,
     FlatFilter,
-    GetWishList
+    TypeImages,
+    GetWishList,
 
 }   

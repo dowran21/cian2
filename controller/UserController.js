@@ -1,6 +1,4 @@
-const { relativeTimeRounding } = require('moment');
 const database = require('../db/index.js')
-const {lang_id} = require('../utils/helpFunctions.js');
 const UserHelper = require('../utils/index.js');
 const { SendSMS } = require('../utils/sms.js');
 const {status} = require('../utils/status.js')
@@ -365,6 +363,7 @@ req.body should be like this;
 *****************************/
 
     const {type_id, category_id, phone, area, position, price, descriptions, owner_id, specifications, location_id } = req.body
+    console.log(req.body)
     const user_id = req.user.id
     try {
         const user_query = `

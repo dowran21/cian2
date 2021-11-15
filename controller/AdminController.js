@@ -2,7 +2,7 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
-const { compareSync } = require("bcrypt");
+// const { compareSync } = require("bcrypt");
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -933,7 +933,7 @@ const GetStatistics = async (req, res) =>{
     }
 
     const query_text = `
-        SELECT st.id, 
+        SELECT st.id, st.absolute_name,
         (SELECT COUNT(r.id) FROM
             (SELECT DISTINCT ON (re.id) re.id
                 FROM real_estates re

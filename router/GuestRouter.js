@@ -8,7 +8,9 @@ router.get('/:lang/all-real-estates', GuestController.AllRealEstate)
 router.get('/:lang/categories-types', GuestController.TypeCategoryController)
 router.get('/:lang/real-estate/:id', GuestController.GetRealEstateByID)
 router.get('/:lang/get-filter-count', GuestController.CountForFilter)
+
 router.get('/:lang/flat-filter', GuestController.FlatFilter)
+router.get('/:lang/type-images/:main_type_id', GuestController.TypeImages)
 
 router.get('/:lang/types/:cat_id/:main_id', GuestController.GetTypesCategory)
 router.get('/:lang/main-locations', GuestController.GetLocations)
@@ -22,5 +24,7 @@ router.post('/:lang/get-wish-list', GuestController.GetWishList)
 router.get('/:lang/specifications-for-type/:type_id', GuestController.GetSpecificationsForType)
 router.get('/:lang/spec-for-type-search/:type_id', GuestController.GetSpecForTypeSearch)
 router.get('/:lang/not-required-specifications-for-type/:type_id', GuestController.GetNotRequiredSpecificationsForType)
+
+
 
 module.exports = router
