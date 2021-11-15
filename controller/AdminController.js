@@ -875,22 +875,22 @@ const AddTypeImage = async (req, res)=>{
     }
 }
 
-const GetAllTypes = async (req, res) =>{
-    const query_text = `
-        SELECT t.id, tt.name 
-        FROM types
-            INNER JOIN type_translations tt
-                ON tt.type_id = t.id
-        WHERE t.main_type_id IS NULL
-    `
-    try {
-        const {rows} = await database.query(query_text, [])
-        return res.status(status.success).json({rows})
-    } catch (e) {
-        console.log(e)
-        return res.status(status.error).send(false)
-    }
-}
+// const GetAllTypes = async (req, res) =>{
+//     const query_text = `
+//         SELECT t.id, tt.name 
+//         FROM types
+//             INNER JOIN type_translations tt
+//                 ON tt.type_id = t.id
+//         WHERE t.main_type_id IS NULL
+//     `
+//     try {
+//         const {rows} = await database.query(query_text, [])
+//         return res.status(status.success).json({rows})
+//     } catch (e) {
+//         console.log(e)
+//         return res.status(status.error).send(false)
+//     }
+// }
 
 const GetStatistics = async (req, res) =>{
     const {specification_values, location_id, type_id, category_id, price, area, start_date, end_date} = req.query
