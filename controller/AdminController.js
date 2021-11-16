@@ -426,7 +426,7 @@ const GetAllSpecifications = async (req, res)=>{
 const GetAllTypes = async (req, res) =>{
     try{
         const query_text = `
-        SELECT t.id, tt.name AS main_type, t.absolute_name, ti.destination, 
+        SELECT ct.name, ctp.id, tt.name AS main_type, t.absolute_name, cti.destination, 
 
             (SELECT json_agg(translation) FROM (
                 SELECT language_id, name FROM type_translations tp 
@@ -434,12 +434,16 @@ const GetAllTypes = async (req, res) =>{
             )translation) AS translations  
         
         FROM types t
-            LEFT JOIN type_image ti
-                ON ti.type_id = t.id
             INNER JOIN types tp
                 ON t.main_type_id = tp.id
             INNER JOIN type_translations tt
                 ON tt.type_id = tp.id AND tt.language_id = 2
+            INNER JOIN ctypes ctp
+                ON ctp.type_id = t.id
+            INNER JOIN category_translations ct 
+                ON ct.category_id = ctp.category_id AND ct.language_id = 2
+            LEFT JOIN ctype_image cti
+                ON cti.ctype_id = ctp.id
         WHERE t.main_type_id IS NOT NULL
         ORDER BY t.id ASC
         `
@@ -535,7 +539,7 @@ const GetTypeByID = async (req, res) =>{
                     FROM specifications s
                         INNER JOIN type_specifications ts
                             ON ts.spec_id = s.id
-                        WHERE ts.type_id = $1 AND ts.deleted = false 
+                        WHERE ts.ctype_id = $1 AND ts.deleted = false 
                         ORDER BY ts.queue_position ASC
                 )spec) AS active_type_specifications,
                 
@@ -550,13 +554,15 @@ const GetTypeByID = async (req, res) =>{
                     FROM specifications s
                         INNER JOIN type_specifications ts
                             ON ts.spec_id = s.id
-                        WHERE ts.type_id = $1 AND ts.deleted = true 
+                        WHERE ts.ctype_id = $1 AND ts.deleted = true 
                 )spec) AS deleted_type_specifications
             
             FROM types
-                LEFT JOIN type_image ti
-                    ON ti.type_id = types.id
-            WHERE types.id = $1
+                LEFT JOIN ctype_image cti
+                    ON cti.ctype_id = $1
+                INNER JOIN ctypes ctp
+                    ON ctp.type_id = types.id
+            WHERE ctp.id = $1
         `
     try{
         const {rows} = await database.query(query_text, [id])
@@ -579,7 +585,7 @@ const GetNotContainedSpec = async (req, res) =>{
 
         FROM specifications s
             LEFT JOIN type_specifications ts
-                ON ts.spec_id = s.id AND ts.type_id = ${id}
+                ON ts.spec_id = s.id AND ts.ctype_id = ${id}
         WHERE ts.id IS NULL
     `
     try {
@@ -595,13 +601,13 @@ const AddSpecificationToType = async (req, res) =>{
     /**********
      "specifications":[{"spec_id":12, "position":1}, {"spec_id":13, "position":2} ]
      */
-    const {type_id} = req.params
+    const {ctype_id} = req.params
     const {specifications} = req.body
 
     try{
         const query_text = `
-                INSERT INTO type_specifications (type_id, spec_id, queue_position) 
-                VALUES ${specifications?.map(item => `(${type_id}, ${item.id}, ${item.position})`).join(',')}
+                INSERT INTO type_specifications (ctype_id, spec_id, queue_position) 
+                VALUES ${specifications?.map(item => `(${ctype_id}, ${item.id}, ${item.position})`).join(',')}
             `
         // console.log(query_text)
         const {rows} = await database.query(query_text, [])
@@ -861,13 +867,13 @@ const DeleteImagePlace = async (req, res) =>{
 const AddTypeImage = async (req, res)=>{
     const {id} = req.params
     const query_text = `
-        INSERT INTO type_image(type_id, destination) 
+        INSERT INTO ctype_image(ctype_id, destination) 
             VALUES($1, $2)
-            ON CONFLICT (type_id) DO UPDATE SET destination = EXCLUDED.destination
+            ON CONFLICT (ctype_id) DO UPDATE SET destination = EXCLUDED.destination
     `
     try {
         await database.query(query_text, [id, req.file.path])
-        const {rows} = await database.query(`SELECT destination FROM type_image WHERE type_id = ${id}`, [])
+        const {rows} = await database.query(`SELECT destination FROM ctype_image WHERE ctype_id = ${id}`, [])
         return res.status(status.success).json({"rows":rows[0]})
     } catch (e) {
         console.log(e)
@@ -875,22 +881,22 @@ const AddTypeImage = async (req, res)=>{
     }
 }
 
-// const GetAllTypes = async (req, res) =>{
-//     const query_text = `
-//         SELECT t.id, tt.name 
-//         FROM types
-//             INNER JOIN type_translations tt
-//                 ON tt.type_id = t.id
-//         WHERE t.main_type_id IS NULL
-//     `
-//     try {
-//         const {rows} = await database.query(query_text, [])
-//         return res.status(status.success).json({rows})
-//     } catch (e) {
-//         console.log(e)
-//         return res.status(status.error).send(false)
-//     }
-// }
+const GetTypes = async (req, res) =>{
+    const query_text = `
+        SELECT t.id, tt.name 
+        FROM types t
+            INNER JOIN type_translations tt
+                ON tt.type_id = t.id
+        WHERE t.main_type_id IS NULL
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
 
 const GetStatistics = async (req, res) =>{
     const {specification_values, location_id, type_id, category_id, price, area, start_date, end_date} = req.query
@@ -940,11 +946,11 @@ const GetStatistics = async (req, res) =>{
 
     //---------------------dates-------------//
     if(start_date && end_date){
-        where_part += ` AND created_at >= '${start_date}'::date AND created_at <= '${end_date}'::date`
+        where_part += ` AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date`
     }else if(start_date && !end_date){
-        where_part += ` AND created_at >= '${start_date}'::date`
+        where_part += ` AND re.created_at >= '${start_date}'::date`
     }else if(!start_date && end_date){
-        where_part += ` AND created_at <= '${end_date}'::date`
+        where_part += ` AND re.created_at <= '${end_date}'::date`
     }else{
         where_part += ``
     }
@@ -1017,4 +1023,5 @@ module.exports = {
     AddTypeImage,
 
     GetStatistics,
+    GetTypes
 }

@@ -32,7 +32,7 @@ router.get('/all-types',VerifyAdminAccessToken, AdminController.GetAllTypes)
 
 router.get('/type/:id', VerifyAdminAccessToken, AdminController.GetTypeByID)
 router.get('/not-contained-spec/:id', VerifyAdminAccessToken, AdminController.GetNotContainedSpec)
-router.post('/add-specifications-to-type/:type_id', VerifyAdminAccessToken, AdminController.AddSpecificationToType)
+router.post('/add-specifications-to-type/:ctype_id', VerifyAdminAccessToken, AdminController.AddSpecificationToType)
 router.post('/activation-type-specification/:ts_id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
 router.post('/add-image-to-type/:id', VerifyAdminAccessToken, upload.single('picture'), resize_page_images, AdminController.AddTypeImage)
 
@@ -51,5 +51,6 @@ router.post('/add-page-image/:id', upload.single('picture'), resize_page_images,
 router.post('/delete-place-image/:id', VerifyAdminAccessToken, AdminController.DeleteImagePlace)
 
 router.get('/all-real-estate-statistics', VerifyAdminAccessToken, AdminController.GetStatistics )
+router.get('/get-all-types', VerifyAdminAccessToken, AdminController.GetTypes)
 
 module.exports = router

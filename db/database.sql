@@ -144,16 +144,16 @@ CREATE TABLE specification_translations(
 
 CREATE TABLE type_specifications(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
-    "type_id" SMALLINT NOT NULL,
+    "ctype_id" SMALLINT NOT NULL,
     spec_id SMALLINT NOT NULL,
     queue_position SMALLINT,
     deleted BOOLEAN DEFAULT FALSE,
     
-    UNIQUE(spec_id, "type_id"),
-    CONSTRAINT type_specification_spec_id_fk 
+    UNIQUE(spec_id, "ctype_id"),
+    CONSTRAINT ctype_specification_spec_id_fk 
         FOREIGN KEY(spec_id) REFERENCES  specifications(id) ON UPDATE CASCADE,
-    CONSTRAINT type_specification_type_id_fk 
-        FOREIGN KEY("type_id") REFERENCES  types(id) ON UPDATE CASCADE
+    CONSTRAINT ctype_specification_type_id_fk 
+        FOREIGN KEY("ctype_id") REFERENCES  ctypes(id) ON UPDATE CASCADE
 );
 
 CREATE TABLE specification_values(
@@ -346,13 +346,13 @@ CREATE TABLE place_images(
 );
 
 ------------------image for type -------------
-CREATE TABLE type_image(
+CREATE TABLE ctype_image(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
-    type_id SMALLINT NOT NULL,
+    ctype_id SMALLINT NOT NULL,
     destination VARCHAR(150) NOT NULL,
-    UNIQUE(type_id),
+    UNIQUE(ctype_id),
 
-    CONSTRAINT type_id_fk FOREIGN KEY (type_id) REFERENCES types(id)
+    CONSTRAINT type_id_fk FOREIGN KEY (ctype_id) REFERENCES ctypes(id)
 );
 
 -----------------logs-------------------

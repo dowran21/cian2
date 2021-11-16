@@ -2,7 +2,7 @@ INSERT INTO languages(language, language_code) VALUES
 ('turkmen', 'tm'), 
 ('russian', 'ru');
 
-INSERT INTO categories(absolute_name) VALUES ('sale'), ('rent'), ('for day');
+INSERT INTO categories(absolute_name) VALUES ('sale'), ('rent');
 
 INSERT INTO category_translations(name, language_id, category_id) VALUES
 ('Satlyk', 1, 1),
