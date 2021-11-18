@@ -8,9 +8,7 @@ INSERT INTO category_translations(name, language_id, category_id) VALUES
 ('Satlyk', 1, 1),
 ('Продается', 2, 1),
 ('Kärende', 1, 2),
-('Сдается в аренду', 2, 2),
-('Günlük', 1, 3),
-('Посуточно', 2, 3);
+('Сдается в аренду', 2, 2);
 
 
 INSERT INTO statuses(category_id, absolute_name) VALUES 

@@ -983,6 +983,87 @@ const GetStatistics = async (req, res) =>{
     }
 }
 
+const GetPriceStatistics = async (req, res) =>{
+    const {specification_values, location_id, type_id, category_id, price, area, start_date, end_date} = req.query
+    let spec_part = ``
+    let where_part = ``
+    
+    //--------------location part -----------------------//
+    if (location_id && location_id !== 'null'){
+        where_part += ` AND (lc.id = ${location_id} OR lc.main_location_id = ${location_id})`
+    }
+
+    //---------------------ctype part -----------------------//
+    if (type_id !== 'null' && type_id){
+        where_part += ` AND cp.type_id = ${type_id}` 
+    }
+
+    if (category_id && category_id !== 'null'){
+        where_part += ` AND cp.category_id = ${category_id}` 
+    }
+    
+    //-------------------specification part-----------------//
+    if (specification_values?.length){
+        spec_part += ` AND (${specification_values?.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
+    }
+    
+    //----------------area part--------------------//
+    if (area?.min && area?.max){
+        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
+    }else if(area?.min && !area?.max){
+        where_part += ` AND re.area > ${area?.min}`
+    }else if(!area?.min && area?.max){
+        where_part += ` AND re.area < ${area.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //---------------price-----------------------//
+    if (price?.min && price?.max){
+        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
+    }else if(price?.min && !price?.max){
+        where_part += ` AND rep.price > ${price.min}`
+    }else if(!price?.min && price?.max){
+        where_part += ` AND rep.price < ${price.max}`
+    }else{
+        where_part +=``
+    }
+
+    //---------------------dates-------------//
+    // if(start_date && end_date){
+    //     where_part += ` AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date`
+    // }else if(start_date && !end_date){
+    //     where_part += ` AND re.created_at >= '${start_date}'::date`
+    // }else if(!start_date && end_date){
+    //     where_part += ` AND re.created_at <= '${end_date}'::date`
+    // }else{
+    //     where_part += ``
+    // }
+
+    const query_text = `
+    SELECT  
+        date_trunc('day', re.created_at), AVG(rep.price)
+        FROM real_estates re
+            INNER JOIN real_estate_prices rep
+                ON rep.real_estate_id = re.id AND rep.is_active = true
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            INNER JOIN locations lc 
+                    ON lc.id = re.location_id
+            INNER JOIN real_estate_specification_values resv
+                    ON resv.real_estate_id = re.id
+        WHERE re.id > 0 AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date  ${where_part} ${spec_part}
+        GROUP BY date_trunc('day', re.created_at)
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -1023,5 +1104,6 @@ module.exports = {
     AddTypeImage,
 
     GetStatistics,
-    GetTypes
+    GetTypes,
+    GetPriceStatistics
 }

@@ -727,5 +727,4 @@ module.exports = {
     FlatFilter,
     TypeImages,
     GetWishList,
-
 }   

@@ -45,6 +45,7 @@ CREATE TABLE users(
     owner_id SMALLINT,
     "password" VARCHAR (300) NOT NULL,
     deleted BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     UNIQUE(phone),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),

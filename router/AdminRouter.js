@@ -52,5 +52,6 @@ router.post('/delete-place-image/:id', VerifyAdminAccessToken, AdminController.D
 
 router.get('/all-real-estate-statistics', VerifyAdminAccessToken, AdminController.GetStatistics )
 router.get('/get-all-types', VerifyAdminAccessToken, AdminController.GetTypes)
+router.get('/get-price-statistics',  AdminController.GetPriceStatistics)
 
 module.exports = router
