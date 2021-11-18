@@ -450,19 +450,27 @@ const TypeCategoryController = async (req, res) =>{
     const {lang} = req.params
     const query_text = `
         SELECT c.id, ct.name, 
-            
-            (SELECT json_agg(type) FROM 
-                (SELECT t.id, tt.name   
+            (SELECT json_agg(mai) FROM (
+                SELECT ttt.name, ty.id,     
                 
-                FROM types t
-                    INNER JOIN ctypes 
-                        ON ctypes.type_id = t.id 
-                    INNER JOIN type_translations tt 
-                        ON tt.type_id = t.id 
-                WHERE ctypes.category_id = c.id AND tt.language_id = l.id
+                    (SELECT json_agg(type) FROM 
+                        (SELECT t.id, tt.name   
+                        FROM types t
+                            INNER JOIN ctypes 
+                                ON ctypes.type_id = t.id 
+                            INNER JOIN type_translations tt 
+                                ON tt.type_id = t.id 
+                        WHERE ctypes.category_id = c.id AND tt.language_id = l.id AND t.main_type_id = ty.id AND t.main_type_id IS NOT NULL
 
-            )type) AS types
+                    )type) AS sub_types
             
+                FROM types ty
+                    INNER JOIN type_translations ttt
+                        ON ttt.type_id = ty.id AND ttt.language_id = l.id
+                WHERE ty.main_type_id IS NULL
+
+            )mai) AS main_types
+
             FROM categories c
                 INNER JOIN languages l 
                     ON l.language_code = $1
