@@ -461,7 +461,7 @@ const AddImage = async (req, res) =>{
             return res.status(400).json(false)
         }
     }
-    return res.json({"message":"there is no file"})
+    return res.status(status.bad).json({"message":"there is no file"})
 }
 
 const GetUserRealEstateByID = async (req, res) =>{
