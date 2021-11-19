@@ -132,10 +132,11 @@ const DeleteOperator = async (req, res) =>{
     const {id} = req.params
     const query_text = `UPDATE users SET deleted = true WHERE id = ${id}`
     try {
-        const {rows} = await database.query(query_text, [])
+        await database.query(query_text, [])
         return res.status(status.success).send(true)
     } catch (e) {
-        
+        console.log(e)
+        return res.status(status.error).send(false)
     }
 }
 
