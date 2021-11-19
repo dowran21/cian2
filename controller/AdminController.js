@@ -117,11 +117,11 @@ const AddOperator = async (req, res) =>{
     const hashed_password = await AdminHelper.HashPassword(password)
     const query_text = `
         INSERT INTO users(role_id, full_name, email, phone, password)
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email, phone
         `
     try{
-        await database.query(query_text, [2, full_name, email, phone, hashed_password]);
-        return res.status(status.success).send(true);
+        const {rows} = await database.query(query_text, [2, full_name, email, phone, hashed_password]);
+        return res.status(status.success).json({"rows":rows[0]});
     }catch(e){
         console.log(e)
         return res.status(status.error).send(false)

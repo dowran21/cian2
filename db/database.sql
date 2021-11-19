@@ -234,7 +234,7 @@ CREATE TABLE real_estate_prices(
     id SERIAL PRIMARY KEY NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT clock_timestamp(),
     real_estate_id INTEGER NOT NULL,
-    price NUMERIC(13,2) NOT NUll,
+    price INTEGER NOT NUll,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT real_estate_price_real_estate_id_fk 

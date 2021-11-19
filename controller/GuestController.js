@@ -712,6 +712,23 @@ const TypeImages = async (req, res) =>{
     }
 }
 
+const RoomSpecController = async (req, res) =>{
+    const query_text = `
+        SELECT id, absolute_value 
+        FROM specification_values
+        WHERE spec_id = 1
+        ORDER BY CASE WHEN absolute_value ~ '\\d+' THEN cast(absolute_value as 
+            integer) ELSE null END ASC, absolute_value ASC
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecForTypeSearch,
@@ -727,4 +744,5 @@ module.exports = {
     FlatFilter,
     TypeImages,
     GetWishList,
+    RoomSpecController,
 }   

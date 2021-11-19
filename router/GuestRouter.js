@@ -20,6 +20,7 @@ router.post('/:lang/get-wish-list', GuestController.GetWishList)
 
 // router.get('/:lang/types', GuestController.GetTypes)
 
+router.get('/room-specification', GuestController.RoomSpecController)
 
 router.get('/:lang/specifications-for-type/:type_id/:category_id', GuestController.GetSpecificationsForType)
 router.get('/:lang/spec-for-type-search/:type_id', GuestController.GetSpecForTypeSearch)
