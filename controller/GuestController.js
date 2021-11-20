@@ -120,7 +120,7 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
-    const {spec_values, location_id, type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -134,6 +134,10 @@ const AllRealEstate = async (req, res) =>{
         offSet = `OFFSET ${page*limit} LIMIT ${limit}`
     }
     
+    ///------------------------main_type_id ------------------//
+    if(main_type_id){
+        where_part += ` AND t.main_type_id = ${main_type_id}`
+    }
     //--------------location part -----------------------//
     if (location_id && location_id !== 'null'){
         where_part += ` AND (lc.id = ${location_id} OR lc.main_location_id = ${location_id})`
@@ -248,7 +252,8 @@ const AllRealEstate = async (req, res) =>{
                 ON cp.id = re.ctype_id
             INNER JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-            INNER JOIN languages l ON l.language_code = $2
+            INNER JOIN languages l 
+                ON l.language_code = $2
             INNER JOIN type_translations tt 
                 ON tt.type_id = cp.type_id AND tt.language_id = l.id
             LEFT JOIN vip_real_estates vre 
@@ -263,6 +268,8 @@ const AllRealEstate = async (req, res) =>{
                 ON resv.real_estate_id = re.id
             INNER JOIN users u
                 ON u.id = re.user_id
+            INNER JOIN types t
+                ON t.id = cp.type_id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
         ORDER BY  re.id DESC  ${offSet}), 
 
@@ -285,6 +292,8 @@ const AllRealEstate = async (req, res) =>{
                 ON lc.id = re.location_id
             INNER JOIN real_estate_specification_values resv
                 ON resv.real_estate_id = re.id
+            INNER JOIN types t
+                ON t.id = cp.type_id
             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}   
         ) AS count),
 
