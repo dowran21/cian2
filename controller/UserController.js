@@ -446,6 +446,7 @@ const AddImage = async (req, res) =>{
     // console.log(req)
     console.log("-------------------------------------------------------------------")
     console.log(req.files)
+    // console.log(req.file)
     const {id} = req.params
     if (files?.length){
         // console.log(files)

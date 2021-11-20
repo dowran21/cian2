@@ -1,4 +1,5 @@
 const Joi = require('joi')
+const { GetSpecForTypeSearch } = require('../controller/GuestController')
 
 const Schema = {
     Real_estate:Joi.object({
@@ -96,6 +97,55 @@ const Schema = {
             'string.min': `{#label} azyndan {#limit} harp bolmaly`,
             'any.required': `{#label} hökman gerek`,
         }),
+    }),
+
+    RealEstateFilter:Joi.object({
+        page:Joi.number(),
+        limit:Joi.number(),
+        location_id: Joi.number().label("Yerleshyan yeri").messages({
+            'number.pattern.base':"it hsould be a number"
+        }),
+        type_id: Joi.number().label("Yerleshyan yeri").messages({
+            'number.pattern.base':"it hsould be a number"
+        }),
+        main_type_id: Joi.number().label("Yerleshyan yeri").messages({
+            'number.pattern.base':"it hsould be a number"
+        }),
+        category_id: Joi.number().label("Yerleshyan yeri").messages({
+            'number.pattern.base':"it hsould be a number"
+        }),
+        price:Joi.object({
+            min:Joi.number(),
+            max:Joi.number()
+        }),
+        area:Joi.object({
+            min:Joi.number(),
+            max:Joi.number()
+        }),
+        spec_values:Joi.array(),
+        page:Joi.number(),
+        limit:Joi.number()
+    }),
+
+    LangSchema:Joi.object({
+        lang:Joi.string().min(2).max(2)
+    }),
+
+    IDSchema:Joi.object({
+        id:Joi.number()
+    }),
+    
+    TypeSchema:Joi.object({
+        type_id:Joi.number()
+    }),
+
+    CategoryTypeSchema:Joi.object({
+        type_id:Joi.number(),
+        category_id:Joi.number()
+    }),
+
+    MainTypeSchema:Joi.object({
+        main_type_id:Joi.number()
     })
 }
 

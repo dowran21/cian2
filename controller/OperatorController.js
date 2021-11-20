@@ -107,7 +107,7 @@ const GetConfirmRealEstates = async (req, res) =>{
         `
     try {
         const {rows} = await database.query(query_text, [])
-        console.log(rows)
+        // console.log(rows)
         return res.status(status.success).json(rows)
     } catch (e) {
         console.log(e)
@@ -149,9 +149,6 @@ const RealestateByID = async (req, res) =>{
             ) AS location,
             real_estate_name($1, l.id, tt.name, area), u.phone, ott.translation AS owner_type,
 
-            (SELECT COUNT(count) 
-                FROM view_count WHERE real_estate_id = re.id AND view_type_id = 2 AND is_active=true) AS view_count,
-            
             (SELECT json_agg(image) FROM (
                 SELECT destination FROM real_estate_images rei
                 WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
@@ -203,7 +200,7 @@ const RealestateByID = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [id])
-        console.log(rows)
+        // console.log(rows)
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)

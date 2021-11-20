@@ -2,7 +2,7 @@ const express = require('express')
 const router = new express.Router()
 const UserController = require('../controller/UserController.js')
 const upload = require('../middleware/upload.js')
-const {SchemaMiddleware} = require('../middleware/SchemaMiddleware.js')
+const {SchemaMiddleware, QuerySchemaMiddleware, ParamsSchemaMiddleware} = require('../middleware/SchemaMiddleware.js')
 const Schema = require('../schemas/UserSchema.js')
 const {resize_image} = require('../middleware/resize')
 const { VerifyUserAccessToken, VerifyCodeAccessToken } = require('../middleware/AuthMiddleware.js')
@@ -16,12 +16,12 @@ router.post('/forgot-password', UserController.ForgotPassword)
 router.post('/change-password', VerifyCodeAccessToken, UserController.ChangePassword)
 
 
-router.post('/:lang/add-real-estate', VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
+router.post('/:lang/add-real-estate', ParamsSchemaMiddleware(Schema.LangSchema), VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
 
 
-router.get('/:lang/user-real-estates', VerifyUserAccessToken,  UserController.UserRealEstates)
-router.get('/:lang/user-real-estate/:id', VerifyUserAccessToken, UserController.GetUserRealEstateByID)
-router.post('/:lang/add-real-estate-images/:id',VerifyUserAccessToken, upload.array("picture", 15), resize_image, UserController.AddImage )
+router.get('/:lang/user-real-estates',  ParamsSchemaMiddleware(Schema.LangSchema), VerifyUserAccessToken,  UserController.UserRealEstates)
+router.get('/:lang/user-real-estate/:id', ParamsSchemaMiddleware(Schema.LangSchema),  ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, UserController.GetUserRealEstateByID)
+router.post('/:lang/add-real-estate-images/:id',  ParamsSchemaMiddleware(Schema.LangSchema),  ParamsSchemaMiddleware(Schema.IDSchema), upload.array("picture", 15), resize_image, UserController.AddImage )
 router.post('/:lang/update-real-estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
 
 

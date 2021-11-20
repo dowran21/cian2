@@ -20,6 +20,52 @@ const SchemaMiddleware = (schema) => {
   }
 };
 
+const QuerySchemaMiddleware = (schema) => { 
+  return async (req, res, next) => { 
+    const { error } = schema.validate(req.query, { abortEarly: false });
+    if (error == null) { 
+      next(); 
+    } else { 
+      const { details } = error;
+      let resp = [];
+      details.forEach(item => {
+        let err = {
+          type:"manual",
+        }
+        err["name"] = item.path[0];
+        err["message"] = item.message
+        resp = resp.concat(err)
+      });
+      console.log(resp);
+      res.status(301).json({ error: resp }) 
+    } 
+  }
+}; 
+
+const ParamsSchemaMiddleware = (schema) => { 
+  return async (req, res, next) => { 
+    const { error } = schema.validate(req.query, { abortEarly: false });
+    if (error == null) { 
+      next(); 
+    } else { 
+      const { details } = error;
+      let resp = [];
+      details.forEach(item => {
+        let err = {
+          type:"manual",
+        }
+        err["name"] = item.path[0];
+        err["message"] = item.message
+        resp = resp.concat(err)
+      });
+      console.log(resp);
+      res.status(301).json({ error: resp }) 
+    } 
+  }
+};
+
 module.exports = {
     SchemaMiddleware,
+    QuerySchemaMiddleware,
+    ParamsSchemaMiddleware
 }

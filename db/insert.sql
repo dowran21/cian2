@@ -28,7 +28,7 @@ INSERT INTO owner_type_translations (language_id, translation, owner_id) VALUES
 (1, 'eýesi', 1),
 (2, 'собственник', 1),
 (1, 'agent', 2),
-(1, 'агент', 1);
+(2, 'агент', 2);
 
 
 
