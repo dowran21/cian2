@@ -432,7 +432,8 @@ req.body should be like this;
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
         const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
-        return res.status(status.success).json(rows[0])
+        console.log(rows[0])
+        return res.status(status.success).json({"rows":rows[0]})
 
     } catch(e) {
         console.log(e)
@@ -442,10 +443,13 @@ req.body should be like this;
 }
 
 const AddImage = async (req, res) =>{
+    // console.log(req)
+    // console.log(req.body)
+    // console.log(req.fields)
     const files = req.files
     // console.log(req)
-    console.log("-------------------------------------------------------------------")
-    console.log(req.files)
+    // console.log("-------------------------------------------------------------------")
+    console.log(req.files.picture)
     // console.log(req.file)
     const {id} = req.params
     if (files?.length){

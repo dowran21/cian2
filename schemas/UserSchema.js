@@ -100,8 +100,6 @@ const Schema = {
     }),
 
     RealEstateFilter:Joi.object({
-        page:Joi.number(),
-        limit:Joi.number(),
         location_id: Joi.number().label("Yerleshyan yeri").messages({
             'number.pattern.base':"it hsould be a number"
         }),
@@ -132,7 +130,8 @@ const Schema = {
     }),
 
     IDSchema:Joi.object({
-        id:Joi.number()
+        id:Joi.number(),
+        lang:Joi.string().min(2).max(2)
     }),
     
     TypeSchema:Joi.object({
@@ -141,11 +140,17 @@ const Schema = {
 
     CategoryTypeSchema:Joi.object({
         type_id:Joi.number(),
-        category_id:Joi.number()
+        category_id:Joi.number(),
+        lang:Joi.string().min(2).max(2)
     }),
 
     MainTypeSchema:Joi.object({
         main_type_id:Joi.number()
+    }),
+    MainTypeMult:Joi.object({
+        main_id:Joi.number(),
+        cat_id:Joi.number(),
+        lang:Joi.string().min(2).max(2)
     })
 }
 

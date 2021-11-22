@@ -44,7 +44,7 @@ const QuerySchemaMiddleware = (schema) => {
 
 const ParamsSchemaMiddleware = (schema) => { 
   return async (req, res, next) => { 
-    const { error } = schema.validate(req.query, { abortEarly: false });
+    const { error } = schema.validate(req.params, { abortEarly: false });
     if (error == null) { 
       next(); 
     } else { 

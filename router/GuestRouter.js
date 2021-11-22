@@ -14,9 +14,9 @@ router.get('/:lang/get-filter-count', ParamsSchemaMiddleware(Schema.LangSchema),
 router.get('/:lang/flat-filter', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.FlatFilter)
 router.get('/:lang/type-images/:main_type_id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.MainTypeSchema), GuestController.TypeImages)
 
-router.get('/:lang/types/:cat_id/:main_id', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetTypesCategory)
+router.get('/:lang/types/:cat_id/:main_id', ParamsSchemaMiddleware(Schema.MainTypeMult), GuestController.GetTypesCategory)
 router.get('/:lang/main-locations', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetLocations)
-router.get('/:lang/region-locations/:id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRegions)
+router.get('/:lang/region-locations/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRegions)
 
 router.post('/:lang/get-wish-list', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetWishList)
 
@@ -24,7 +24,7 @@ router.post('/:lang/get-wish-list', ParamsSchemaMiddleware(Schema.LangSchema), G
 
 router.get('/room-specification', GuestController.RoomSpecController)
 
-router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.CategoryTypeSchema), GuestController.GetSpecificationsForType)
+router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
 // router.get('/:lang/spec-for-type-search/:type_id', ParamsSchemaMiddleware(Schema.LangSchema),  GuestController.GetSpecForTypeSearch)
 // router.get('/:lang/not-required-specifications-for-type/:type_id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.TypeSchema), GuestController.GetNotRequiredSpecificationsForType)
 
