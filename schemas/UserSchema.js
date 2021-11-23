@@ -110,7 +110,7 @@ const Schema = {
             'number.pattern.base':"it hsould be a number"
         }),
         category_id: Joi.number().label("Yerleshyan yeri").messages({
-            'number.pattern.base':"it hsould be a number"
+            'number.pattern.base':"it should be a number"
         }),
         price:Joi.object({
             min:Joi.number(),

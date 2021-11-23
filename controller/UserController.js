@@ -397,19 +397,29 @@ req.body should be like this;
                             VALUES`
     for (i=0; i<specifications?.length; i++){
         let specification = specifications[i]
-        if (specification.values){
+        if (specification.values.length){
+            console.log(specification.values, "spec values themelves")
+            console.log(specification.values.length, "spec values length")
             const values = specification.values
+            if (i!=0){
+                spec_value_part += `,`
+            } 
             for (j=0; j<values?.length; j++){
+                
                 spec_value_part += ` ((SELECT id FROM inserted), ${specification.id}, ${values[j]})`
                 if (j!=(values?.length-1)){
                     spec_value_part += `,`;
                 }
             }
-        if (i!=(specifications?.length-1)){
-            spec_value_part += `,`
-        }
+        
         }
     }
+    // let spec_value_part = `INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
+    //                         VALUES ${specifications.map(item => {
+    //                             if(item.values.length){
+    //                                 item.values.map(val => (`((SELECT id FROM inserted), ${item.id}, ${val}`)).join(`,`)
+    //                             }
+    //                         }).join(`,`)}`
 
 
     try {
@@ -431,8 +441,10 @@ req.body should be like this;
 
             ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
         `
+        // console.log(query_text)
         const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
-        console.log(rows[0])
+        // console.log(rows[0])
+        
         return res.status(status.success).json({"rows":rows[0]})
 
     } catch(e) {
@@ -443,13 +455,13 @@ req.body should be like this;
 }
 
 const AddImage = async (req, res) =>{
-    // console.log(req)
+    // console.log("hello i am in controller")
     // console.log(req.body)
     // console.log(req.fields)
     const files = req.files
     // console.log(req)
     // console.log("-------------------------------------------------------------------")
-    console.log(req.files.picture)
+    // console.log(req.files)
     // console.log(req.file)
     const {id} = req.params
     if (files?.length){
@@ -459,7 +471,9 @@ const AddImage = async (req, res) =>{
                 VALUES ${files?.map(item => `(${id}, '${item.path}')`).join(',')}
         `
         try {
+            console.log("i am in try")
             const {rows} = await database.query(query_text, [])
+            console.log("i am after try")
             return res.status(200).json(true)
         } catch (e) {
             console.log(e)

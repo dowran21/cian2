@@ -42,7 +42,7 @@ app.get('*', function (req, res) {
 
 app.use(cookieParser())
 
-cron_job()
+// cron_job()
 
 
 
