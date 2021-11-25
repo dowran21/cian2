@@ -526,20 +526,25 @@ const CountForFilter = async (req, res) =>{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
     const query_text =`
-        SELECT COUNT (re.id) FROM (
-            SELECT CISTINCT ON (re.id) re.id
+        SELECT COUNT (id) FROM (
+            SELECT DISTINCT ON (re.id) re.id
             FROM real_estates re  
-                LEFT JOIN vip_real_estates vre 
-                    ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
                 INNER JOIN ctypes cp 
                     ON cp.id = re.ctype_id
+                INNER JOIN types t
+                    ON t.id = cp.type_id
+                INNER JOIN categories c 
+                    ON c.id = cp.category_id
                 INNER JOIN real_estate_specification_values resv
                     ON resv.real_estate_id = re.id
-                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL 
-                    ${where_part} ${spec_part})   
+                LEFT JOIN locations lc 
+                    ON lc.id = re.location_id
+                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 
+                    ${where_part} ${spec_part}) AS real_estaates
     `
     try {
-        const {rows} = await database.query(query_text, [ip, lang])        
+        // console.log(query_text)
+        const {rows} = await database.query(query_text, [])        
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)

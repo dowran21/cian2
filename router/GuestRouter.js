@@ -21,13 +21,10 @@ router.get('/:lang/region-locations/:id', ParamsSchemaMiddleware(Schema.IDSchema
 
 router.post('/:lang/get-wish-list', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetWishList)
 
-// router.get('/:lang/types', GuestController.GetTypes)
 
 router.get('/room-specification', GuestController.RoomSpecController)
 
 router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
-// router.get('/:lang/spec-for-type-search/:type_id', ParamsSchemaMiddleware(Schema.LangSchema),  GuestController.GetSpecForTypeSearch)
-// router.get('/:lang/not-required-specifications-for-type/:type_id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.TypeSchema), GuestController.GetNotRequiredSpecificationsForType)
 
 
 
