@@ -11,6 +11,7 @@ router.get('/:lang/categories-types', ParamsSchemaMiddleware(Schema.LangSchema),
 router.get('/:lang/real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRealEstateByID)
 router.get('/:lang/get-filter-count', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.CountForFilter)
 
+router.get('/:lang/get-real-estate-positions', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.RealEstatePositions)
 router.get('/:lang/flat-filter', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.FlatFilter)
 router.get('/:lang/type-images/:main_type_id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.MainTypeSchema), GuestController.TypeImages)
 

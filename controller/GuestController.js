@@ -154,6 +154,184 @@ const AllRealEstate = async (req, res) =>{
     
     //-------------------specification part-----------------//
     if (spec_values?.length){
+        spec_part += ` AND (${spec_values?.map(item =>` resv.spec_value_id = ${item}`).join('OR')})`      
+    }
+    
+    //----------------area part--------------------//
+    if (area?.min && area?.max){
+        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
+    }else if(area?.min && !area?.max){
+        where_part += ` AND re.area > ${area?.min}`
+    }else if(!area?.min && area?.max){
+        where_part += ` AND re.area < ${area.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //---------------price-----------------------//
+    if (price?.min && price?.max){
+        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
+    }else if(price?.min && !price?.max){
+        where_part += ` AND rep.price > ${price.min}`
+    }else if(!price?.min && price?.max){
+        where_part += ` AND rep.price < ${price.max}`
+    }else{
+        where_part +=``
+    }
+    
+    //----------about to have an image---------// 
+    if (images && images !== null && images !== 'undefined'){
+        image_part = `INNER JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }else{
+        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    }
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
+    let vip_limit = ``
+    if (limit){
+        // console.log("i am in limit if")
+        vip_limit = limit/2;
+    }else{
+        vip_limit = 5;
+    }
+    if (page && limit){
+        offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
+    }else{
+        offSet = ``
+    }    
+    
+    const query_text =`
+    WITH selected AS 
+        (SELECT DISTINCT ON (re.id) re.id, rep.price, u.phone::text, re.created_at::text, u.full_name,
+        concat(
+            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+        
+        (SELECT json_agg(dest) FROM (
+            SELECT rei.destination FROM real_estate_images rei
+            WHERE rei.real_estate_id = re.id AND rei.is_active = true
+        )dest) AS images
+
+        FROM real_estates re 
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            LEFT JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+            LEFT JOIN languages l 
+                ON l.language_code = $2
+            LEFT JOIN type_translations tt 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            LEFT JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
+            LEFT JOIN users u
+                ON u.id = re.user_id
+            INNER JOIN types t
+                ON t.id = cp.type_id
+            INNER JOIN categories c 
+                ON c.id = cp.category_id
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}
+        ORDER BY  re.id DESC  ${offSet}), 
+
+                    
+    inserted AS (INSERT INTO view_address 
+        SELECT $1,  id, 1 FROM selected 
+        ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING)
+    
+    SELECT
+         (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            INNER JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
+            INNER JOIN types t
+                ON t.id = cp.type_id
+            INNER JOIN categories c 
+                ON c.id = cp.category_id
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part} ${spec_part}   
+        ) AS count),
+
+        (SELECT json_agg(res) FROM 
+            selected 
+        res) AS real_estates_all
+        `
+    try {
+        // console.log(query_text)
+        const {rows} = await database.query(query_text, [ip, lang])
+        let i = 0;
+        let j = 0;
+        let k = 0;
+        let real_estates_all = []
+        if (rows[0].vip_real_estates){
+            for ( k; k<(rows[0].real_estates_all.length+rows[0].vip_real_estates.length); k++){
+                if (k%3 == 2 && rows[0].vip_real_estates[i]){
+                    real_estates_all[k] = rows[0].vip_real_estates[i];
+                    i++;
+                }else{
+                    if(rows[0].real_estates_all[k]){
+                        real_estates_all[k] = rows[0].real_estates_all[j]
+                        j++
+                    }
+                }
+            }
+        }else{
+            real_estates_all = rows[0].real_estates_all
+        }
+        // console.log(rows);
+        return res.status(status.success).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).json({"message":e.message})
+    }
+
+}
+
+const RealEstatePositions = async (req, res) =>{
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {lang} = req.params
+    let offSet = ``
+    let ctype_part =``
+    let spec_part = ``
+    let where_part = ``
+    let image_part =``
+    let order_part = `ORDER BY re.id DESC`
+    
+    //--------------------Pagination part ---------------------//
+    if (page !== 'null' && limit !== 'null' && page && limit){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    
+    ///------------------------main_type_id ------------------//
+    if(main_type_id){
+        where_part += ` AND t.main_type_id = ${main_type_id}`
+    }
+    //--------------location part -----------------------//
+    if (location_id && location_id !== 'null'){
+        where_part += ` AND (lc.id = ${location_id} OR lc.main_location_id = ${location_id})`
+    }
+
+    //---------------------ctype part -----------------------//
+    if (type_id !== 'null' && type_id){
+        where_part += ` AND cp.type_id = ${type_id}` 
+    }
+
+    if (category_id && category_id !== 'null'){
+        where_part += ` AND cp.category_id = ${category_id}` 
+    }
+    
+    //-------------------specification part-----------------//
+    if (spec_values?.length){
         spec_part += ` AND (${spec_values?.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
     }
     
@@ -199,53 +377,16 @@ const AllRealEstate = async (req, res) =>{
     }else{
         offSet = ``
     }    
-    let vip_estates = `
-    selected_vip AS (
-        SELECT re.id, rep.price::text, re.created_at::text,
-        concat(
-            CASE 
-                WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
-                END ||
-            lt.translation) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, re.area)),
+    const position_part = `
+    (SELECT json_agg(pos) FROM(
+        SELECT position[0] AS x, position[1] AS y
+            FROM real_estates 
+            WHERE real_estates.id = $1                 
+    )pos) AS position,`
     
-    (SELECT json_agg(dest) FROM (
-        SELECT rei.destination FROM real_estate_images rei
-        WHERE rei.real_estate_id = re.id AND rei.is_active = true LIMIT 3
-    )dest) AS images
-
-    FROM real_estates re 
-        INNER JOIN ctypes cp 
-            ON cp.id = re.ctype_id
-        INNER JOIN real_estate_prices rep 
-            ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-        INNER JOIN languages l 
-            ON l.language_code = $2
-        INNER JOIN type_translations tt 
-            ON tt.type_id = cp.type_id AND tt.language_id = l.id
-        INNER JOIN vip_real_estates vre 
-            ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-        LEFT JOIN location_translations lt
-            ON lt.location_id = re.location_id AND lt.language_id = l.id
-        LEFT JOIN locations lc 
-            ON lc.id = re.location_id
-        LEFT JOIN location_translations ltt
-            ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-    WHERE re.is_active = 'true' AND re.status_id <> 2 
-        AND re.status_id <> 4 AND vre.id IS NOT NULL 
-    ORDER BY random() LIMIT ${vip_limit}
-    )`
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
-        concat(
-            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
-        
-        (SELECT json_agg(dest) FROM (
-            SELECT rei.destination FROM real_estate_images rei
-            WHERE rei.real_estate_id = re.id AND rei.is_active = true
-        )dest) AS images
+        (SELECT DISTINCT ON (re.id) re.id, ${position_part}
 
         FROM real_estates re 
             INNER JOIN ctypes cp 
@@ -271,15 +412,11 @@ const AllRealEstate = async (req, res) =>{
             INNER JOIN types t
                 ON t.id = cp.type_id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
-        ORDER BY  re.id DESC  ${offSet}), 
+        ORDER BY  re.id DESC  ), 
 
                     
     inserted AS (INSERT INTO view_address 
         SELECT $1,  id, 1 FROM selected 
-        ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING), ${vip_estates}, 
-    
-    inserted_vips AS (INSERT INTO view_address
-        SELECT $1, id, 1 FROM selected_vip
         ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING)
     
     SELECT
@@ -294,16 +431,12 @@ const AllRealEstate = async (req, res) =>{
                 ON resv.real_estate_id = re.id
             INNER JOIN types t
                 ON t.id = cp.type_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}   
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}   
         ) AS count),
 
         (SELECT json_agg(res) FROM 
             selected 
-        res) AS real_estates_all,
-        
-        (SELECT json_agg(s) FROM 
-            selected_vip 
-        s) AS vip_real_estates
+        res) AS real_estates_all
         `
     try {
         const {rows} = await database.query(query_text, [ip, lang])
@@ -754,4 +887,5 @@ module.exports = {
     TypeImages,
     GetWishList,
     RoomSpecController,
+    RealEstatePositions
 }   

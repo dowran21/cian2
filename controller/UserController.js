@@ -137,7 +137,7 @@ const UserLogin = async (req, res) =>{
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
     const {phone, password} = req.body
-    console.log(phone, password)
+    console.log(req.body)
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     console.log(code)
     const query_text = `
@@ -161,7 +161,7 @@ const UserLogin = async (req, res) =>{
 
         if (!user.bann){
             let compare = await UserHelper.ComparePassword(password, user.password)
-            
+            console.log(compare)
             if(!user.ip_address || !user.activated){
                 console.log("I am i first if")
                 let count = 0;
@@ -278,8 +278,10 @@ const ChangePassword = async (req, res) =>{
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
     const {password, code} = req.body
+    console.log(req.body)
     const user_id = req.user.id
-    const hashed_password = UserHelper.HashPassword(password)
+    const hashed_password = await UserHelper.HashPassword(password)
+    console.log(hashed_password)
     let ipr = {}
     const ip_query = `
         SELECT * FROM access_ip WHERE user_id = ${user_id} AND ip_address = '${ip}' AND code = ${code}
@@ -312,26 +314,35 @@ const ChangePassword = async (req, res) =>{
 const UserRealEstates = async (req, res) =>{
     const {lang} = req.params
     const user_id = req.user.id
+    console.log(user_id)
     try {
         const query_text = `
-            SELECT re.id, re.area, rep.price, 
-                real_estate_name(re.id, l.id, tt.name, re.area)
+            SELECT re.id, rep.price, 
+                concat(CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+                
+                (SELECT real_estate_name(re.id, l.id, tt.name, area)),
                 
                 (SELECT json_agg(image) FROM (
                     SELECT rei.destination FROM real_estate_images rei
                     WHERE rei.real_estate_id = re.id
-                )image) AS images, ret.description
+                )image) AS images
             
-                FROM real_estate re
+                FROM real_estates re
 
             INNER JOIN languages l 
-                ON l.language_code = ${lang}
+                ON l.language_code = '${lang}'
             INNER JOIN ctypes cp
-                    ON cp.id = re.ctype_id
+                ON cp.id = re.ctype_id
             INNER JOIN type_translations tt
-                    ON tt.type_id = cp.type_id AND tt.language_id = l.id 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id 
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
             INNER JOIN real_estate_prices rep 
-                ON rep.real_estate_id = re.id AND rep.is_active = false
+                ON rep.real_estate_id = re.id AND rep.is_active = true
             WHERE re.user_id = ${user_id}
         `
         const {rows} = await database.query(query_text, [])
@@ -363,7 +374,7 @@ req.body should be like this;
 *****************************/
 
     const {type_id, category_id, phone, area, position, price, descriptions, owner_id, specifications, location_id } = req.body
-    console.log(req.body)
+    // console.log(req.body)
     const user_id = req.user.id
     try {
         const user_query = `
@@ -393,35 +404,33 @@ req.body should be like this;
     }
     let i = 0;
     let j=0;
-    let spec_value_part = `INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
-                            VALUES`
-    for (i=0; i<specifications?.length; i++){
-        let specification = specifications[i]
-        if (specification.values.length){
-            console.log(specification.values, "spec values themelves")
-            console.log(specification.values.length, "spec values length")
-            const values = specification.values
-            if (i!=0){
-                spec_value_part += `,`
-            } 
-            for (j=0; j<values?.length; j++){
-                
-                spec_value_part += ` ((SELECT id FROM inserted), ${specification.id}, ${values[j]})`
-                if (j!=(values?.length-1)){
-                    spec_value_part += `,`;
+    let spec_value_part = ``
+    if (specifications && specifications.length){
+
+    
+        spec_value_part = `, insert_spec AS (INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
+                                VALUES`
+        for (i=0; i<specifications?.length; i++){
+            let specification = specifications[i]
+            if (specification.values.length){
+                console.log(specification.values, "spec values themelves")
+                console.log(specification.values.length, "spec values length")
+                const values = specification.values
+                if (i!=0){
+                    spec_value_part += `,`
+                } 
+                for (j=0; j<values?.length; j++){
+                    
+                    spec_value_part += ` ((SELECT id FROM inserted), ${specification.id}, ${values[j]})`
+                    if (j!=(values?.length-1)){
+                        spec_value_part += `,`;
+                    }
                 }
+            
             }
-        
         }
+        spec_value_part += ` ) `
     }
-    // let spec_value_part = `INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
-    //                         VALUES ${specifications.map(item => {
-    //                             if(item.values.length){
-    //                                 item.values.map(val => (`((SELECT id FROM inserted), ${item.id}, ${val}`)).join(`,`)
-    //                             }
-    //                         }).join(`,`)}`
-
-
     try {
         const query_text = `
             WITH selected AS (
@@ -439,9 +448,9 @@ req.body should be like this;
                 INSERT INTO real_estate_translations(description, real_estate_id, language_id)
                 VALUES ${descriptions?.map(item => `('${item.description}', (SELECT id FROM inserted), ${item.language_id})`).join(',')}
 
-            ), insert_spec AS (${spec_value_part}) SELECT id FROM inserted
+            )${spec_value_part} SELECT id FROM inserted
         `
-        // console.log(query_text)
+        console.log(query_text)
         const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
         // console.log(rows[0])
         
@@ -457,11 +466,11 @@ req.body should be like this;
 const AddImage = async (req, res) =>{
     // console.log("hello i am in controller")
     // console.log(req.body)
-    // console.log(req.fields)
+    console.log(req.fields)
     const files = req.files
     // console.log(req)
     // console.log("-------------------------------------------------------------------")
-    // console.log(req.files)
+    console.log(req.files)
     // console.log(req.file)
     const {id} = req.params
     if (files?.length){
@@ -477,7 +486,7 @@ const AddImage = async (req, res) =>{
             return res.status(200).json(true)
         } catch (e) {
             console.log(e)
-            return res.status(400).json(false)
+            return res.status(status.error).json(false)
         }
     }
     return res.status(status.bad).json({"message":"there is no file"})
