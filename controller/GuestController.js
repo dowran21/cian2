@@ -662,7 +662,9 @@ const GetRealEstateByID = async (req, res) => {
                     END ||
                 lt.translation
             ) AS location,
-            real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type,
+            real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type, 
+            u.full_name, u.id::text AS user_id,
+            (SELECT COUNT(real.id)::text FROM real_estates real WHERE real.user_id = re.user_id) AS user_real_estate_count,
             
             (SELECT json_agg(image) FROM (
                 SELECT destination FROM real_estate_images rei
@@ -881,6 +883,65 @@ const RoomSpecController = async (req, res) =>{
     }
 }
 
+const GetUserRealEstates = async (req, res) =>{
+    const {id,  lang} = req.params
+    const {page, limit} = req.query
+    let offSet = ``
+    if(page && limit){
+        offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    const query_text = `
+        SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
+        concat(
+            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+        
+        (SELECT json_agg(dest) FROM (
+            SELECT rei.destination FROM real_estate_images rei
+            WHERE rei.real_estate_id = re.id AND rei.is_active = true
+        )dest) AS images, 
+        ret.description
+
+        FROM real_estates re 
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            LEFT JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+            LEFT JOIN languages l 
+                ON l.language_code = $2
+            INNER JOIN real_estate_translations ret
+                ON ret.real_estate_id = re.id AND ret.language_id = l.id
+            LEFT JOIN type_translations tt 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            LEFT JOIN real_estate_specification_values resv
+                ON resv.real_estate_id = re.id
+            LEFT JOIN users u
+                ON u.id = re.user_id
+            INNER JOIN types t
+                ON t.id = cp.type_id
+            INNER JOIN categories c 
+                ON c.id = cp.category_id
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND re.user_id = $1
+        ORDER BY  re.id DESC  ${offSet}
+    `
+    try {
+        const {rows} = await database.query(query_text, [id, lang])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecForTypeSearch,
@@ -897,5 +958,6 @@ module.exports = {
     TypeImages,
     GetWishList,
     RoomSpecController,
-    RealEstatePositions
+    RealEstatePositions,
+    GetUserRealEstates
 }   

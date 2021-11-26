@@ -9,7 +9,9 @@ router.get('/languages', GuestController.Languages)
 router.get('/:lang/all-real-estates', ParamsSchemaMiddleware(Schema.LangSchema), QuerySchemaMiddleware(Schema.RealEstateFilter), GuestController.AllRealEstate)
 router.get('/:lang/categories-types', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.TypeCategoryController)
 router.get('/:lang/real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRealEstateByID)
+router.get('/:lang/user-real-estates/:id', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetUserRealEstates )
 router.get('/:lang/get-filter-count', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.CountForFilter)
+
 
 router.get('/:lang/get-real-estate-positions', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.RealEstatePositions)
 router.get('/:lang/flat-filter', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.FlatFilter)
