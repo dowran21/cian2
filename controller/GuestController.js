@@ -202,7 +202,7 @@ const AllRealEstate = async (req, res) =>{
     
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price, u.phone::text, re.created_at::text, u.full_name,
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -210,7 +210,8 @@ const AllRealEstate = async (req, res) =>{
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei
             WHERE rei.real_estate_id = re.id AND rei.is_active = true
-        )dest) AS images
+        )dest) AS images, 
+        ret.description
 
         FROM real_estates re 
             INNER JOIN ctypes cp 
@@ -219,6 +220,8 @@ const AllRealEstate = async (req, res) =>{
                 ON rep.real_estate_id = re.id AND rep.is_active = 'true'
             LEFT JOIN languages l 
                 ON l.language_code = $2
+            INNER JOIN real_estate_translations ret
+                ON ret.real_estate_id = re.id AND ret.language_id = l.id
             LEFT JOIN type_translations tt 
                 ON tt.type_id = cp.type_id AND tt.language_id = l.id
             LEFT JOIN vip_real_estates vre 
@@ -790,7 +793,9 @@ const GetWishList = async (req, res) =>{
     const {real_estates} = req.body
     console.log(req.body)
     // console.log(real_estates)
-   
+   if(!real_estates.length){
+        return res.status(status.success).json({"rows":[]})
+   }
     try {
         const query_text = `
         SELECT 
@@ -821,7 +826,7 @@ const GetWishList = async (req, res) =>{
                      ON lc.id = re.location_id
                  LEFT JOIN location_translations ltt
                      ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-                 INNER JOIN real_estate_specification_values resv
+                 LEFT JOIN real_estate_specification_values resv
                      ON resv.real_estate_id = re.id
                  INNER JOIN users u
                      ON u.id = re.user_id
@@ -833,7 +838,7 @@ const GetWishList = async (req, res) =>{
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)
-        return res.status(status.success).send(false)
+        return res.status(status.error).send(false)
     }
 }
 
