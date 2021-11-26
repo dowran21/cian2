@@ -89,7 +89,11 @@ const Schema = {
             lang_id:Joi.number().required(),
             name:Joi.string().required()
         }))
-    })
+    }),
+
+    IdSchema:Joi.object({
+        id:Joi.number().min(1).required()
+    }),
 }
 
 module.exports = Schema
