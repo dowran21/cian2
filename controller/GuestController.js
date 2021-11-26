@@ -942,6 +942,8 @@ const GetUserRealEstates = async (req, res) =>{
 
 }
 
+
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecForTypeSearch,

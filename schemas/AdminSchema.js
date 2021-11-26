@@ -47,7 +47,49 @@ const Schema = {
             'any.required': `{#label} hökman gerek`,
         }),
     }),
-    
+
+    AddSpecification: Joi.object({
+        absolute_name:Joi.string().min(3).max(250).required(),
+        is_required:Joi.boolean().required(),
+        is_multiple:Joi.boolean().required(),
+        translations:Joi.array().items(Joi.object({
+            lang_id:Joi.number().required(),
+            name:Joi.string().required()
+            })
+        ),
+        absolute_values:Joi.array().required(),
+        value_translations:Joi.array().required(),
+    }),
+
+    AddSpecificationValue: Joi.object({
+        absolute_value:Joi.string().required(),
+        value_translations:Joi.array().items(Joi.object({
+            lang_id:Joi.number().required(),
+            name:Joi.string().required()
+        }))
+    }),
+
+    AddSpecToType: Joi.array().required().items(Joi.object({
+        spec_id: Joi.number().min(1).required(),
+        position: Joi.number().min(1).required()
+    })),
+
+    AddMainLocation: Joi.object({
+        absolute_name:Joi.string().required(),
+        translations:Joi.array().items(Joi.object({
+            lang_id:Joi.number().required(),
+            name:Joi.string().required()
+        }))
+    }),
+
+    AddLocation:Joi.object({
+        absolute_name:Joi.string().required(),
+        main_location_id: Joi.number().required(),
+        translations:Joi.array().items(Joi.object({
+            lang_id:Joi.number().required(),
+            name:Joi.string().required()
+        }))
+    })
 }
 
 module.exports = Schema
