@@ -15,7 +15,7 @@ router.post('/add-operator',VerifyAdminAccessToken, SchemaMiddleware(Schema.AddO
 router.post('/delete-operator/:id', ParamsSchemaMiddleware(Schema.IdSchema), VerifyAdminAccessToken, AdminController.DeleteOperator)
 router.post('/update-operator/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), SchemaMiddleware(Schema.UpdateOperator), AdminController.UpdateOperator)
 // router.get('/get-deleted-operators', VerifyAdminAccessToken, AdminController.GetDeletedOperators)
-router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.RecoveryOperator)
+// router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.RecoveryOperator)
 router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators)
 
 router.post('/add-specification', VerifyAdminAccessToken, SchemaMiddleware(Schema.AddSpecification), AdminController.AddSpecification)
