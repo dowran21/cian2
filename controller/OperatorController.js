@@ -44,8 +44,8 @@ const LoadOperator = async (req, res) =>{
         const user = rows[0]
         const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
         const access_token = await AdminHelper.GenerateOperatorAccessToken(data)
-        const refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
-        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+        // const refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
+        return res.status(status.success).json({"access_token":access_token, "data":data})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)

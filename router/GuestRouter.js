@@ -25,6 +25,7 @@ router.post('/:lang/get-wish-list', ParamsSchemaMiddleware(Schema.LangSchema), G
 
 
 router.get('/room-specification', GuestController.RoomSpecController)
+router.get('/:lang/types-of-category/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetTypesOfCategory)
 
 router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
 

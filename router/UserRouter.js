@@ -5,7 +5,7 @@ const upload = require('../middleware/upload.js')
 const {SchemaMiddleware, QuerySchemaMiddleware, ParamsSchemaMiddleware} = require('../middleware/SchemaMiddleware.js')
 const Schema = require('../schemas/UserSchema.js')
 const {resize_image} = require('../middleware/resize')
-const { VerifyUserAccessToken, VerifyCodeAccessToken } = require('../middleware/AuthMiddleware.js')
+const { VerifyUserAccessToken, VerifyCodeAccessToken, VerifyUserRefreshToken } = require('../middleware/AuthMiddleware.js')
 
 
 router.post('/registration', SchemaMiddleware(Schema.Registration), UserController.UserRegistration)
@@ -14,7 +14,7 @@ router.post('/verify-code', VerifyCodeAccessToken, UserController.VerifyUserCode
 router.post('/send-code-again', VerifyCodeAccessToken, UserController.SendCodeAgain)
 router.post('/forgot-password', UserController.ForgotPassword)
 router.post('/change-password', VerifyCodeAccessToken, UserController.ChangePassword)
-
+router.get('/load-user', VerifyUserRefreshToken, UserController.LoadUser)
 
 router.post('/:lang/add-real-estate', ParamsSchemaMiddleware(Schema.LangSchema), VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
 

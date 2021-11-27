@@ -5,17 +5,12 @@ const SchemaMiddleware = (schema) => {
       next(); 
     } else { 
       const { details } = error;
-      let resp = [];
+      let resp = {};
       details.forEach(item => {
-        let err = {
-          type:"manual",
-        }
-        err["name"] = item.path[0];
-        err["message"] = item.message
-        resp = resp.concat(err)
+        resp[item.path[0]] = item.message
       });
       console.log(resp);
-      res.status(301).json({ error: resp }) 
+      res.status(422).json({ error: resp }) 
     } 
   }
 };
@@ -29,15 +24,10 @@ const QuerySchemaMiddleware = (schema) => {
       const { details } = error;
       let resp = [];
       details.forEach(item => {
-        let err = {
-          type:"manual",
-        }
-        err["name"] = item.path[0];
-        err["message"] = item.message
-        resp = resp.concat(err)
+        resp[item.path[0]] = item.message
       });
       console.log(resp);
-      res.status(301).json({ error: resp }) 
+      res.status(422).json({ error: resp }) 
     } 
   }
 }; 
@@ -51,15 +41,10 @@ const ParamsSchemaMiddleware = (schema) => {
       const { details } = error;
       let resp = [];
       details.forEach(item => {
-        let err = {
-          type:"manual",
-        }
-        err["name"] = item.path[0];
-        err["message"] = item.message
-        resp = resp.concat(err)
+        resp[item.path[0]] = item.message
       });
       console.log(resp);
-      res.status(301).json({ error: resp }) 
+      res.status(422).json({ error: resp }) 
     } 
   }
 };

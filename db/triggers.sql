@@ -23,7 +23,6 @@ CREATE TRIGGER access_ip_update
     EXECUTE PROCEDURE update_denied_count();
 
 
-
 CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_name VARCHAR, area NUMERIC(8)) 
     RETURNS VARCHAR AS $real_name$
     DECLARE
@@ -47,12 +46,15 @@ CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_n
                                 ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
                     WHERE resv.spec_id = 1 AND resv.real_estate_id = re_id) ||
                 CASE 
-                    WHEN language_id = 1 THEN ' otagly '
-                    WHEN language_id = 2 THEN ' комнатная '
+                    WHEN language_id = 1 THEN ' otag.'
+                    WHEN language_id = 2 THEN ' комн.'
                 END
             END,
-            t_name, ', ', area, ' ' ||
-            
+            t_name, E'\u00B7' , area ||
+                CASE 
+                    WHEN language_id = 1 THEN ' m'
+                    WHEN language_id = 2 THEN ' м'
+                END, E'u00B2' ||
             CASE WHEN            
             (SELECT sv.absolute_value
                 FROM specification_values sv

@@ -868,11 +868,14 @@ const TypeImages = async (req, res) =>{
 
 const RoomSpecController = async (req, res) =>{
     const query_text = `
-        SELECT id, absolute_value 
-        FROM specification_values
-        WHERE spec_id = 1
-        ORDER BY CASE WHEN absolute_value ~ '\\d+' THEN cast(absolute_value as 
-            integer) ELSE null END ASC, absolute_value ASC
+
+        SELECT 1 AS spec_id, (SELECT json_agg(ro) FROM
+            (SELECT id, absolute_value 
+            FROM specification_values
+            WHERE spec_id = 1
+            ORDER BY CASE WHEN absolute_value ~ '\\d+' THEN cast(absolute_value as 
+                integer) ELSE null END ASC, absolute_value ASC
+        )ro) AS rooms
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -942,7 +945,27 @@ const GetUserRealEstates = async (req, res) =>{
 
 }
 
-
+const GetTypesOfCategory = async (req, res) =>{
+    const {id} = req.params
+    const query_text = `
+        SELECT t.id, tt.name, cpi.destination 
+        FROM types t  
+            INNER JOIN type_translations tt
+                ON tt.type_id = t.id AND language_id = 2
+            INNER JOIN ctypes cp 
+                ON cp.category_id = ${id}
+            INNER JOIN ctype_image cpi
+                ON cpi.ctype_id = cp.id
+        WHERE t.main_type_id IS NOT NULL
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
 
 module.exports = {
     GetSpecificationsForType,
@@ -961,5 +984,7 @@ module.exports = {
     GetWishList,
     RoomSpecController,
     RealEstatePositions,
-    GetUserRealEstates
+    GetUserRealEstates,
+    GetTypesOfCategory,
+    
 }   

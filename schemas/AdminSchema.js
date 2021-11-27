@@ -39,7 +39,7 @@ const Schema = {
         phone:Joi.string().min(8).max(8).label("phone number").required().messages({
             'any.required':"{#label} hokman gerek"
         }),
-        password: Joi.string().min(8).max(200).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/).required().label('Açar söz').messages({
+        password: Joi.string().min(8).max(50).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/).required().label('Açar söz').messages({
             'string.pattern.base': '{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly',
             'string.base': `{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly`,
             'string.empty': `{#label} boş bolmaly däl`,

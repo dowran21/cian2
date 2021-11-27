@@ -20,7 +20,7 @@ const AdminLogin = async (req, res) =>{
         const {rows} = await database.query(query_text, [phone])
         const user = rows[0]
         if(!user){
-            const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
+            const message = {type:"manual", name:"phone", message:"Телефон или пароль неправильный"} 
             return res.status(status.notfound).json(message)
         }
         const is_password_same = await AdminHelper.ComparePassword(password, user.password)
@@ -58,8 +58,8 @@ const LoadAdmin = async (req, res) =>{
         const user = rows[0]
         const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
         const access_token = await AdminHelper.GenerateAdminAccessToken(data)
-        const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
-        return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
+        // const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
+        return res.status(status.success).json({"access_token":access_token, "data":data})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -68,10 +68,10 @@ const LoadAdmin = async (req, res) =>{
 
 const GetOperators = async (req, res) =>{
     const {page, limit} = req.query
-    const {full_name, phone} = req.query
+    const {full_name, phone, deleted} = req.query
     let OffSet = ``
     if (page && limit) {
-        OffSet = ` OFFSET ${(page-1)*limit} LIMIT ${limit}`
+        OffSet = ` OFFSET ${(page)*limit} LIMIT ${limit}`
     }else{
         OffSet = ``
     }
@@ -82,6 +82,11 @@ const GetOperators = async (req, res) =>{
     if(phone && phone != 'null' && phone != 'undefined'){
         WherePart += ` AND phone = '${phone}'`
     }
+    if(deleted){
+        WherePart += ` AND deleted = true`
+    }else{
+        WherePart += ` AND deleted = false`
+    }
     
     const query_text = `
         SELECT
@@ -91,7 +96,7 @@ const GetOperators = async (req, res) =>{
             (SELECT json_agg(op) FROM (
                 SELECT id, full_name, email, phone 
                 FROM users 
-                    WHERE role_id = 2 AND deleted = false ${WherePart}
+                    WHERE role_id = 2 ${WherePart}
                 ${OffSet}
             )op) AS operators
         `
@@ -130,7 +135,8 @@ const AddOperator = async (req, res) =>{
 
 const DeleteOperator = async (req, res) =>{
     const {id} = req.params
-    const query_text = `UPDATE users SET deleted = true WHERE id = ${id}`
+    const {deleted} = req.body
+    const query_text = `UPDATE users SET deleted = ${deleted} WHERE id = ${id}`
     try {
         await database.query(query_text, [])
         return res.status(status.success).send(true)
@@ -1268,6 +1274,7 @@ const NotActivatedEstates = async (req, res) =>{
     }
 
 }
+
 
 module.exports = {
     AdminLogin,

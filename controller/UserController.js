@@ -310,6 +310,21 @@ const ChangePassword = async (req, res) =>{
     
 }
 
+const LoadUser = async (req, res) =>{
+    const user_id = req.user.id
+    try {
+        const {rows} = await database.query(`SELECT * FROM users WHERE id = ${user_id} AND role_id = 2`, [])
+        const user = rows[0]
+        const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
+        const access_token = await UserHelper.GenerateUserAccessToken(data)
+        // const refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
+        return res.status(status.success).json({"access_token":access_token, "data":data})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 ////////User real estates///////////
 const UserRealEstates = async (req, res) =>{
     const {lang} = req.params
@@ -664,6 +679,8 @@ module.exports = {
     UserLogin,
     VerifyUserCode,
     UserRealEstates,
+    LoadUser,
+    
     AddRealEstate,
     GetUserRealEstateByID,
     ForgotPassword,
