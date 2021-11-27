@@ -82,19 +82,19 @@ const GetOperators = async (req, res) =>{
     if(phone && phone != 'null' && phone != 'undefined'){
         WherePart += ` AND phone = '${phone}'`
     }
-    if(deleted){
-        WherePart += ` AND deleted = true`
-    }else{
-        WherePart += ` AND deleted = false`
-    }
+    // if(deleted){
+    //     WherePart += ` AND deleted = true`
+    // }else{
+    //     WherePart += ` AND deleted = false`
+    // }
     
     const query_text = `
         SELECT
             (SELECT COUNT(*) 
                 FROM users 
-                WHERE role_id = 2 AND deleted = false ${WherePart}),
+                WHERE role_id = 2 ${WherePart}),
             (SELECT json_agg(op) FROM (
-                SELECT id, full_name, email, phone 
+                SELECT id, full_name, email, phone, deleted
                 FROM users 
                     WHERE role_id = 2 ${WherePart}
                 ${OffSet}
