@@ -1,3 +1,4 @@
+const { json } = require('express')
 const database = require('../db/index.js')
 const {status} = require('../utils/status')
 
@@ -121,6 +122,8 @@ const Languages = async (req, res) =>{
 
 const AllRealEstate = async (req, res) =>{
     const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
+    console.log(req.query)
+    console.log(price)
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -151,32 +154,66 @@ const AllRealEstate = async (req, res) =>{
     if (category_id && category_id !== 'null'){
         where_part += ` AND cp.category_id = ${category_id}` 
     }
-    
-    //-------------------specification part-----------------//
-    if (spec_values?.length){
-        spec_part += ` AND (${spec_values?.map(item =>` resv.spec_value_id = ${item}`).join('OR')})`      
+
+    //---------price part-------//
+    let price1 = {}
+    if(price){
+        try {
+            price1 = JSON.parse(price);
+        } catch (e) {
+            price1 = {};
+        }
     }
-    
-    //----------------area part--------------------//
-    if (area?.min && area?.max){
-        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
-    }else if(area?.min && !area?.max){
-        where_part += ` AND re.area > ${area?.min}`
-    }else if(!area?.min && area?.max){
-        where_part += ` AND re.area < ${area.max}`
+
+    if (price1?.min && price1?.max){
+        where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
+    }else if(price1?.min && !price1?.max){
+        where_part += ` AND rep.price > ${price1.min}`
+    }else if(!price1?.min && price1?.max){
+        where_part += ` AND rep.price < ${price1.max}`
     }else{
         where_part +=``
     }
-    
-    //---------------price-----------------------//
-    if (price?.min && price?.max){
-        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
-    }else if(price?.min && !price?.max){
-        where_part += ` AND rep.price > ${price.min}`
-    }else if(!price?.min && price?.max){
-        where_part += ` AND rep.price < ${price.max}`
+
+    //---------------area part------//
+    let area1 = {}
+    if(area){
+        try {
+            area1 = JSON.parse(area);
+        } catch (e) {
+            area1 = {};
+        }
+    }
+
+    if (area1?.min && area1?.max){
+        where_part += ` AND re.area > ${area1.min}  AND re.area < ${area1.max}`
+    }else if(area1?.min && !area1?.max){
+        where_part += ` AND re.area > ${area1?.min}`
+    }else if(!area1?.min && area1?.max){
+        where_part += ` AND re.area < ${area1.max}`
     }else{
         where_part +=``
+    }
+   
+    //-------------specificatoin values search------------//
+    let specifications = ``
+    if(spec_values){
+        try {
+            specifications = JSON.parse(spec_values)
+            if(specifications.length){
+                for(let i=0; i<specifications.length; i++){
+                    if(specifications[i]?.values.length){
+                        spec_part += `
+                            INNER JOIN real_estate_specification_values resv${i}
+                                ON resv${i}.real_estate_id = re.id AND resv${i}.spec_id = ${specifications[i]?.id} AND (${specifications[i].values.map(item => `resv${i}.spec_value_id = ${item}`).join('OR ')})    
+                        `
+                    }
+                    
+                }
+            }
+        } catch (e) {
+            console.log(e)
+        }   
     }
     
     //----------about to have an image---------// 
@@ -232,15 +269,14 @@ const AllRealEstate = async (req, res) =>{
                 ON lc.id = re.location_id
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            LEFT JOIN real_estate_specification_values resv
-                ON resv.real_estate_id = re.id
+                ${spec_part}
             LEFT JOIN users u
                 ON u.id = re.user_id
             INNER JOIN types t
                 ON t.id = cp.type_id
             INNER JOIN categories c 
                 ON c.id = cp.category_id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} 
         ORDER BY  re.id DESC  ${offSet}), 
 
                     
@@ -250,19 +286,30 @@ const AllRealEstate = async (req, res) =>{
     
     SELECT
          (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
             INNER JOIN ctypes cp 
                 ON cp.id = re.ctype_id
+            LEFT JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+            LEFT JOIN languages l 
+                ON l.language_code = $2
+            INNER JOIN real_estate_translations ret
+                ON ret.real_estate_id = re.id AND ret.language_id = l.id
+            LEFT JOIN type_translations tt 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
             LEFT JOIN locations lc 
                 ON lc.id = re.location_id
-            INNER JOIN real_estate_specification_values resv
-                ON resv.real_estate_id = re.id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+                ${spec_part} 
             INNER JOIN types t
                 ON t.id = cp.type_id
             INNER JOIN categories c 
                 ON c.id = cp.category_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part} ${spec_part}   
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part}   
         ) AS count),
 
         (SELECT json_agg(res) FROM 
@@ -563,20 +610,20 @@ const FlatFilter = async (req, res) =>{
             (SELECT json_agg(flat) FROM(
 
             
-                (SELECT c.id AS category_id, 
+                (SELECT c.id AS category_id, 3 AS type_id, 1 AS spec_id,
                     
                     (SELECT json_agg(co) FROM (
-                        SELECT sv.absolute_value, sv.id AS spec_id, 
+                        SELECT sv.absolute_value::text, sv.id AS spec_id, 
                             
-                            (SELECT json_agg(cou) FROM (
+                            
                                 
-                                SELECT COUNT(*) 
+                                (SELECT COUNT(*) 
                                 FROM real_estates re
                                 INNER JOIN ctypes cp
                                     ON cp.category_id = c.id AND cp.type_id = 3
                                 INNER JOIN real_estate_specification_values resv
                                     ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
-                            )cou) AS estate_count
+                            )
                         
                         FROM specification_values sv 
                         WHERE sv.spec_id = 1
@@ -589,7 +636,7 @@ const FlatFilter = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [])
-        return res.status(status.success).json({rows})
+        return res.status(status.success).json(rows)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)

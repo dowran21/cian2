@@ -68,7 +68,7 @@ const LoadAdmin = async (req, res) =>{
 
 const GetOperators = async (req, res) =>{
     const {page, limit} = req.query
-    const {full_name, phone, deleted} = req.query
+    const {search, phone, sort_direction, sort_column} = req.query
     let OffSet = ``
     if (page && limit) {
         OffSet = ` OFFSET ${(page)*limit} LIMIT ${limit}`
@@ -76,18 +76,30 @@ const GetOperators = async (req, res) =>{
         OffSet = ``
     }
     let WherePart = ``
-    if(full_name && full_name != 'null' && full_name != 'undefined'){
-        WherePart += ` AND full_name ~* '${full_name}'`
+    if(search && search != 'null' && search != 'undefined'){
+        WherePart += ` AND (full_name ~* '${search}' OR phone ~* '${search}')`
     }
-    if(phone && phone != 'null' && phone != 'undefined'){
-        WherePart += ` AND phone = '${phone}'`
-    }
-    // if(deleted){
-    //     WherePart += ` AND deleted = true`
-    // }else{
-    //     WherePart += ` AND deleted = false`
+    // if(phone && phone != 'null' && phone != 'undefined'){
+    //     WherePart += ` AND phone = '${phone}'`
     // }
+
+    let order_column = ``
+    if(sort_column){
+        order_column = sort_column;
+    }else{
+        order_column = ` id`
+    }
+
+    let order_direction = ``
+    if(sort_direction){
+        order_direction = sort_direction
+    }else{
+        order_direction = ` DESC`
+    }
+
     
+    let order_part = `ORDER BY ${order_column} ${order_direction}`
+
     const query_text = `
         SELECT
             (SELECT COUNT(*) 
@@ -97,6 +109,7 @@ const GetOperators = async (req, res) =>{
                 SELECT id, full_name, email, phone, deleted
                 FROM users 
                     WHERE role_id = 2 ${WherePart}
+                ${order_part}
                 ${OffSet}
             )op) AS operators
         `
@@ -168,6 +181,22 @@ const UpdateOperator = async (req, res) =>{
         return res.status(status.error).send(false)
     }
 
+}
+
+const ChangeOperatorPassword = async (req, res) =>{
+    const {password} = req.body
+    const {id} = req.params;
+    const hashed_password = await AdminHelper.HashPassword(password)
+    const query_text = `
+        UPDATE users SET password = '${hashed_password}' WHERE users.id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 const GetDeletedOperators = async (req, res) =>{
@@ -1284,6 +1313,7 @@ module.exports = {
     UpdateOperator,
     GetDeletedOperators,
     RecoveryOperator,
+    ChangeOperatorPassword,
 
     AddSpecification,
     GetSpecificationByID,
