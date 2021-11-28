@@ -22,7 +22,7 @@ router.get('/get-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddlew
 router.get('/get-all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
 router.post('/activation-of-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.SpecificationActivation)
 router.post('/disable-enable-spec-val/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DisableEnableValue)
-router.post('/add-spec-val/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), SchemaMiddleware(Schema.AddSpecificationValue),AdminController.AddSpecVal)
+router.post('/add-spec-val/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.AddSpecVal)
 
 router.post('/add-main-type', VerifyAdminAccessToken, AdminController.AddMaintype)
 router.post('/add-type', VerifyAdminAccessToken, AdminController.AddType)

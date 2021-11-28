@@ -367,31 +367,27 @@ const AddSpecVal = async (req, res) =>{
     *****************************/
     const {id} = req.params
     const {value_translations} = req.body
-    let val_trans_part = ``
-    if (value_translations){
-        val_trans_part = `, insert_val_trans(
-            INSERT INTO specification_value_translations(name, language_id, spec_id)
-            VALUES ${value_translations?.map(item =>`('${item.name}', ${item.lang_id}, SELECT id FROM inserted)`).join(',')}
-        )`
-    }
+    console.log(req.body)
+    let val_part = ``
     for(let i=0; i<value_translations.length; i++){
         val_part = ` inserted${i} AS (
             INSERT INTO specification_values(spec_id, absolute_value) 
-                VALUES (${id}, ${value_translations[i].name_ru})
-        ), insert_val_trans${i} (
+                VALUES (${id}, '${value_translations[i].name_ru}') RETURNING id
+        ), insert_val_trans${i} AS(
             INSERT INTO specification_value_translations(name, language_id, spec_id)
-                VALUES ('${name}') 
+                VALUES ('${value_translations[i].name_ru}', 2, (SELECT id FROM inserted${i})) 
         )`
+        if(i!=(value_translations.length-1)){
+            val_part += `,`
+        }
     }
     const query_text = `
-        WITH inserted AS (
-            INSERT INTO specification_values(spec_id, absolute_value) 
-            VALUES(${id}, ${absolute_value})
-        ) ${val_trans_part} SELECT id FROM inserted
+        WITH ${val_part} SELECT id FROM inserted0
     `
     try {
+        console.log(query_text)
         const {rows} = await database.query(query_text, [])
-        return res.status(status.success).send(rows[0].id)
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
