@@ -14,17 +14,15 @@ router.get('/load-admin', VerifyAdminRefreshToken, AdminController.LoadAdmin )
 router.post('/add-operator',VerifyAdminAccessToken, SchemaMiddleware(Schema.AddOperator), AdminController.AddOperator)
 router.post('/delete-operator/:id', ParamsSchemaMiddleware(Schema.IdSchema), VerifyAdminAccessToken, AdminController.DeleteOperator)
 router.post('/update-operator/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), SchemaMiddleware(Schema.UpdateOperator), AdminController.UpdateOperator)
-// router.get('/get-deleted-operators', VerifyAdminAccessToken, AdminController.GetDeletedOperators)
-// router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.RecoveryOperator)
 router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators);
 router.post('/change-operator-password/:id', VerifyAdminAccessToken, SchemaMiddleware(Schema.ChangePassword), AdminController.ChangeOperatorPassword);
 
-router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
+router.post('/add-specification', VerifyAdminAccessToken, SchemaMiddleware(Schema.AddSpecification), AdminController.AddSpecification)
 router.get('/get-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetSpecificationByID)
 router.get('/get-all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
 router.post('/activation-of-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.SpecificationActivation)
 router.post('/disable-enable-spec-val/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DisableEnableValue)
-router.post('/add-spec-val/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), SchemaMiddleware(),AdminController.AddSpecVal)
+router.post('/add-spec-val/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), SchemaMiddleware(Schema.AddSpecificationValue),AdminController.AddSpecVal)
 
 router.post('/add-main-type', VerifyAdminAccessToken, AdminController.AddMaintype)
 router.post('/add-type', VerifyAdminAccessToken, AdminController.AddType)

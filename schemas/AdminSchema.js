@@ -53,24 +53,21 @@ const Schema = {
     }),
 
     AddSpecification: Joi.object({
-        absolute_name:Joi.string().min(3).max(250).required(),
         is_required:Joi.boolean().required(),
         is_multiple:Joi.boolean().required(),
-        translations:Joi.array().items(Joi.object({
-            lang_id:Joi.number().required(),
-            name:Joi.string().required()
-            })
-        ),
-        absolute_values:Joi.array().required(),
-        value_translations:Joi.array().required(),
+        translation_tm:Joi.string().required().min(3).max(150),
+        translation_ru:Joi.string().required().min(3).max(150),
+        value_translations:Joi.array().items(Joi.object({
+            name_ru:Joi.string().min(1).max(150),
+            name_tm:Joi.string().min(1).max(150),
+        })),
     }),
 
     AddSpecificationValue: Joi.object({
-        absolute_value:Joi.string().required(),
         value_translations:Joi.array().items(Joi.object({
-            lang_id:Joi.number().required(),
-            name:Joi.string().required()
-        }))
+            name_ru:Joi.string().min(1).max(150),
+            name_tm:Joi.string().min(1).max(150),
+        })),
     }),
 
     AddSpecToType: Joi.array().required().items(Joi.object({

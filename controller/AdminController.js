@@ -305,36 +305,6 @@ const AddSpecification = async (req, res) =>{
 const GetSpecificationByID = async (req, res)=>{
 
     const {id} = req.params
-    // const query_text = `    
-    //     SELECT spec.id, spec.absolute_name, 
-            
-    //         (SELECT json_agg(value) FROM (
-    //             SELECT sv.id, sv.absolute_value, sv.enable,
-                    
-    //                 (SELECT json_agg(value_translation) FROM 
-    //                     (SELECT svt.language_id, svt.name 
-    //                     FROM specification_value_translations svt 
-    //                     WHERE svt.spec_value_id = sv.id
-    //                 )value_translation) AS value_translations
-                
-    //             FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = true
-    //         )value) AS enabled_values,
-
-    //         (SELECT json_agg(dvalue) FROM (
-    //             SELECT sv.id, sv.absolute_value, sv.enable,
-                    
-    //                 (SELECT json_agg(value_translation) FROM 
-    //                     (SELECT svt.language_id, svt.name 
-    //                     FROM specification_value_translations svt 
-    //                     WHERE svt.spec_value_id = sv.id
-    //                 )value_translation) AS value_translations
-                
-    //             FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = false
-    //         )dvalue) AS disabled_values
-
-    //     FROM specifications spec 
-            
-    //     WHERE spec.id = ${id}`
     const query_text = `
             SELECT sv.id, sv.enable, svt.name AS name_tm, svtt.name AS name_ru
             FROM specification_values sv
@@ -343,7 +313,7 @@ const GetSpecificationByID = async (req, res)=>{
                 INNER JOIN specification_value_translations svtt
                     ON svtt.spec_value_id = sv.id AND svtt.language_id = 1
             WHERE sv.spec_id = ${id}
-            ORDER BY sv.enable ASC
+            ORDER BY sv.enable DESC
 
     `
     try {
