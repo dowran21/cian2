@@ -31,8 +31,9 @@ const UserRegistration = async (req, res) =>{
     try {
         const s = await database.query(`SELECT * FROM users WHERE phone = '${phone}'`, [])
         if (s.rows[0]){
-            const error = {type:"manual", name:"phone", message:"User with this phone has already exist"}
-            return res.status(409).send(false)
+            let message = {}
+            message["phone"] = "User with this phone has already exists"
+            return res.status(409).send({error:message})
         }
     } catch (e) {
         return res.status(status.error).json({"message":e.message})
@@ -79,7 +80,9 @@ const VerifyUserCode = async (req, res) =>{
         const {rows} = await database.query(query_text, [])
         if (!rows[0]){
             // console.log("I am in if")
-            return res.status(status.notfound).send(false)
+            let message = {}
+            message["code"] = "Code is not correct"
+            return res.status(status.notfound).send({error:message})
         }else{
             try {
                 const update_query = `

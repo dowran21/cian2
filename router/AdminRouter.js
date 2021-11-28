@@ -19,7 +19,7 @@ router.post('/update-operator/:id', VerifyAdminAccessToken, ParamsSchemaMiddlewa
 router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators);
 router.post('/change-operator-password/:id', VerifyAdminAccessToken, SchemaMiddleware(Schema.ChangePassword), AdminController.ChangeOperatorPassword);
 
-router.post('/add-specification', VerifyAdminAccessToken, SchemaMiddleware(Schema.AddSpecification), AdminController.AddSpecification)
+router.post('/add-specification', VerifyAdminAccessToken, AdminController.AddSpecification)
 router.get('/get-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetSpecificationByID)
 router.get('/get-all-specifications', VerifyAdminAccessToken, AdminController.GetAllSpecifications)
 router.post('/activation-of-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.SpecificationActivation)

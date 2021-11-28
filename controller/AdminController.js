@@ -240,73 +240,56 @@ const RecoveryOperator = async (req, res) =>{
 const AddSpecification = async (req, res) =>{
     /*************************************** 
 {
-      "absolute_name":"type of telephon line",
-      "is_required" : "FALSE",
-      "is_multiple" : "FALSE",
-      "translations" : [
-          {"lang_id" : "1", "name" : "Telefon liniyanyn gornusi"}, 
-          {"lang_id" : "2", "name" : "Виды телефонной линии"}
-          ],
-      "absolute_values" :["ADSL", "FIBEROPTIC", "LAN"],
-      "values_translations" : [ 
-          [{"lang_id" : "1", "name" : "ADSL"}, {"lang_id" : "2", "name" : "АДСЛ"}], 
-          [{"lang_id" : "1", "name" : "optiki Suyum"}, {"lang_id" : "2", "name" : "Оптоволокно"}], 
-          [{"lang_id" : "1", "name" : "LAN"}, {"lang_id" : "2", "name" : "LAN"}] ]
+        is_required: true,
+        is_multiple: false,
+        translation_tm: 'aaaaa',
+        translation_ru: 'bbbbb',
+        value_translations: [
+            { name_ru: 'sdfsdafsd', name_tm: 'kerpic' },
+            { name_ru: 'sdafaf', name_tm: 'sadfsadf' },
+            { name_ru: 'sdfasfdf', name_tm: 'afasdfdsf' }
+        ]
+
     }
       *********************************************************/
-    const {absolute_name, is_required, is_multiple, translations, absolute_values, values_translations} = req.body 
-    let spec_values = ``
+    const {translation_tm, translation_ru, is_required, is_multiple, value_translations} = req.body 
+
     console.log(req.body)
-    console.log(values_translations)
-    for (let i=0; i<absolute_values.length; i++){
-        spec_values += `, insert_value${i} AS (
-                INSERT INTO specification_values (spec_id, absolute_value)
-                    VALUES ((SELECT id FROM inserted), '${absolute_values[i]}') RETURNING id
-        )`
-        if (values_translations[i] && values_translations.length){
-            let val_trans = values_translations[i]
-            if(val_trans[0].name !== '' || val_trans[1].name !== ''){
-                spec_values += `, insert_val_trans${i} AS (
-                    INSERT INTO specification_value_translations(name, language_id, spec_value_id)
-                        VALUES 
-                `
-                let k=0;
-                for(let j=0; j<val_trans.length; j++){
-                    if(val_trans[j].name !== ''){
-                        if(k !== 0){
-                            spec_values += ','
-                        }
-                        spec_values += `('${val_trans[j].name}', ${val_trans[j].lang_id}, (SELECT id FROM insert_value${i}))`
-                        k++;
-                    }
-                }
-                spec_values += `
-                )`
-            }
-            
-        } 
+    let val_part = ``
+    for(let i=0; i<value_translations.length; i++){
+        val_part += `, inserted_val${i} AS(
+            INSERT INTO specification_values (spec_id, absolute_value)
+            VALUES ((SELECT id FROM inserted), '${value_translations[i].name_ru}') RETURNING id
+        ), inseert_val_trans${i} AS (
+            INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+            VALUES ('${value_translations[i].name_ru}', 2, (SELECT id FROM inserted_val${i})),
+                ('${value_translations[i].name_tm}', 1, (SELECT id FROM inserted_val${i}))
+            )`
     }
+
     const query_text = `
-            WITH inserted AS (
-                INSERT INTO specifications (absolute_name, is_required, is_multiple) 
-                    VALUES ($1, $2, $3) RETURNING id
+        WITH inserted AS (
+            INSERT INTO specifications(absolute_name, is_required, is_multiple)
+            VALUES ('${translation_ru}', ${is_required}, ${is_multiple}) RETURNING id
             ), insert_translations AS (
                 INSERT INTO specification_translations(name, language_id, spec_id)
-                    VALUES 
-                    ${translations?.map(item =>`('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`).join(',')} 
-            )${spec_values} 
+                    VALUES ('${translation_ru}', 2, (SELECT id FROM inserted)),('${translation_tm}', 1, (SELECT id FROM inserted))
+               )${val_part}
                 SELECT id FROM inserted
-        `
+            `
     try {
         console.log(query_text)
-        const {rows} = await database.query(query_text, [absolute_name, is_required, is_multiple ])
+        const {rows} = await database.query(query_text, [])
         try{
             const qt = `
-                SELECT id, absolute_name, name 
+                SELECT id, absolute_name, is_multiple, is_active, is_required,
+                    (SELECT json_agg(tr) FROM(
+                        SELECT language_id, name 
+                        FROM specification_translations
+                        WHERE spec_id = id 
+                    )tr) AS translations   
                 FROM specifications 
-                    INNER JOIN specification_translations 
-                        ON specifications.id = specification_translations.spec_id 
-                WHERE language_id = 1 AND id = ${rows[0].id}`
+                WHERE  id = ${rows[0].id}`
             const so = await database.query(qt, [])
             return res.status(status.success).json({"rows":so.rows[0]})
         }catch(e){
@@ -317,52 +300,58 @@ const AddSpecification = async (req, res) =>{
         console.log(e)
         return res.status(status.error).send(false)
     }
-
 }
 
 const GetSpecificationByID = async (req, res)=>{
 
     const {id} = req.params
-    const query_text = `    
-        SELECT spec.id, spec.absolute_name, 
+    // const query_text = `    
+    //     SELECT spec.id, spec.absolute_name, 
             
-            (SELECT json_agg(translation) FROM 
-                (SELECT st.language_id, st.name 
-                    FROM specification_translations st WHERE st.spec_id = spec.id 
-                )translation) AS translations, 
+    //         (SELECT json_agg(value) FROM (
+    //             SELECT sv.id, sv.absolute_value, sv.enable,
+                    
+    //                 (SELECT json_agg(value_translation) FROM 
+    //                     (SELECT svt.language_id, svt.name 
+    //                     FROM specification_value_translations svt 
+    //                     WHERE svt.spec_value_id = sv.id
+    //                 )value_translation) AS value_translations
+                
+    //             FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = true
+    //         )value) AS enabled_values,
+
+    //         (SELECT json_agg(dvalue) FROM (
+    //             SELECT sv.id, sv.absolute_value, sv.enable,
+                    
+    //                 (SELECT json_agg(value_translation) FROM 
+    //                     (SELECT svt.language_id, svt.name 
+    //                     FROM specification_value_translations svt 
+    //                     WHERE svt.spec_value_id = sv.id
+    //                 )value_translation) AS value_translations
+                
+    //             FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = false
+    //         )dvalue) AS disabled_values
+
+    //     FROM specifications spec 
             
-            (SELECT json_agg(value) FROM (
-                SELECT sv.id, sv.absolute_value, sv.enable,
-                    
-                    (SELECT json_agg(value_translation) FROM 
-                        (SELECT svt.language_id, svt.name 
-                        FROM specification_value_translations svt 
-                        WHERE svt.spec_value_id = sv.id
-                    )value_translation) AS value_translations
-                
-                FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = true
-            )value) AS enabled_values,
+    //     WHERE spec.id = ${id}`
+    const query_text = `
+            SELECT sv.id, sv.enable, svt.name AS name_tm, svtt.name AS name_ru
+            FROM specification_values sv
+                INNER JOIN specification_value_translations svt
+                    ON svt.spec_value_id = sv.id AND svt.language_id = 1
+                INNER JOIN specification_value_translations svtt
+                    ON svtt.spec_value_id = sv.id AND svtt.language_id = 1
+            WHERE sv.spec_id = ${id}
+            ORDER BY sv.enable ASC
 
-            (SELECT json_agg(dvalue) FROM (
-                SELECT sv.id, sv.absolute_value, sv.enable,
-                    
-                    (SELECT json_agg(value_translation) FROM 
-                        (SELECT svt.language_id, svt.name 
-                        FROM specification_value_translations svt 
-                        WHERE svt.spec_value_id = sv.id
-                    )value_translation) AS value_translations
-                
-                FROM specification_values sv WHERE sv.spec_id = spec.id AND sv.enable = false
-            )dvalue) AS disabled_values
-
-        FROM specifications spec WHERE spec.id = ${id}`
-
+    `
     try {
         const {rows} = await database.query(query_text, [])
-        return res.json(rows)
+        return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)
-        return res.status(status.success).send(false)
+        return res.status(status.error).send(false)
     }
 
 } 
@@ -400,18 +389,28 @@ const DisableEnableValue = async (req, res) =>{
 const AddSpecVal = async (req, res) =>{
     /*********************************
     
-    "absolute_value" :"FIBEROPTIC",
-      "value_translations" : 
-          [{"lang_id" : "1", "name" : "ADSL"}, {"lang_id" : "2", "name" : "АДСЛ"}]
-          
+     value_translations: [
+            { name_ru: 'sdfsdafsd', name_tm: 'kerpic' },
+            { name_ru: 'sdafaf', name_tm: 'sadfsadf' },
+            { name_ru: 'sdfasfdf', name_tm: 'afasdfdsf' }
+        ]
     *****************************/
     const {id} = req.params
-    const {absolute_value, value_translations} = req.body
+    const {value_translations} = req.body
     let val_trans_part = ``
     if (value_translations){
         val_trans_part = `, insert_val_trans(
             INSERT INTO specification_value_translations(name, language_id, spec_id)
             VALUES ${value_translations?.map(item =>`('${item.name}', ${item.lang_id}, SELECT id FROM inserted)`).join(',')}
+        )`
+    }
+    for(let i=0; i<value_translations.length; i++){
+        val_part = ` inserted${i} AS (
+            INSERT INTO specification_values(spec_id, absolute_value) 
+                VALUES (${id}, ${value_translations[i].name_ru})
+        ), insert_val_trans${i} (
+            INSERT INTO specification_value_translations(name, language_id, spec_id)
+                VALUES ('${name}') 
         )`
     }
     const query_text = `
