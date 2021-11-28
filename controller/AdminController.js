@@ -39,7 +39,7 @@ const AdminLogin = async (req, res) =>{
         if(user.role_id == 2){
             data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
             access_token = await AdminHelper.GenerateOperatorAccessToken(data)
-            refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
+            refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
         }
         if(user.role_id == 3){
             return res.status(499).json({"message":"Idi otsuda eto ne twoye mesto"})
@@ -54,10 +54,16 @@ const AdminLogin = async (req, res) =>{
 const LoadAdmin = async (req, res) =>{
     const user_id = req.user.id
     try {
-        const {rows} = await database.query(`SELECT * FROM users WHERE id = ${user_id} AND role_id = 1`, [])
+        const {rows} = await database.query(`SELECT * FROM users WHERE id = ${user_id}`, [])
         const user = rows[0]
         const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
-        const access_token = await AdminHelper.GenerateAdminAccessToken(data)
+        let access_token = ``
+        if(user.role_id == 1){
+            access_token = await AdminHelper.GenerateAdminAccessToken(data);
+        }
+        if(user.role_id ==2){
+            access_token = await AdminHelper.GenerateOperatorAccessToken(data);
+        }
         // const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
         return res.status(status.success).json({"access_token":access_token, "data":data})
     } catch (e) {
@@ -135,13 +141,18 @@ const AddOperator = async (req, res) =>{
     const hashed_password = await AdminHelper.HashPassword(password)
     const query_text = `
         INSERT INTO users(role_id, full_name, email, phone, password)
-        VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email, phone
+        VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email, phone, deleted
         `
     try{
         const {rows} = await database.query(query_text, [2, full_name, email, phone, hashed_password]);
         return res.status(status.success).json({"rows":rows[0]});
     }catch(e){
         console.log(e)
+        if(e.message = 'duplicate key value violates unique constraint "users_phone_key"'){
+            let message = {}
+            message["phone"] = "Оператор с таким телефон уже был создан" 
+            return res.status(409).send({error: message})
+        }
         return res.status(status.error).send(false)
     }
 }
@@ -171,11 +182,12 @@ const UpdateOperator = async (req, res) =>{
     const {id} = req.params
     const {full_name, phone, email} = req.body
     const query_text = `
-        UPDATE users SET full_name = $1, phone = $2, email= $3 WHERE id = $4
+        UPDATE users SET full_name = $1, phone = $2, email= $3 WHERE id = $4 
+            RETURNING id, full_name, email, phone, deleted
         `
     try {
         const {rows} = await database.query(query_text, [full_name, phone, email, id])
-        return res.status(status.success).send(true)
+        return res.status(status.success).json({rows:rows[0]})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -188,7 +200,7 @@ const ChangeOperatorPassword = async (req, res) =>{
     const {id} = req.params;
     const hashed_password = await AdminHelper.HashPassword(password)
     const query_text = `
-        UPDATE users SET password = '${hashed_password}' WHERE users.id = ${id}
+        UPDATE users SET password = '${hashed_password}' WHERE users.id = ${id} 
     `
     try {
         await database.query(query_text, [])
@@ -357,9 +369,9 @@ const GetSpecificationByID = async (req, res)=>{
 
 const SpecificationActivation = async (req, res) =>{
     const {id} = req.params
-    const {bool} = req.body
+    const {is_active} = req.body
     const query_text = `
-        UPDATE specifications SET is_active = ${bool} WHERE id = ${id}
+        UPDATE specifications SET is_active = ${is_active} WHERE id = ${id}
         `
     try {
         const {rows}= await database.query(query_text, [])
@@ -372,9 +384,9 @@ const SpecificationActivation = async (req, res) =>{
 
 const DisableEnableValue = async (req, res) =>{
     const {id} = req.params
-    const {bool} = req.body
+    const {enable} = req.body
     const query_text = ` 
-        UPDATE specification_values SET enable = ${bool} WHERE id = ${id}
+        UPDATE specification_values SET enable = ${enable} WHERE id = ${id}
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -418,19 +430,32 @@ const AddSpecVal = async (req, res) =>{
 }
 
 const GetAllSpecifications = async (req, res)=>{
-    const {page, limit} = req.query
+    const {page, limit, sort_direction, sort_column} = req.query
     let offset = ``
     if (page && limit){
         offset = `OFFSET ${limit*page} LIMIT ${limit}`
     }else{
         offset = ``
     }
-    const {name} = req.query
+    const {search} = req.query
     let WherePart = ``
-    if(name && name != null && name != undefined){
-        WherePart += ` AND (s.absolute_name ~* '${name}' OR st.name ~* '${name}')`
+    if(search && search != null && search != undefined){
+        WherePart += ` AND (stt.name ~* '${search}' OR st.name ~* '${search}')`
 
     }
+    let direction = ``
+    if(sort_direction){
+        direction = `${sort_direction}`
+    }else{
+        direction = `ASC`
+    }
+    let column = ``
+    if(sort_column){
+        column = `${sort_column}`
+    }else{
+        column = `s.id`
+    }
+    let orderBy = `ORDER BY ${column} ${direction}`;
     console.log(WherePart)
     try{
         const query_text = `
@@ -438,7 +463,9 @@ const GetAllSpecifications = async (req, res)=>{
                 (SELECT COUNT(*) FROM specifications ) AS count,
                 
                 (SELECT json_agg(specification) FROM (
-                    SELECT DISTINCT ON (s.id) s.id, s.absolute_name, s.is_multiple, s.is_required, is_active,
+
+                
+                    SELECT s.id, s.absolute_name, s.is_multiple, s.is_required, is_active,
                     
                     (SELECT json_agg(tr) FROM(
                         SELECT language_id, name 
@@ -448,11 +475,15 @@ const GetAllSpecifications = async (req, res)=>{
 
                     FROM specifications s
                         INNER JOIN specification_translations st
-                            ON st.spec_id = s.id
-                    WHERE s.id>0 ${WherePart}  ${offset})specification) AS specifications`
+                            ON st.spec_id = s.id AND st.language_id = 1
+                        INNER JOIN specification_translations stt
+                            ON stt.spec_id = s.id AND stt.language_id = 2
+                    WHERE s.id>0 ${WherePart}  
+                    ${orderBy}
+                    ${offset})specification) AS specifications`
         const {rows} = await database.query(query_text, [])
         
-        return res.status(status.success).json({"rows":rows})
+        return res.status(status.success).json(rows[0])
     }catch(e){
         console.log(e)
         return res.status(status.error).send(false)

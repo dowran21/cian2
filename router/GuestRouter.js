@@ -15,6 +15,7 @@ router.get('/:lang/get-filter-count', ParamsSchemaMiddleware(Schema.LangSchema),
 
 router.get('/:lang/get-real-estate-positions', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.RealEstatePositions)
 router.get('/:lang/flat-filter', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.FlatFilter)
+router.get('/:lang/commerce-filter', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.CommerceFilter)
 router.get('/:lang/type-images/:main_type_id', ParamsSchemaMiddleware(Schema.LangSchema), ParamsSchemaMiddleware(Schema.MainTypeSchema), GuestController.TypeImages)
 
 router.get('/:lang/types/:cat_id/:main_id', ParamsSchemaMiddleware(Schema.MainTypeMult), GuestController.GetTypesCategory)
@@ -28,7 +29,5 @@ router.get('/room-specification', GuestController.RoomSpecController)
 router.get('/:lang/types-of-category/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetTypesOfCategory)
 
 router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
-
-
 
 module.exports = router

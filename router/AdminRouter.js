@@ -4,7 +4,7 @@ const AdminController = require('../controller/AdminController.js')
 const {resize_page_images} = require('../middleware/resize.js')
 const {VerifyAdminAccessToken, VerifyAdminRefreshToken} = require('../middleware/AuthMiddleware.js')
 const Schema = require('../schemas/AdminSchema');
-const {SchemaMiddleware, ParamsSchemaMiddleware} = require('../middleware/SchemaMiddleware')
+const {SchemaMiddleware, ParamsSchemaMiddleware, QuerySchemaMiddleware} = require('../middleware/SchemaMiddleware')
 const upload = require('../middleware/upload')
 
 
@@ -17,7 +17,7 @@ router.post('/update-operator/:id', VerifyAdminAccessToken, ParamsSchemaMiddlewa
 // router.get('/get-deleted-operators', VerifyAdminAccessToken, AdminController.GetDeletedOperators)
 // router.post('/recover-operator/:id', VerifyAdminAccessToken, AdminController.RecoveryOperator)
 router.get('/get-all-operators', VerifyAdminAccessToken, AdminController.GetOperators);
-router.post('/change-operator-password/:id', VerifyAdminAccessToken, AdminController.ChangeOperatorPassword);
+router.post('/change-operator-password/:id', VerifyAdminAccessToken, SchemaMiddleware(Schema.ChangePassword), AdminController.ChangeOperatorPassword);
 
 router.post('/add-specification', VerifyAdminAccessToken, SchemaMiddleware(Schema.AddSpecification), AdminController.AddSpecification)
 router.get('/get-specification/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetSpecificationByID)

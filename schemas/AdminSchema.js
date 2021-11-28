@@ -8,13 +8,13 @@ const Schema = {
             'string.max':"{#label} maksimum 150 sany bomaly"
         }),
         email: Joi.string().email().min(1).max(100).required().label('Email').messages({
-            'string.pattern.base': '{#label} talaba laýyk däl!',
-            'string.email': `{#label} talaba laýyk däl!`,
-            'string.min': `{#label} azyndan {#limit} simwol bolmaly!`,
-            'string.max': `{#label} maksimum {#limit} simwol bolmaly!`,
+            'string.pattern.base': '{#label} неправильный',
+            'string.email': `{#label} непраильный!`,
+            'string.min': `{#label} должен состоять минимум из {#limit} сомволов!`,
+            'string.max': `{#label} должен состоять максимум из {#limit} сомволов`,
         }),
         phone:Joi.string().min(8).max(8).label("phone number").required().messages({
-            'any.required':"{#label} hokman gerek"
+            'any.required':"{#label} телефон обязателень"
         }),
         password: Joi.string().min(8).max(200).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/).required().label('Açar söz').messages({
             'string.pattern.base': '{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly',
@@ -39,7 +39,11 @@ const Schema = {
         phone:Joi.string().min(8).max(8).label("phone number").required().messages({
             'any.required':"{#label} hokman gerek"
         }),
-        password: Joi.string().min(8).max(50).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/).required().label('Açar söz').messages({
+        id:Joi.number().required(),
+    }),
+
+    ChangePassword:Joi.object({
+        password: Joi.string().min(8).max(200).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/).required().label('Açar söz').messages({
             'string.pattern.base': '{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly',
             'string.base': `{#label} Iň azyndan sekiz simwol, iň bolmanda bir harp we bir san bolmaly`,
             'string.empty': `{#label} boş bolmaly däl`,

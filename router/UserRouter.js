@@ -10,6 +10,7 @@ const { VerifyUserAccessToken, VerifyCodeAccessToken, VerifyUserRefreshToken } =
 
 router.post('/registration', SchemaMiddleware(Schema.Registration), UserController.UserRegistration)
 router.post('/login', SchemaMiddleware(Schema.Login), UserController.UserLogin)
+// router.get('/load-user', VerifyUserRefreshToken, UserController.Load)
 router.post('/verify-code', VerifyCodeAccessToken, UserController.VerifyUserCode)
 router.post('/send-code-again', VerifyCodeAccessToken, UserController.SendCodeAgain)
 router.post('/forgot-password', UserController.ForgotPassword)

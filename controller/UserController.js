@@ -67,7 +67,7 @@ const VerifyUserCode = async (req, res) =>{
     const ip = requestip.getClientIp(req)
     const {code} = req.body
     const user_id = req.user.id
-    console.log(user_id, ip, code)
+    // console.log(user_id, ip, code)
     const query_text = `
         SELECT u.id, u.full_name, u.email, u.phone, u.owner_id
             FROM users u
@@ -78,7 +78,7 @@ const VerifyUserCode = async (req, res) =>{
     try {
         const {rows} = await database.query(query_text, [])
         if (!rows[0]){
-            console.log("I am in if")
+            // console.log("I am in if")
             return res.status(status.notfound).send(false)
         }else{
             try {
@@ -137,7 +137,7 @@ const UserLogin = async (req, res) =>{
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
     const {phone, password} = req.body
-    console.log(req.body)
+    // console.log(req.body)
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     console.log(code)
     const query_text = `
@@ -154,14 +154,16 @@ const UserLogin = async (req, res) =>{
     try {
         const {rows} = await database.query(query_text, [])
         const user = rows[0];
-        console.log(user)
+        // console.log(user)
         if(!user){
-            return res.status(status.bad).json({"message":"Phone or password incorrect"})
+            let message = {}
+            message["phone"] = "Telefon yada acar soz yalnysh"
+            return res.status(status.bad).json({error:message})
         }
 
         if (!user.bann){
             let compare = await UserHelper.ComparePassword(password, user.password)
-            console.log(compare)
+            // console.log(compare)
             if(!user.ip_address || !user.activated){
                 console.log("I am i first if")
                 let count = 0;
@@ -171,11 +173,12 @@ const UserLogin = async (req, res) =>{
                     ON CONFLICT(ip_address, user_id) DO UPDATE SET denied_count = access_ip.denied_count + EXCLUDED.denied_count, code = EXCLUDED.code`;
                 
                 if(!compare){
-                    const error = {type:"manual", name:"phone", message:"'Phone ' ýada 'Açar söz' ýalňyş"}
+                    let message = {}
+                    message["phone"] = "Telefon yada acar soz yalnysh"
                     count = 1;
                     try {
                         await database.query(ip_query, [count])
-                        return res.status(405).send(error)        
+                        return res.status(405).send({error:message})        
                     } catch (e) {
                         console.log(e)
                         return res.status(status.error).send("ERROR")
@@ -206,12 +209,13 @@ const UserLogin = async (req, res) =>{
                     }
                 }else{
                     try {
-                        const error = {type:"manual", name:"phone", message:"'Phone ' ýada 'Açar söz' ýalňyş"}
+                        let message = {}
+                        message["phone"] = "Telefon yada acar soz yalnysh"
                         const count_query = `UPDATE access_ip 
                             SET denied_count = ${user.denied_count+1}
                             WHERE ip_address = '${ip}' AND user_id = ${user.id}`
                         await database.query(count_query, [])
-                        return res.status(405).send(error)
+                        return res.status(405).send({error:message})
                     } catch (e) {
                         console.log(e)
                         return res.status(status.error).send(false)   
@@ -221,8 +225,9 @@ const UserLogin = async (req, res) =>{
             }
                         
         }else{
-            const error = {type:"manual", name:"", message:"you are in bann for one hour"}
-            return res.status(status.bad).send(error)
+            let message = {}
+            message["phone"] = "You are in bann please login later"
+            return res.status(432).send({error:message})
         }
 
     } catch (e) {
@@ -680,7 +685,7 @@ module.exports = {
     VerifyUserCode,
     UserRealEstates,
     LoadUser,
-    
+
     AddRealEstate,
     GetUserRealEstateByID,
     ForgotPassword,

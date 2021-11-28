@@ -222,6 +222,7 @@ const AllRealEstate = async (req, res) =>{
     }else{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
+    console.log(spec_values)
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
     let vip_limit = ``
@@ -272,9 +273,9 @@ const AllRealEstate = async (req, res) =>{
                 ${spec_part}
             LEFT JOIN users u
                 ON u.id = re.user_id
-            INNER JOIN types t
+            LEFT JOIN types t
                 ON t.id = cp.type_id
-            INNER JOIN categories c 
+            LEFT JOIN categories c 
                 ON c.id = cp.category_id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} 
         ORDER BY  re.id DESC  ${offSet}), 
@@ -606,14 +607,11 @@ const CountForFilter = async (req, res) =>{
 const FlatFilter = async (req, res) =>{
 
     const query_text = `
-        SELECT 
-            (SELECT json_agg(flat) FROM(
 
-            
-                (SELECT c.id AS category_id, 3 AS type_id, 1 AS spec_id,
+            SELECT c.id AS category_id, 3 AS type_id, 1 AS spec_id,
                     
                     (SELECT json_agg(co) FROM (
-                        SELECT sv.absolute_value::text, sv.id AS spec_id, 
+                        SELECT sv.absolute_value::text, sv.id AS value_id, 
                             
                             
                                 
@@ -623,20 +621,57 @@ const FlatFilter = async (req, res) =>{
                                     ON cp.category_id = c.id AND cp.type_id = 3
                                 INNER JOIN real_estate_specification_values resv
                                     ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
+                                    WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4
                             )
                         
                         FROM specification_values sv 
                         WHERE sv.spec_id = 1
                             ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
                                 integer) ELSE null END ASC, sv.absolute_value ASC
-                    )co) AS ready_search)
+                    )co) AS ready_search
 
-            )flat) AS flat_ready_filter
-        FROM categories c 
+            FROM categories c
     `
     try {
         const {rows} = await database.query(query_text, [])
-        return res.status(status.success).json(rows)
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const CommerceFilter = async (req, res) =>{
+    const {lang} = req.params
+    const query_text = `
+        SELECT c.id AS category_id, (
+            
+            SELECT json_agg(esta) FROM (
+                SELECT t.id AS type_id, tt.name,
+            
+                    (SELECT COUNT(*) 
+                        FROM real_estates re
+                            INNER JOIN ctypes cp 
+                                ON cp.id = re.ctype_id
+                            WHERE re.is_active = 'true' AND re.status_id <> 2 
+                                AND re.status_id <> 4 AND cp.type_id = t.id AND cp.category_id = c.id 
+                    )
+
+                FROM types t
+                    INNER JOIN languages l
+                        ON l.language_code = '${lang}'
+                    INNER JOIN ctypes cp 
+                        ON cp.category_id = c.id AND cp.type_id = t.id
+                    INNER JOIN type_translations tt
+                        ON tt.type_id = t.id AND tt.language_id = l.id 
+                    WHERE t.main_type_id = 2
+        )esta) estates
+
+        FROM categories c
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -1027,6 +1062,7 @@ module.exports = {
     GetRegions,
     CountForFilter,
     FlatFilter,
+    CommerceFilter,
     TypeImages,
     GetWishList,
     RoomSpecController,
