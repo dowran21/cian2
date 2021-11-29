@@ -2,6 +2,7 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
+const { QuerySchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
 // const { compareSync } = require("bcrypt");
 
 const AdminLogin = async (req, res) =>{
@@ -370,12 +371,12 @@ const AddSpecVal = async (req, res) =>{
     console.log(req.body)
     let val_part = ``
     for(let i=0; i<value_translations.length; i++){
-        val_part = ` inserted${i} AS (
+        val_part += ` inserted${i} AS (
             INSERT INTO specification_values(spec_id, absolute_value) 
                 VALUES (${id}, '${value_translations[i].name_ru}') RETURNING id
         ), insert_val_trans${i} AS(
-            INSERT INTO specification_value_translations(name, language_id, spec_id)
-                VALUES ('${value_translations[i].name_ru}', 2, (SELECT id FROM inserted${i})) 
+            INSERT INTO specification_value_translations(name, language_id, spec_value_id)
+                VALUES ('${value_translations[i].name_ru}', 2, (SELECT id FROM inserted${i})), ('${value_translations[i].name_tm}', 1, (SELECT id FROM inserted${i}))  
         )`
         if(i!=(value_translations.length-1)){
             val_part += `,`
@@ -458,18 +459,18 @@ const GetAllSpecifications = async (req, res)=>{
 const GetAllTypes = async (req, res) =>{
     try{
         const query_text = `
-        SELECT ct.name, ctp.id, tt.name AS main_type, t.absolute_name, cti.destination, 
-
-            (SELECT json_agg(translation) FROM (
-                SELECT language_id, name FROM type_translations tp 
-                WHERE tp.type_id = t.id
-            )translation) AS translations  
-        
+        SELECT ct.name, ctp.id, 
+            t.absolute_name, cti.destination, tt.name AS name_ru, ttt.name AS name_tm 
+            , mtt.name AS main_type_name
         FROM types t
+            INNER JOIN type_translations mtt
+                ON mtt.type_id = t.main_type_id AND mtt.language_id = 2 
             INNER JOIN types tp
                 ON t.main_type_id = tp.id
             INNER JOIN type_translations tt
-                ON tt.type_id = tp.id AND tt.language_id = 2
+                ON tt.type_id = t.id AND tt.language_id = 2
+            INNER JOIN type_translations ttt
+                ON ttt.type_id = t.id AND ttt.language_id = 1
             INNER JOIN ctypes ctp
                 ON ctp.type_id = t.id
             INNER JOIN category_translations ct 
@@ -477,7 +478,7 @@ const GetAllTypes = async (req, res) =>{
             LEFT JOIN ctype_image cti
                 ON cti.ctype_id = ctp.id
         WHERE t.main_type_id IS NOT NULL
-        ORDER BY t.id ASC
+        ORDER BY ctp.id ASC
         `
         const {rows} = await database.query(query_text, [])
         return res.status(status.success).json({"rows":rows})
@@ -554,46 +555,32 @@ const GetTypeByID = async (req, res) =>{
     const {id} = req.params
     // console.log(id)
     const query_text = `
-            SELECT absolute_name, destination,
-                
-                (SELECT json_agg(translation) FROM (
-                    SELECT name, language_id FROM type_translations
-                )translation) AS translations,
+            SELECT  destination, tt.name AS name_ru, ttt.name AS name_tm,
                 
                 (SELECT json_agg(spec) FROM(
-                    SELECT s.id AS spec_id, s.absolute_name, ts.id AS type_spec_id, ts.deleted, ts.queue_position,
-                        (SELECT json_agg(tr) FROM (
-                            SELECT st.name, st.language_id 
-                            FROM specification_translations st
-                            WHERE st.spec_id = s.id
-                        )tr) AS spec_translations
+                    SELECT s.id AS spec_id, ts.id AS type_spec_id, 
+                        ts.deleted, ts.queue_position, st.name AS name_ru, stt.name AS name_tm                   
                     
                     FROM specifications s
                         INNER JOIN type_specifications ts
                             ON ts.spec_id = s.id
-                        WHERE ts.ctype_id = $1 AND ts.deleted = false 
+                        INNER JOIN specification_translations st
+                            ON st.spec_id = s.id AND st.language_id = 2
+                        INNER JOIN specification_translations stt
+                            ON stt.spec_id = s.id AND stt.language_id = 1
+                        WHERE ts.ctype_id = $1 
                         ORDER BY ts.queue_position ASC
-                )spec) AS active_type_specifications,
-                
-                (SELECT json_agg(spec) FROM(
-                    SELECT s.id AS spec_id, s.absolute_name, ts.id AS type_spec_id, ts.deleted,
-                        (SELECT json_agg(tr) FROM (
-                            SELECT st.name, st.language_id 
-                            FROM specification_translations st
-                            WHERE st.spec_id = s.id
-                        )tr) AS spec_translations
-                    
-                    FROM specifications s
-                        INNER JOIN type_specifications ts
-                            ON ts.spec_id = s.id
-                        WHERE ts.ctype_id = $1 AND ts.deleted = true 
-                )spec) AS deleted_type_specifications
+                )spec) AS active_type_specifications
             
-            FROM types
+            FROM types t
                 LEFT JOIN ctype_image cti
                     ON cti.ctype_id = $1
                 INNER JOIN ctypes ctp
-                    ON ctp.type_id = types.id
+                    ON ctp.type_id = t.id
+                INNER JOIN type_translations tt
+                    ON tt.type_id = t.id AND tt.language_id = 2
+                INNER JOIN type_translations ttt
+                    ON ttt.type_id = t.id AND ttt.language_id = 1
             WHERE ctp.id = $1
         `
     try{
@@ -608,16 +595,16 @@ const GetTypeByID = async (req, res) =>{
 const GetNotContainedSpec = async (req, res) =>{
     const {id} = req.params
     const query_text = `
-        SELECT s.id AS spec_id, s.absolute_name,
-            (SELECT json_agg(tr) FROM (
-                SELECT st.name, st.language_id 
-                FROM specification_translations st
-                WHERE st.spec_id = s.id
-            )tr) AS spec_translations
+        SELECT s.id AS spec_id, s.absolute_name, st.name AS name_ru, stt.name AS name_tm  
+            
 
         FROM specifications s
             LEFT JOIN type_specifications ts
                 ON ts.spec_id = s.id AND ts.ctype_id = ${id}
+            INNER JOIN specification_translations st
+                ON st.spec_id = s.id AND st.language_id = 2
+            INNER JOIN specification_translations stt
+                ON stt.spec_id = s.id AND stt.language_id = 1
         WHERE ts.id IS NULL
     `
     try {
@@ -631,15 +618,15 @@ const GetNotContainedSpec = async (req, res) =>{
 
 const AddSpecificationToType = async (req, res) =>{
     /**********
-     "specifications":[{"spec_id":12, "position":1}, {"spec_id":13, "position":2} ]
+     "specifications":[{"spec_id":12, "queue_position":1}, {"spec_id":13, "queue_position":2} ]
      */
     const {ctype_id} = req.params
-    const {specifications} = req.body
-
+    const specifications = req.body
+    console.log(specifications)
     try{
         const query_text = `
                 INSERT INTO type_specifications (ctype_id, spec_id, queue_position) 
-                VALUES ${specifications?.map(item => `(${ctype_id}, ${item.id}, ${item.position})`).join(',')}
+                VALUES ${specifications?.map(item => `(${ctype_id}, ${item.spec_id}, ${item.queue_position})`).join(',')}
             `
         // console.log(query_text)
         const {rows} = await database.query(query_text, [])
@@ -650,11 +637,29 @@ const AddSpecificationToType = async (req, res) =>{
     }
 }
 
-const DeleteTypeSpecification = async (req, res) =>{
-    const {ts_id} = req.params
-    const {bool} = req.body
+const ChangeQueuePosition = async (req, res) =>{
+    // {"queue_position":15}
+    const {queue_position} = req.body
+    const {type_spec_id} = req.params
     const query_text = `
-        UPDATE type_specifications SET deleted = ${bool} WHERE id = ${ts_id}
+        UPDATE type_specifications SET queue_position = ${queue_position} WHERE id = ${type_spec_id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
+}
+
+const DeleteTypeSpecification = async (req, res) =>{
+    const {type_spec_id} = req.params
+    const {deleted} = req.body
+    console.log(req.body)
+    const query_text = `
+        UPDATE type_specifications SET deleted = ${deleted} WHERE id = ${type_spec_id}
     `
     try {
         await database.query(query_text, [])
@@ -720,31 +725,30 @@ const AddToVIP = async (req, res) =>{
 const AddMainLocation = async (req, res)=>{
     /************************
      {
-         "absolute_name":"Ashgabat city",
-         "translations":[
-             {"lang_id" : "1", "name" : "Aşgabat"},
-             {"lang_id" : "2", "name" : "Ашгабат"},
-         ]
+         "name_ru":"Adding Russian wairnat"
+         "name_tm":"Adding turmen wariant"
      }
      *******************************************/
-     const {absolute_name, translations} = req.body
-    
+     const {name_ru, name_tm} = req.body
+     console.log(req.body)
      const query_text = `
          WITH inserted AS (
              INSERT INTO locations(absolute_name)
-              VALUES ('${absolute_name}') RETURNING id
+              VALUES ('${name_ru}') RETURNING id
         ), insert_trans AS (
              INSERT INTO location_translations(translation, language_id, location_id) VALUES
-             ${translations?.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
+             ('${name_ru}', 2, (SELECT id FROM inserted)), ('${name_tm}', 1, (SELECT id FROM inserted)) 
         ) SELECT id FROM inserted
      `
      try {
          const {rows} = await database.query(query_text, [])
          try {
-            const qt = `SELECT l.id, lt.translation AS name
+            const qt = `SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru
             FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1
+            INNER JOIN location_translations ltt
+                ON ltt.location_id = l.id AND ltt.language_id = 2
             WHERE l.id = ${rows[0].id}`
             const k = await database.query(qt, [])
             const s = k.rows[0]
@@ -762,33 +766,34 @@ const AddMainLocation = async (req, res)=>{
 const AddLocation = async (req, res) =>{ 
     /************************
      {
-         "absolute_name":"11 mikrayon",
-         "main_location_id": 3
-         "translations":[
-             {"lang_id" : "1", "name" : "11 kici etrapca"},
-             {"lang_id" : "2", "name" : "11 микрорайон"},
-         ]
+         "name_ru":"Adding Russian wairnat"
+         "name_tm":"Adding turmen wariant"
      }
      *******************************************/
-    const {absolute_name, main_location_id, translations} = req.body
-    
+    const {name_ru, name_tm} = req.body
+    const {id} = req.params
+    console.log(req.body)
+
     const query_text = `
         WITH inserted AS (
             INSERT INTO locations(absolute_name, main_location_id)
              VALUES ($1, $2) RETURNING id
         ), insert_trans AS (INSERT INTO location_translations(translation, language_id, location_id) VALUES
-            ${translations?.map(item => `('${item.name}', ${item.lang_id}, (SELECT id FROM inserted))`)}
+            ('${name_ru}', 2, (SELECT id FROM inserted)), ('${name_tm}', 1, (SELECT id FROM inserted))
         ) SELECT id FROM inserted
         
         `
     try {
-        const {rows} = await database.query(query_text, [absolute_name, main_location_id])
+        const {rows} = await database.query(query_text, [name_ru, id])
         try {
-            const qt = `SELECT l.id, lt.translation AS name
-            FROM locations l
-            INNER JOIN location_translations lt
-                ON lt.location_id = l.id AND lt.language_id = 1
-            WHERE l.id = ${rows[0].id}`
+            const qt = `
+                SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
+                    FROM locations l
+                        INNER JOIN location_translations lt
+                            ON lt.location_id = l.id AND lt.language_id = 1
+                        INNER JOIN location_translations ltt
+                            ON ltt.location_id = l.id AND ltt.language_id = 2
+                    WHERE l.id = ${rows[0].id}`
             const k = await database.query(qt, [])
             const s = k.rows[0]
             return res.status(status.success).json({"rows":s})
@@ -804,12 +809,14 @@ const AddLocation = async (req, res) =>{
 
 const GetLocations = async (req, res) =>{
     const {lang} = req.params
-    console.log("hello getlocations")
+    // console.log("hello getlocations")
     const query_text = `
-        SELECT l.id, lt.translation AS name
+        SELECT l.id, lt.translation AS name_tm, lt.translation AS name_ru, l.enabled
         FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1
+            INNER JOIN location_translations ltt
+                ON ltt.location_id = l.id AND ltt.language_id = 2        
         WHERE l.main_location_id IS NULL
     `
     try {
@@ -822,13 +829,15 @@ const GetLocations = async (req, res) =>{
 }
 
 const GetRegions = async (req, res) =>{
-    console.log("hello getregions")
+    // console.log("hello getregions")
     const {id} = req.params
     const query_text = `
-        SELECT l.id, lt.translation AS name
+        SELECT l.id, lt.translation AS name_tm, lt.translation AS name_ru, l.enabled
         FROM locations l
             INNER JOIN location_translations lt
-                ON lt.location_id = l.id AND lt.language_id = 1 
+                ON lt.location_id = l.id AND lt.language_id = 1
+            INNER JOIN location_translations ltt
+                ON ltt.location_id = l.id AND ltt.language_id = 2 
         WHERE l.main_location_id = ${id}
     `
     try {
@@ -837,6 +846,62 @@ const GetRegions = async (req, res) =>{
     } catch (e) {
         console.log(e)
         return res.json(false)
+    }
+}
+
+const ActivationOfLocation = async (req, res) =>{
+    const {id} = req.params
+    const {enabled} = req.body
+    const query_text = `
+        UPDATE locations SET enabled = ${enabled} WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text)
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const UpdateLocation = async (req, res) =>{
+    // {
+// "name_tm"; "name_ru", enabled 
+    // }
+    console.log(req.body)
+
+    const {id} = req.params
+    const {name_ru, name_tm, enabled} = req.body
+    const query_text = `
+        WITH updated1 AS (
+            UPDATE location_translations SET translation = '${name_ru}' WHERE language_id = 2 AND location_id = ${id}
+        ), aupdate_it AS (
+            UPDATE locations SET enabled = ${enabled} WHERE id = ${id}
+        )
+        UPDATE location_translations SET translation = '${name_tm}' WHERE language_id = 1 AND location_id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text);
+        try {
+            const qt = `
+                SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
+                    FROM locations l
+                        INNER JOIN location_translations lt
+                            ON lt.location_id = l.id AND lt.language_id = 1
+                        INNER JOIN location_translations ltt
+                            ON ltt.location_id = l.id AND ltt.language_id = 2
+                    WHERE l.id = ${id}`
+            const k = await database.query(qt, [])
+            const s = k.rows[0]
+            return res.status(status.success).json({"rows":s})
+        } catch (e) {
+            console.log(e)
+            return res.status(status.error).send(false)
+        }
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.success).send(false)
     }
 }
 
@@ -1323,11 +1388,14 @@ module.exports = {
     UpdateRealEstate,
     AddSpecificationToType,
     DeleteTypeSpecification,
+    ChangeQueuePosition,
 
     AddToVIP,
     AddMainLocation,
     AddLocation,
     AddMaintype,
+    ActivationOfLocation,
+    UpdateLocation,
     GetOperators,
     DisableEnableValue,
     AddSpecVal,

@@ -31,8 +31,9 @@ router.get('/all-types',VerifyAdminAccessToken, AdminController.GetAllTypes)
 
 router.get('/type/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetTypeByID)
 router.get('/not-contained-spec/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetNotContainedSpec)
-router.post('/add-specifications-to-type/:ctype_id', VerifyAdminAccessToken, SchemaMiddleware(Schema.AddSpecificationToType),AdminController.AddSpecificationToType)
-router.post('/activation-type-specification/:ts_id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
+router.post('/add-specifications-to-type/:ctype_id', VerifyAdminAccessToken,AdminController.AddSpecificationToType)
+router.post('/change-queue-position/:type_spec_id', VerifyAdminAccessToken, AdminController.ChangeQueuePosition )
+router.post('/activation-type-specification/:type_spec_id', VerifyAdminAccessToken, AdminController.DeleteTypeSpecification)
 router.post('/add-image-to-type/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), upload.single('picture'), resize_page_images, AdminController.AddTypeImage)
 
 router.post('/update-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.UpdateRealEstate)
@@ -40,9 +41,11 @@ router.post('/update-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddl
 router.post('/add-to-vip/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.AddToVIP)
 
 router.post('/add-main-location', VerifyAdminAccessToken, AdminController.AddMainLocation)
-router.post('/add-location', VerifyAdminAccessToken, AdminController.AddLocation)
+router.post('/add-location/:id', VerifyAdminAccessToken, AdminController.AddLocation)
 router.get('/main-locations',VerifyAdminAccessToken, AdminController.GetLocations)
 router.get('/region-locations/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetRegions)
+router.post('/enable-location/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivationOfLocation)
+router.post('/update-location/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.UpdateLocation)
 
 router.get('/page-image-places', VerifyAdminAccessToken, AdminController.GetImagePlaces)
 router.get('/get-page-images/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetPageImages)

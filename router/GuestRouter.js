@@ -23,7 +23,7 @@ router.get('/:lang/main-locations', ParamsSchemaMiddleware(Schema.LangSchema), G
 router.get('/:lang/region-locations/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRegions)
 
 router.post('/:lang/get-wish-list', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetWishList)
-
+router.get('/:lang/get-types-count/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetCountOfCategory)
 
 router.get('/room-specification', GuestController.RoomSpecController)
 router.get('/:lang/types-of-category/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetTypesOfCategory)

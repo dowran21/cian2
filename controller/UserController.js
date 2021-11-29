@@ -68,7 +68,7 @@ const VerifyUserCode = async (req, res) =>{
     const ip = requestip.getClientIp(req)
     const {code} = req.body
     const user_id = req.user.id
-    // console.log(user_id, ip, code)
+    console.log(user_id, ip, code)
     const query_text = `
         SELECT u.id, u.full_name, u.email, u.phone, u.owner_id
             FROM users u

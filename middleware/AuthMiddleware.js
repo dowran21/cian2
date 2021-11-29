@@ -77,6 +77,7 @@ const VerifyUserRefreshToken = async (req, res, next) =>{
 
 const VerifyCodeAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
+    console.log(token)
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }

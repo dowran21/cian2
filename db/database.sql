@@ -184,6 +184,7 @@ CREATE TABLE specification_value_translations(
 CREATE TABLE locations(
     id SERIAL PRIMARY KEY NOT NULL,
     absolute_name VARCHAR(100) NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
     main_location_id SMALLINT,
 
     CONSTRAINT main_location_id_fk 
