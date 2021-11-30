@@ -39,7 +39,7 @@ const AdminLogin = async (req, res) =>{
         }
         if(user.role_id == 2){
             data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
-            access_token = await AdminHelper.GenerateOperatorAccessToken(data)
+            access_token = await AdminHelper.GenerateAdminAccessToken(data)
             refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
         }
         if(user.role_id == 3){
@@ -743,7 +743,7 @@ const AddMainLocation = async (req, res)=>{
      try {
          const {rows} = await database.query(query_text, [])
          try {
-            const qt = `SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru
+            const qt = `SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
             FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1

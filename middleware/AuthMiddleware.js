@@ -128,6 +128,15 @@ const VerifyOperatorRefreshToken = async (req, res, next) =>{
     });
 }
 
+const VerifyIsAdmin = async (req, res, next) =>{
+    role_id = req.user.role_id;
+    if(role_id == 1){
+        next()
+    }else{
+        return res.status(status.forbidden).send("forbidden");
+    }
+}
+
 module.exports = {
     VerifyAdminAccessToken,
     VerifyUserAccessToken,
@@ -135,5 +144,6 @@ module.exports = {
     VerifyCodeAccessToken,
     VerifyOperatorRefreshToken,
     VerifyOperatorAccessToken,
-    VerifyAdminRefreshToken
+    VerifyAdminRefreshToken,
+    VerifyIsAdmin,
 }

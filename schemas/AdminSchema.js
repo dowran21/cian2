@@ -84,12 +84,9 @@ const Schema = {
     }),
 
     AddLocation:Joi.object({
-        absolute_name:Joi.string().required(),
-        main_location_id: Joi.number().required(),
-        translations:Joi.array().items(Joi.object({
-            lang_id:Joi.number().required(),
-            name:Joi.string().required()
-        }))
+        enabled:Joi.boolean().required(),
+        name_ru:Joi.string().min(1).max(150).required(),
+        name_tm:Joi.string().min(1).max(150).required()
     }),
 
     IdSchema:Joi.object({
