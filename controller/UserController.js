@@ -52,8 +52,8 @@ const UserRegistration = async (req, res) =>{
     try{
         const {rows} = await database.query(query_text, [3, full_name, email, phone, hashed_password, owner_id, max_count, ip, code]);
         data = {"id":rows[0].id, "code":code}
-        const mess = `Code: ${code}`
-        SendSMS({phone, mess})
+        const message = `Code: ${code}`
+        SendSMS({phone, message})
         const access_token = await UserHelper.GenerateCodeAccessToken(data);
         return res.status(status.success).json({"access_token":access_token, code})
     }catch(e){
@@ -190,8 +190,8 @@ const UserLogin = async (req, res) =>{
                 try {
                     await database.query(ip_query, [count])
                     data = {"id":user.id, "code":code}
-                    const mess = `Code: ${code}`
-                    SendSMS({phone:user.phone, mess})
+                    const message = `Code: ${code}`
+                    SendSMS({phone, message})
                     const access_token = await UserHelper.GenerateCodeAccessToken(data);
                     return res.status(status.success).json({"access_token":access_token, code})    
                 } catch (e) {
@@ -340,7 +340,7 @@ const UserRealEstates = async (req, res) =>{
     console.log(user_id)
     try {
         const query_text = `
-            SELECT re.id, rep.price, 
+            SELECT re.id, rep.price::text, 
                 concat(CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
                 
                 (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -352,11 +352,11 @@ const UserRealEstates = async (req, res) =>{
             
                 FROM real_estates re
 
-            INNER JOIN languages l 
+            LEFT JOIN languages l 
                 ON l.language_code = '${lang}'
-            INNER JOIN ctypes cp
+            LEFT JOIN ctypes cp
                 ON cp.id = re.ctype_id
-            INNER JOIN type_translations tt
+            LEFT JOIN type_translations tt
                 ON tt.type_id = cp.type_id AND tt.language_id = l.id 
             LEFT JOIN location_translations lt
                 ON lt.location_id = re.location_id AND lt.language_id = l.id
@@ -364,12 +364,13 @@ const UserRealEstates = async (req, res) =>{
                 ON lc.id = re.location_id
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            INNER JOIN real_estate_prices rep 
+            LEFT JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = true
             WHERE re.user_id = ${user_id}
         `
         const {rows} = await database.query(query_text, [])
-        return res.status(status.success).json(rows)
+        console.log(rows)
+        return res.status(status.success).json({rows})
 
     } catch (e) {
         console.log(e)
@@ -396,9 +397,10 @@ req.body should be like this;
     } 
 *****************************/
 
-    const {type_id, category_id, phone, area, position, price, descriptions, owner_id, specifications, location_id } = req.body
+    const {type_id, category_id, area, position, price, descriptions, specifications, location_id } = req.body
     // console.log(req.body)
     const user_id = req.user.id
+    console.log(user_id)
     try {
         const user_query = `
             SELECT u.id, u.max_count, u.owner_id, 
@@ -410,7 +412,7 @@ req.body should be like this;
             FROM users u WHERE u.id = ${user_id}
             `
         const {rows} = await database.query(user_query, [])
-        console.log(rows[0])
+        console.log(rows)
         if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
             return res.status(422).send(false)
         }

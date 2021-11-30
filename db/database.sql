@@ -230,6 +230,13 @@ CREATE TABLE real_estates(
 );
 CREATE INDEX real_estate_ctype_idx ON real_estates (ctype_id);
 
+CREATE TABLE real_estate_comments(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    real_estate_id BIGINT NOT NULL,
+    comment VARCHAR(500),
+
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id)
+);
 
 CREATE TABLE real_estate_prices(
     id SERIAL PRIMARY KEY NOT NULL,

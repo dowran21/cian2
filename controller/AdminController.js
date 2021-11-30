@@ -1162,31 +1162,42 @@ const GetPriceStatistics = async (req, res) =>{
 }
 
 const GetConfirmRealEstates = async (req, res) =>{
-    const {page, limit} = req.query
+    const {page, limit, search, is_active} = req.query
     let offSet = ``
     if(page && limit){
         offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
     }else{
         offSet = ``
     }
-
+    let active_part = ``
+    if(is_active){
+        active_part = `re.is_active = ${is_active}`
+    }else{
+        active_part = `re.is_active IS NULL`
+    }
+    let where_part = ``
+    if(search){
+        where_part += ` AND (u.phone ~* '${search}' OR u.full_name ~* '${search}')`
+    }else{
+        where_part = ``
+    }
     const query_text = `
     WITH selected AS ( 
 
-        SELECT re.id, rep.price, 
+        SELECT re.id, rep.price, u.phone, u.full_name, ott.translation AS type_of_owner,
             concat(
                 CASE 
                     WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
                         END 
                     || lt.translation) AS location,
-            (SELECT real_estate_name(re.id, l.id, tt.name, area)),
-            
-            (SELECT json_agg(dest) FROM (
-                SELECT rei.destination FROM real_estate_images rei
-                WHERE rei.real_estate_id = re.id AND rei.is_active = true
-            )dest) AS images
+            (SELECT real_estate_name(re.id, l.id, tt.name, area))
 
+ 
             FROM real_estates re 
+                INNER JOIN users u
+                    ON u.id = re.user_id
+                INNER JOIN owner_type_translations ott
+                    ON ott.owner_id = u.owner_id AND ott.language_id = 2
                 INNER JOIN ctypes cp 
                     ON cp.id = re.ctype_id
                 INNER JOIN real_estate_prices rep 
@@ -1201,9 +1212,9 @@ const GetConfirmRealEstates = async (req, res) =>{
                     ON lc.id = re.location_id
                 LEFT JOIN location_translations ltt
                     ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            WHERE re.is_active IS NULL AND re.status_id <> 2 AND re.status_id <> 4 AND (selected = 'false'
+            WHERE ${active_part} AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} AND (selected = 'false'
                 OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
-            ORDER BY  re.updated_at DESC  
+            ORDER BY  re.id DESC  
             LIMIT 15
         ), updated AS (
             UPDATE real_estates SET selected = true, 
@@ -1212,12 +1223,19 @@ const GetConfirmRealEstates = async (req, res) =>{
                     localtimestamp + INTERVAL '1 SECOND'
                     '[]'
                 ) WHERE id IN (SELECT id FROM selected)
-        ) SELECT * FROM selected;   
+        ) 
+            SELECT (SELECT COUNT(*) 
+                FROM real_estates re
+                WHERE ${active_part} AND re.status_id <> 2 AND re.status_id <> 4 AND (selected = 'false'
+                    OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                ), (SELECT json_agg(re) FROM(
+                    SELECT * FROM selected 
+                )re) AS real_estates   
         `
     try {
         const {rows} = await database.query(query_text, [])
-        // console.log(rows)
-        return res.status(status.success).json(rows)
+        console.log(rows)
+        return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -1226,14 +1244,23 @@ const GetConfirmRealEstates = async (req, res) =>{
 
 const ActivateRealEstate = async (req, res) =>{
     const {id} = req.params
-    const {bool} = req.body
+    const {is_active, comment} = req.body
+    let comment_part = ``
+    if(is_active){
+        comment_part = ``
+    }
+    if(is_active == false){
+        comment_part = `, insert_comment AS (
+            INSERT INTO real_estate_comments(real_estate_id, comment)
+            VALUES (${id}, '${comment}'))`
+    }
     const user_id = req.user.id
     const query_text = `
         WITH updated AS (
-            UPDATE real_estates SET is_active = ${bool} WHERE id = ${id} RETURNING *
-        ) INSERT INTO logs (user_id, event_type_id, table_id, data) 
+            UPDATE real_estates SET is_active = ${is_active} WHERE id = ${id} RETURNING *
+        ) ${comment_part} INSERT INTO logs (user_id, event_type_id, table_id, data) 
             VALUES (${user_id}, 1, 1, 
-                (SELECT json_build_object('id', id, 'is_active', is_active) FROM updated)
+                (SELECT json_build_object('id', id, 'is_active', is_active ${!is_active ? `, 'comment', '${comment}'`: ''}) FROM updated)
                 )
         `
     try {
@@ -1248,7 +1275,7 @@ const ActivateRealEstate = async (req, res) =>{
 const RealestateByID = async (req, res) =>{
     const {id} = req.params
     const query_text = `
-        SELECT re.area, rep.price, re.area, vre.id AS VIP,
+        SELECT re.id, re.area, rep.price, vre.id AS VIP, u.phone, u.full_name, ott.translation,
             re.created_at,
             concat(
                 CASE 
@@ -1263,13 +1290,19 @@ const RealestateByID = async (req, res) =>{
                 WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
             )image) AS images, 
 
+            (SELECT json_agg(rejection) FROM(
+                SELECT rec.id, rec.comment
+                FROM real_estate_comments rec
+                WHERE rec.real_estate_id = re.id
+            )rejection) AS rejections,
+
             (SELECT json_agg(specification) FROM(
                 SELECT DISTINCT ON (resvv.spec_id) st.name, 
-                
+                   
                     (SELECT json_agg(value) FROM(
                         SELECT sv.absolute_value, svt.name FROM specification_values sv
                             LEFT JOIN specification_value_translations svt
-                                ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                                ON svt.spec_value_id = sv.id AND svt.language_id = 2
                             INNER JOIN real_estate_specification_values resv 
                                 ON resv.spec_value_id = sv.id
                         WHERE resv.real_estate_id = re.id AND sv.spec_id = st.spec_id
@@ -1278,9 +1311,9 @@ const RealestateByID = async (req, res) =>{
                 FROM specification_translations st
                     INNER JOIN real_estate_specification_values resvv
                         ON resvv.spec_id = st.spec_id 
-                WHERE st.language_id = l.id AND resvv.real_estate_id = $1 
+                WHERE st.language_id = 2 AND resvv.real_estate_id = $1 
 
-            )specification) AS specifications
+            )specification) AS specifications, ret.description AS description_tm, rett.description AS description_ru
 
     FROM real_estates re
         INNER JOIN users u
@@ -1296,7 +1329,9 @@ const RealestateByID = async (req, res) =>{
         INNER JOIN type_translations tt 
             ON tt.type_id = ctp.type_id AND tt.language_id = l.id
         LEFT JOIN real_estate_translations ret 
-            ON ret.real_estate_id = re.id AND ret.language_id = l.id AND ret.is_active = true
+            ON ret.real_estate_id = re.id AND ret.language_id = 1
+        LEFT JOIN real_estate_translations rett 
+            ON rett.real_estate_id = re.id AND rett.language_id = 2
         INNER JOIN real_estate_prices rep 
             ON rep.real_estate_id = re.id AND rep.is_active = true 
         LEFT JOIN location_translations lt
@@ -1309,7 +1344,7 @@ const RealestateByID = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [id])
-        // console.log(rows)
+        // console.log(rows[0].specifications)
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)

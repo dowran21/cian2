@@ -164,7 +164,8 @@ const AllRealEstate = async (req, res) =>{
             price1 = {};
         }
     }
-
+    // console.log(price1, "hello parsed price")
+    // console.log(price)
     if (price1?.min && price1?.max){
         where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
     }else if(price1?.min && !price1?.max){
@@ -521,9 +522,8 @@ const RealEstatePositions = async (req, res) =>{
 const CountForFilter = async (req, res) =>{
     const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
     const {lang} = req.params
-    if (page !== 'null' && limit !== 'null' && page && limit){
-        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
-    }
+    let where_part = ``
+    let spec_part = ``
     
     ///------------------------main_type_id ------------------//
     if(main_type_id){
@@ -637,7 +637,7 @@ const FlatFilter = async (req, res) =>{
                             )
                         
                         FROM specification_values sv 
-                        WHERE sv.spec_id = 1
+                        WHERE sv.spec_id = 1 AND sv.enable = true
                             ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
                                 integer) ELSE null END ASC, sv.absolute_value ASC
                     )co) AS ready_search
