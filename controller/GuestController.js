@@ -1,4 +1,3 @@
-const { restart } = require('nodemon')
 const database = require('../db/index.js')
 const {status} = require('../utils/status')
 
@@ -122,8 +121,6 @@ const Languages = async (req, res) =>{
 
 const AllRealEstate = async (req, res) =>{
     const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
-    console.log(req.query)
-    console.log(price)
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -381,32 +378,67 @@ const RealEstatePositions = async (req, res) =>{
     if (category_id && category_id !== 'null'){
         where_part += ` AND cp.category_id = ${category_id}` 
     }
-    
-    //-------------------specification part-----------------//
-    if (spec_values?.length){
-        spec_part += ` AND (${spec_values?.map(item =>`resv.spec_value_id = ${item}`).join('OR')})`      
+
+    //---------price part-------//
+    let price1 = {}
+    if(price){
+        try {
+            price1 = JSON.parse(price);
+        } catch (e) {
+            price1 = {};
+        }
     }
-    
-    //----------------area part--------------------//
-    if (area?.min && area?.max){
-        where_part += ` AND re.area > ${area.min}  AND re.are < ${area.max}`
-    }else if(area?.min && !area?.max){
-        where_part += ` AND re.area > ${area?.min}`
-    }else if(!area?.min && area?.max){
-        where_part += ` AND re.area < ${area.max}`
+    // console.log(price1, "hello parsed price")
+    // console.log(price)
+    if (price1?.min && price1?.max){
+        where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
+    }else if(price1?.min && !price1?.max){
+        where_part += ` AND rep.price > ${price1.min}`
+    }else if(!price1?.min && price1?.max){
+        where_part += ` AND rep.price < ${price1.max}`
     }else{
         where_part +=``
     }
-    
-    //---------------price-----------------------//
-    if (price?.min && price?.max){
-        where_part += ` AND (rep.price > ${price.min} AND rep.are < ${price.max})`
-    }else if(price?.min && !price?.max){
-        where_part += ` AND rep.price > ${price.min}`
-    }else if(!price?.min && price?.max){
-        where_part += ` AND rep.price < ${price.max}`
+
+    //---------------area part------//
+    let area1 = {}
+    if(area){
+        try {
+            area1 = JSON.parse(area);
+        } catch (e) {
+            area1 = {};
+        }
+    }
+
+    if (area1?.min && area1?.max){
+        where_part += ` AND re.area > ${area1.min}  AND re.area < ${area1.max}`
+    }else if(area1?.min && !area1?.max){
+        where_part += ` AND re.area > ${area1?.min}`
+    }else if(!area1?.min && area1?.max){
+        where_part += ` AND re.area < ${area1.max}`
     }else{
         where_part +=``
+    }
+   
+    //-------------specificatoin values search------------//
+    let specifications = ``
+    if(spec_values){
+        try {
+            specifications = JSON.parse(spec_values)
+            if(specifications.length){
+                for(let i=0; i<specifications.length; i++){
+                    if(specifications[i]?.values.length){
+                        spec_part += `
+                            INNER JOIN real_estate_specification_values resv${i}
+                                ON resv${i}.real_estate_id = re.id AND resv${i}.spec_id = ${specifications[i]?.id} AND (${specifications[i].values.map(item => `resv${i}.spec_value_id = ${item}`).join('OR ')})    
+                        `
+                    }
+                    
+                }
+            }
+        } catch (e) {
+            console.log(e)
+        }   
     }
     
     //----------about to have an image---------// 
@@ -415,102 +447,42 @@ const RealEstatePositions = async (req, res) =>{
     }else{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
-    const requestip = require('request-ip')
-    const ip = requestip.getClientIp(req)
-    let vip_limit = ``
-    if (limit){
-        // console.log("i am in limit if")
-        vip_limit = limit/2;
-    }else{
-        vip_limit = 5;
-    }
-    if (page && limit){
-        offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
-    }else{
-        offSet = ``
-    }    
+    console.log(spec_values)
+  
+
     const position_part = `
     (SELECT json_agg(pos) FROM(
         SELECT position[0] AS lat, position[1] AS lng
             FROM real_estates 
-            WHERE real_estates.id = $1                 
-    )pos) AS position,`
+            WHERE real_estates.id = re.id               
+    )pos) AS position`
     
     const query_text =`
-    WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, ${position_part}
+    SELECT DISTINCT ON (re.id) re.id, ${position_part}
 
         FROM real_estates re 
             INNER JOIN ctypes cp 
                 ON cp.id = re.ctype_id
             INNER JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-            INNER JOIN languages l 
-                ON l.language_code = $2
-            INNER JOIN type_translations tt 
-                ON tt.type_id = cp.type_id AND tt.language_id = l.id
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            LEFT JOIN location_translations lt
-                ON lt.location_id = re.location_id AND lt.language_id = l.id
             LEFT JOIN locations lc 
                 ON lc.id = re.location_id
-            LEFT JOIN location_translations ltt
-                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            INNER JOIN real_estate_specification_values resv
-                ON resv.real_estate_id = re.id
+                ${spec_part} 
             INNER JOIN users u
                 ON u.id = re.user_id
             INNER JOIN types t
                 ON t.id = cp.type_id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND vre.id IS NULL ${where_part} ${spec_part}
-        ORDER BY  re.id DESC  ), 
-
-                    
-    inserted AS (INSERT INTO view_address 
-        SELECT $1,  id, 1 FROM selected 
-        ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING)
-    
-    SELECT
-         (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            INNER JOIN ctypes cp 
-                ON cp.id = re.ctype_id
-            LEFT JOIN locations lc 
-                ON lc.id = re.location_id
-            INNER JOIN real_estate_specification_values resv
-                ON resv.real_estate_id = re.id
-            INNER JOIN types t
-                ON t.id = cp.type_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}   
-        ) AS count),
-
-        (SELECT json_agg(res) FROM 
-            selected 
-        res) AS real_estates_all
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}
         `
     try {
-        const {rows} = await database.query(query_text, [ip, lang])
-        let i = 0;
-        let j = 0;
-        let k = 0;
-        let real_estates_all = []
-        if (rows[0].vip_real_estates){
-            for ( k; k<(rows[0].real_estates_all.length+rows[0].vip_real_estates.length); k++){
-                if (k%3 == 2 && rows[0].vip_real_estates[i]){
-                    real_estates_all[k] = rows[0].vip_real_estates[i];
-                    i++;
-                }else{
-                    if(rows[0].real_estates_all[k]){
-                        real_estates_all[k] = rows[0].real_estates_all[j]
-                        j++
-                    }
-                }
-            }
-        }else{
-            real_estates_all = rows[0].real_estates_all
-        }
+        // const {rows} = await database.query(query_text, [])
+        let rows = [
+            {"id":12, "position":[{lat:37.922683378780405,lang:58.37599757962268 }]},
+            {"id":12, "position":[{lat:37.922683378780415,lang:58.37599757962268 }]},
+            {"id":12, "position":[{lat:37.922683378780425,lang:58.37599757962268 }]},
+            {"id":12, "position":[{lat:37.922683378780435,lang:58.37599757962268 }]},
+            {"id":12, "position":[{lat:37.922683378780445,lang:58.37599757962268 }]},
+            ] 
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)
@@ -738,7 +710,7 @@ const GetRealEstateByID = async (req, res) => {
 
     const position_part = `
     (SELECT json_agg(pos) FROM(
-        SELECT position[0] AS x, position[1] AS y
+        SELECT position[0] AS lat, position[1] AS lng
             FROM real_estates 
             WHERE real_estates.id = $1                 
     )pos) AS position,`

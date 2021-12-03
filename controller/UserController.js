@@ -487,14 +487,10 @@ req.body should be like this;
 }
 
 const AddImage = async (req, res) =>{
-    // console.log("hello i am in controller")
-    // console.log(req.body)
+    console.log("hello i am in controller")
     console.log(req.fields)
     const files = req.files
-    // console.log(req)
-    // console.log("-------------------------------------------------------------------")
     console.log(req.files)
-    // console.log(req.file)
     const {id} = req.params
     if (files?.length){
         // console.log(files)
@@ -506,7 +502,7 @@ const AddImage = async (req, res) =>{
             console.log("i am in try")
             const {rows} = await database.query(query_text, [])
             console.log("i am after try")
-            return res.status(200).json(true)
+            return res.status(status.success).json(true)
         } catch (e) {
             console.log(e)
             return res.status(status.error).json(false)

@@ -1,6 +1,8 @@
 const JWT = require ('jsonwebtoken')
 require('dotenv').config()
 const {status} = require ('../utils/status.js')
+const database = require('../db/index.js')
+
 
 const VerifyAdminAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
