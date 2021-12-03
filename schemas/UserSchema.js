@@ -22,7 +22,7 @@ const Schema = {
             lat:Joi.number().required("{#label} required").min(-90).max(90),
             lng:Joi.number().required("{#label} required").min(-180).max(180),
             }).description("Please use correct position {lng, lat}"),
-        price: Joi.number().required().max(99999999999).label('Baha').messages({
+        price: Joi.number().required().max(2147860).label('Baha').messages({
             'any.required':'{#label} is required',
             'number.base':'{#label} is not correct',
         }),
@@ -112,15 +112,9 @@ const Schema = {
         category_id: Joi.number().label("Yerleshyan yeri").messages({
             'number.pattern.base':"it should be a number"
         }),
-        price:Joi.object({
-            min:Joi.number(),
-            max:Joi.number()
-        }),
-        area:Joi.object({
-            min:Joi.number(),
-            max:Joi.number()
-        }),
-        spec_values:Joi.array(),
+        price:Joi.string(),
+        area:Joi.string(),
+        spec_values:Joi.string(),
         page:Joi.number(),
         limit:Joi.number()
     }),

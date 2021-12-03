@@ -286,10 +286,8 @@ const ChangePassword = async (req, res) =>{
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
     const {password, code} = req.body
-    console.log(req.body)
     const user_id = req.user.id
     const hashed_password = await UserHelper.HashPassword(password)
-    console.log(hashed_password)
     let ipr = {}
     const ip_query = `
         SELECT * FROM access_ip WHERE user_id = ${user_id} AND ip_address = '${ip}' AND code = ${code}
@@ -320,13 +318,14 @@ const ChangePassword = async (req, res) =>{
 
 const LoadUser = async (req, res) =>{
     const user_id = req.user.id
+    // console.log(req.user)
     try {
-        const {rows} = await database.query(`SELECT * FROM users WHERE id = ${user_id} AND role_id = 2`, [])
+        const {rows} = await database.query(`SELECT * FROM users WHERE id = ${user_id} AND role_id = 3`, [])
         const user = rows[0]
-        const data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
+        const data = {"id":user.id, "full_name":user.full_name, "phone":user.phone, "email":user.email, "role_id":user.role_id}
         const access_token = await UserHelper.GenerateUserAccessToken(data)
         // const refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
-        return res.status(status.success).json({"access_token":access_token, "data":data})
+        return res.status(status.success).json({"token":access_token, "data":data})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -340,7 +339,7 @@ const UserRealEstates = async (req, res) =>{
     console.log(user_id)
     try {
         const query_text = `
-            SELECT re.id, rep.price::text, 
+            SELECT re.id, rep.price::text, re.is_active,
                 concat(CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
                 
                 (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -463,7 +462,7 @@ req.body should be like this;
 
             ),inserted AS (
                 INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id)
-                VALUES($1, (SELECT id FROM selected), $3, '(${position.lng}, ${position.lat})', $4, $5) RETURNING id
+                VALUES($1, (SELECT id FROM selected), $3, '(${position.lat}, ${position.lng})', $4, $5) RETURNING id
 
             ),ins AS (
                 INSERT INTO real_estate_prices (real_estate_id, price)
@@ -477,7 +476,6 @@ req.body should be like this;
         `
         console.log(query_text)
         const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
-        // console.log(rows[0])
         
         return res.status(status.success).json({"rows":rows[0]})
 
@@ -517,6 +515,13 @@ const AddImage = async (req, res) =>{
     return res.status(status.bad).json({"message":"there is no file"})
 }
 
+const UpdateRealEstateSpec = async (req, res) =>{
+    const {real_estate_id, lang, spec_id} = req.params;
+    const {id, is_multiple, is_required, values} = req.body;
+    
+
+}
+
 const GetUserRealEstateByID = async (req, res) =>{
     const {id} = req.body
     const {uuid} = req.params
@@ -532,6 +537,12 @@ const GetUserRealEstateByID = async (req, res) =>{
             (SELECT json_agg(image) FROM (
                 SELECT ret.destination FROM real_estate_images ret WHERE ret.real_estate_id = re.id
             )image) AS images,
+
+            (SELECT json_agg(rejection) FROM(
+                SELECT rec.id, rec.comment
+                FROM real_estate_comments rec
+                WHERE rec.real_estate_id = re.id
+            )rejection) AS rejections,
 
             (SELECT json_agg(specification) FROM (
                 SELECT st.name,
@@ -693,6 +704,7 @@ module.exports = {
 
     AddRealEstate,
     GetUserRealEstateByID,
+    UpdateRealEstateSpec,
     ForgotPassword,
     AddWishList,
     GetWishList,

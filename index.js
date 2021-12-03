@@ -5,7 +5,6 @@ const cors = require('cors')
 const Routers = require('./router/index.js')
 const cookieParser = require('cookie-parser')
 const path = require('path')
-const {cron_job} = require('./utils/cron');
 const morgan = require ('morgan')
 
 const port = process.env.PORT || 3000
@@ -13,7 +12,7 @@ const port = process.env.PORT || 3000
 let dir = path.join(__dirname, 'uploads')
 
 app.use(morgan('dev'))
-const allowedOrigins = ['http://localhost:3001',"http://109.106.244.215:3000",'http://localhost:3000','http://127.0.0.1:3000', 'http://localhost:2000', 'http://109.106.244.215:2000', `http://192.168.31.240:3000`,`http://192.168.31.8:3000` ];
+const allowedOrigins = ['http://localhost:3001',"http://109.106.244.215:3000",'http://localhost:3000','http://localhost:2000','http://127.0.0.1:3000', 'http://localhost:2000', 'http://109.106.244.215:2000', `http://192.168.31.240:3000`,`http://192.168.31.8:3000` ];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
@@ -25,16 +24,12 @@ app.use(cors({
         },
     credentials: true
 }));
-// app.use(cors())
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'build')))
 
 app.use('/api', Routers)
 
-// app.get('/admin', function (req, res) {
-//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
-// });
 app.use('/uploads', express.static(dir))
 
 
@@ -43,20 +38,9 @@ app.get('*', function (req, res) {
 });
 
 
-// app.use(express.static(path.join(__dirname, 'build2')))
-
-
-// app.get('/admin', function(req, res){
-//     res.sendFile(path.join(__dirname, 'build2', 'index.html'));  
-// })
 
 
 app.use(cookieParser())
 
-// cron_job()
-
-
-
-// const server = http.createServer()
 
 app.listen(port, ()=>{console.log(`Your server started and listening on port ${port}`)})

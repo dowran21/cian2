@@ -39,7 +39,6 @@ const VerifyAdminRefreshToken = async (req, res, next) =>{
 }
 
 const VerifyUserAccessToken = async (req, res, next) =>{
-    // console.log(req)
     let token = req.headers.authorization
     if (!token){
         return res.status(status.bad).send("Token not provided")
@@ -77,7 +76,6 @@ const VerifyUserRefreshToken = async (req, res, next) =>{
 
 const VerifyCodeAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log(token)
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }
@@ -137,6 +135,28 @@ const VerifyIsAdmin = async (req, res, next) =>{
     }
 }
 
+const VerifyEstateUser = async (req, res, next) =>{
+    const {id} = req.params
+    const user_id = req.user.id
+    const query_text = `
+        SELECT id FROM real_estates re 
+            WHERE re.id = $1 AND user_id = $2
+    `
+    try{
+        const {rows} = await database.query(query_text, [id, user_id])
+        if (rows){
+            console.log("I passed verify of real_estate_user_verification")
+            next ()
+        }
+        else {
+            return res.status(422).json({"message":"It isn't your real estate"})
+        }
+    }catch(e){
+        console.log(e)
+        return res.status(500).json({"message":"bad error"})
+    }
+}
+
 module.exports = {
     VerifyAdminAccessToken,
     VerifyUserAccessToken,
@@ -146,4 +166,5 @@ module.exports = {
     VerifyOperatorAccessToken,
     VerifyAdminRefreshToken,
     VerifyIsAdmin,
+    VerifyEstateUser
 }

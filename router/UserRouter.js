@@ -5,12 +5,11 @@ const upload = require('../middleware/upload.js')
 const {SchemaMiddleware, QuerySchemaMiddleware, ParamsSchemaMiddleware} = require('../middleware/SchemaMiddleware.js')
 const Schema = require('../schemas/UserSchema.js')
 const {resize_image} = require('../middleware/resize')
-const { VerifyUserAccessToken, VerifyCodeAccessToken, VerifyUserRefreshToken } = require('../middleware/AuthMiddleware.js')
+const { VerifyUserAccessToken, VerifyCodeAccessToken, VerifyUserRefreshToken, VerifyEstateUser } = require('../middleware/AuthMiddleware.js')
 
 
 router.post('/registration', SchemaMiddleware(Schema.Registration), UserController.UserRegistration)
 router.post('/login', SchemaMiddleware(Schema.Login), UserController.UserLogin)
-// router.get('/load-user', VerifyUserRefreshToken, UserController.Load)
 router.post('/verify-code', VerifyCodeAccessToken, UserController.VerifyUserCode)
 router.post('/send-code-again', VerifyCodeAccessToken, UserController.SendCodeAgain)
 router.post('/forgot-password', UserController.ForgotPassword)
@@ -22,8 +21,11 @@ router.post('/:lang/add-real-estate', ParamsSchemaMiddleware(Schema.LangSchema),
 
 router.get('/:lang/user-real-estates',  ParamsSchemaMiddleware(Schema.LangSchema), VerifyUserAccessToken,  UserController.UserRealEstates)
 router.get('/:lang/user-real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema),  ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, UserController.GetUserRealEstateByID)
-router.post('/:lang/add-real-estate-images/:id',  ParamsSchemaMiddleware(Schema.IDSchema), upload.array("picture", 15), resize_image, UserController.AddImage )
+router.post('/:lang/add-real-estate-images/:id', ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, VerifyEstateUser, upload.array("picture", 15), resize_image, UserController.AddImage )
 router.post('/:lang/update-real-estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
+
+router.post('/:lang/update-real-estate-specification/:real_estate_id/:spec_id', VerifyUserAccessToken, UserController.UpdateRealEstateSpec)
+
 
 
 router.post('/:lang/add-to-vip/:id', VerifyUserAccessToken, UserController.AddToVIP)

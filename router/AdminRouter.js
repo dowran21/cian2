@@ -56,6 +56,9 @@ router.get('/all-real-estate-statistics', VerifyAdminAccessToken, VerifyIsAdmin,
 router.get('/get-all-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetTypes)
 router.get('/get-price-statistics',  VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetPriceStatistics)
 
+router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetAllUsers)
+router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)
+
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )
 router.post('/activation-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateRealEstate)

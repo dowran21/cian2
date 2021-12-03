@@ -2,7 +2,7 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
-const { QuerySchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
+// const { QuerySchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
 // const { compareSync } = require("bcrypt");
 
 const AdminLogin = async (req, res) =>{
@@ -995,6 +995,80 @@ const GetTypes = async (req, res) =>{
     }
 }
 
+const GetAllUsers = async (req, res) =>{
+    const {page, limit} = req.query
+    const {search, sort_direction, sort_column} = req.query
+    let OffSet = ``
+    if (page && limit) {
+        OffSet = ` OFFSET ${(page)*limit} LIMIT ${limit}`
+    }else{
+        OffSet = ``
+    }
+    let WherePart = ``
+    if(search && search != 'null' && search != 'undefined'){
+        WherePart += ` AND (full_name ~* '${search}' OR phone ~* '${search}')`
+    }
+    // if(phone && phone != 'null' && phone != 'undefined'){
+    //     WherePart += ` AND phone = '${phone}'`
+    // }
+
+    let order_column = ``
+    if(sort_column){
+        order_column = sort_column;
+    }else{
+        order_column = ` id`
+    }
+
+    let order_direction = ``
+    if(sort_direction){
+        order_direction = sort_direction
+    }else{
+        order_direction = ` DESC`
+    }
+
+    
+    let order_part = `ORDER BY ${order_column} ${order_direction}`
+
+    const query_text = `
+        SELECT
+            (SELECT COUNT(*) 
+                FROM users 
+                WHERE role_id = 3 ${WherePart}),
+            (SELECT json_agg(op) FROM (
+                SELECT u.id, u.full_name, u.email, u.phone, up.is_active, validity
+                FROM users u
+                    LEFT JOIN user_permissions up  
+                        ON up.user_id = u.id AND validity:: tsrange @> localtimestamp
+                    WHERE u.role_id = 3 ${WherePart}
+                ${order_part}
+                ${OffSet}
+            )op) AS users
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json(rows[0])
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const ChangePermission = async (req, res) =>{
+    const {id} = req.params;
+    const {is_active} = req.body;
+    console.log(is_active)
+    const query_text = `
+        UPDATE user_permissions SET is_active = ${is_active} WHERE user_id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetStatistics = async (req, res) =>{
     const {specification_values, location_id, type_id, category_id, price, area, start_date, end_date} = req.query
     let spec_part = ``
@@ -1162,79 +1236,88 @@ const GetPriceStatistics = async (req, res) =>{
 }
 
 const GetConfirmRealEstates = async (req, res) =>{
-    const {page, limit, search, is_active} = req.query
+    const {page, limit, search, is_active, status_id} = req.query
     let offSet = ``
     if(page && limit){
         offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
     }else{
         offSet = ``
     }
+
     let active_part = ``
     if(is_active){
-        active_part = `re.is_active = ${is_active}`
+        active_part = ` AND re.is_active = ${is_active}`
     }else{
-        active_part = `re.is_active IS NULL`
+        active_part = ` AND re.is_active IS NULL`
     }
+
+    let status_part = ``;
+    if(status_id){
+        status_part = ` AND re.status_id = ${status_id}`
+    }
+
     let where_part = ``
     if(search){
         where_part += ` AND (u.phone ~* '${search}' OR u.full_name ~* '${search}')`
     }else{
         where_part = ``
     }
-    const query_text = `
-    WITH selected AS ( 
 
-        SELECT re.id, rep.price, u.phone, u.full_name, ott.translation AS type_of_owner,
-            concat(
-                CASE 
-                    WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
-                        END 
-                    || lt.translation) AS location,
-            (SELECT real_estate_name(re.id, l.id, tt.name, area))
-
- 
-            FROM real_estates re 
-                INNER JOIN users u
-                    ON u.id = re.user_id
-                INNER JOIN owner_type_translations ott
-                    ON ott.owner_id = u.owner_id AND ott.language_id = 2
-                INNER JOIN ctypes cp 
-                    ON cp.id = re.ctype_id
-                INNER JOIN real_estate_prices rep 
-                    ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-                INNER JOIN languages l 
-                    ON l.id = 2
-                INNER JOIN type_translations tt 
-                    ON tt.type_id = cp.type_id AND tt.language_id = l.id
-                LEFT JOIN location_translations lt
-                    ON lt.location_id = re.location_id AND lt.language_id = l.id
-                LEFT JOIN locations lc 
-                    ON lc.id = re.location_id
-                LEFT JOIN location_translations ltt
-                    ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            WHERE ${active_part} AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} AND (selected = 'false'
-                OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
-            ORDER BY  re.id DESC  
-            LIMIT 15
-        ), updated AS (
-            UPDATE real_estates SET selected = true, 
-                selected_time = tsrange (
-                    localtimestamp,
-                    localtimestamp + INTERVAL '1 SECOND'
-                    '[]'
-                ) WHERE id IN (SELECT id FROM selected)
-        ) 
-            SELECT (SELECT COUNT(*) 
-                FROM real_estates re
-                WHERE ${active_part} AND re.status_id <> 2 AND re.status_id <> 4 AND (selected = 'false'
-                    OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
-                ), (SELECT json_agg(re) FROM(
-                    SELECT * FROM selected 
-                )re) AS real_estates   
-        `
+    
     try {
+        const query_text = `
+        WITH selected AS ( 
+    
+            SELECT re.id, rep.price, u.phone, re.is_active, u.full_name, ott.translation AS type_of_owner,
+                concat(
+                    CASE 
+                        WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
+                            END 
+                        || lt.translation) AS location,
+                (SELECT real_estate_name(re.id, l.id, tt.name, area))
+    
+     
+                FROM real_estates re  
+                    INNER JOIN users u
+                        ON u.id = re.user_id
+                    INNER JOIN owner_type_translations ott
+                        ON ott.owner_id = u.owner_id AND ott.language_id = 2
+                    INNER JOIN ctypes cp 
+                        ON cp.id = re.ctype_id
+                    INNER JOIN real_estate_prices rep 
+                        ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+                    INNER JOIN languages l 
+                        ON l.id = 2
+                    INNER JOIN type_translations tt 
+                        ON tt.type_id = cp.type_id AND tt.language_id = l.id
+                    LEFT JOIN location_translations lt
+                        ON lt.location_id = re.location_id AND lt.language_id = l.id
+                    LEFT JOIN locations lc 
+                        ON lc.id = re.location_id
+                    LEFT JOIN location_translations ltt
+                        ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+                WHERE re.id > 0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
+                    OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                ORDER BY  re.id DESC  
+                LIMIT 15
+            ), updated AS (
+                UPDATE real_estates SET selected = true, 
+                    selected_time = tsrange (
+                        localtimestamp,
+                        localtimestamp + INTERVAL '1 SECOND'
+                        '[]'
+                    ) WHERE id IN (SELECT id FROM selected)
+            ) 
+                SELECT (SELECT COUNT(*) 
+                    FROM real_estates re
+                    WHERE re.id >0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
+                        OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                    ), (SELECT json_agg(re) FROM(
+                        SELECT * FROM selected 
+                    )re) AS real_estates   
+            `
         const {rows} = await database.query(query_text, [])
-        console.log(rows)
+        // console.log(rows) 
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
@@ -1447,6 +1530,9 @@ module.exports = {
     GetStatistics,
     GetTypes,
     GetPriceStatistics,
+
+    GetAllUsers,
+    ChangePermission,
 
     GetConfirmRealEstates,
     NotActivatedEstates,

@@ -42,6 +42,7 @@ CREATE TABLE users(
     email VARCHAR (100),
     phone VARCHAR(8) NOT NULL,
     max_count INTEGER,
+    permission BOOLEAN DEFAULT FALSE,-------this one wasn't added to anywhere
     owner_id SMALLINT,
     "password" VARCHAR (300) NOT NULL,
     deleted BOOLEAN DEFAULT FALSE,
@@ -50,6 +51,25 @@ CREATE TABLE users(
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
+);
+
+
+CREATE TABLE operator_locations(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    user_id BIGINT NOT NULL,
+    location_id BIGINT NOT NULL,
+
+    CONSTRAINT location_id_fk FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE,
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
+);
+
+CREATE TABLE user_permissions(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    validity tsrange NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    user_id BIGINT NOT NULL,
+
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE 
 );
 
 -----------ACCESS IP ADDRESS----------------

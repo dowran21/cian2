@@ -1,4 +1,4 @@
-const { json } = require('express')
+const { restart } = require('nodemon')
 const database = require('../db/index.js')
 const {status} = require('../utils/status')
 
@@ -431,7 +431,7 @@ const RealEstatePositions = async (req, res) =>{
     }    
     const position_part = `
     (SELECT json_agg(pos) FROM(
-        SELECT position[0] AS x, position[1] AS y
+        SELECT position[0] AS lat, position[1] AS lng
             FROM real_estates 
             WHERE real_estates.id = $1                 
     )pos) AS position,`
@@ -1090,6 +1090,35 @@ const GetCountOfCategory = async (req, res) =>{
     }
 }
 
+const GetSpecByID = async (req, res) =>{
+    const {id, lang} = req.params;
+    const query_text = `
+        SELECT s.id, s.is_multiple, 
+            s.is_required, st.name,
+            
+            (SELECT json_agg(val) FROM (
+                SELECT sv.id, svt.name
+                FROM specification_values sv
+                    INNER JOIN specification_value_translations svt
+                        ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+            )val) AS values
+        
+        FROM specifications s
+            INNER JOIN languages l 
+                ON l.language_code = '${lang}'
+            INNER JOIN specification_translations st 
+                ON st.spec_id = s.id AND st.language_id = l.id
+        WHERE s.id = ${id}
+                `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({"rows":rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecForTypeSearch,
@@ -1110,6 +1139,7 @@ module.exports = {
     RealEstatePositions,
     GetUserRealEstates,
     GetTypesOfCategory,
-    GetCountOfCategory
+    GetCountOfCategory,
+    GetSpecByID
     
 }   

@@ -558,3 +558,8 @@ WITH inserted AS (
                 ('15', 1, (SELECT id FROM inserted_val14))
             )
                 SELECT id FROM inserted;
+
+
+
+------------------
+--INSERT INTO user_permissions (user_id, validity) VALUES (9, '[2021-12-01, 2021-12-15]');
