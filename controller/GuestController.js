@@ -447,18 +447,10 @@ const RealEstatePositions = async (req, res) =>{
     }else{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
-    console.log(spec_values)
-  
-
-    const position_part = `
-    (SELECT json_agg(pos) FROM(
-        SELECT position[0] AS lat, position[1] AS lng
-            FROM real_estates 
-            WHERE real_estates.id = re.id               
-    )pos) AS position`
+    // console.log(spec_values)
     
     const query_text =`
-    SELECT DISTINCT ON (re.id) re.id, ${position_part}
+    SELECT DISTINCT ON (re.id) re.id, position[0] AS lat, position[1] AS lng, rep.price
 
         FROM real_estates re 
             INNER JOIN ctypes cp 
@@ -475,14 +467,7 @@ const RealEstatePositions = async (req, res) =>{
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}
         `
     try {
-        // const {rows} = await database.query(query_text, [])
-        let rows = [
-            {"id":12, "position":[{lat:37.922683378780405,lang:58.37599757962268 }]},
-            {"id":12, "position":[{lat:37.922683378780415,lang:58.37599757962268 }]},
-            {"id":12, "position":[{lat:37.922683378780425,lang:58.37599757962268 }]},
-            {"id":12, "position":[{lat:37.922683378780435,lang:58.37599757962268 }]},
-            {"id":12, "position":[{lat:37.922683378780445,lang:58.37599757962268 }]},
-            ] 
+        const {rows} = await database.query(query_text, [])
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)
@@ -579,7 +564,8 @@ const CountForFilter = async (req, res) =>{
     `
     try {
         // console.log(query_text)
-        const {rows} = await database.query(query_text, [])        
+        const {rows} = await database.query(query_text, [])   
+        console.log(rows)     
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
         console.log(e)

@@ -84,7 +84,7 @@ const GetOperators = async (req, res) =>{
     }
     let WherePart = ``
     if(search && search != 'null' && search != 'undefined'){
-        WherePart += ` AND (full_name ~* '${search}' OR phone ~* '${search}')`
+        WherePart += ` AND (u.full_name ~* '${search}' OR u.phone ~* '${search}')`
     }
     // if(phone && phone != 'null' && phone != 'undefined'){
     //     WherePart += ` AND phone = '${phone}'`
@@ -94,7 +94,7 @@ const GetOperators = async (req, res) =>{
     if(sort_column){
         order_column = sort_column;
     }else{
-        order_column = ` id`
+        order_column = ` u.id`
     }
 
     let order_direction = ``
@@ -113,9 +113,18 @@ const GetOperators = async (req, res) =>{
                 FROM users 
                 WHERE role_id = 2 ${WherePart}),
             (SELECT json_agg(op) FROM (
-                SELECT id, full_name, email, phone, deleted
-                FROM users 
-                    WHERE role_id = 2 ${WherePart}
+                SELECT u.id, u.full_name, u.email, u.phone, u.deleted,
+                (SELECT json_agg(loc) FROM (
+                    SELECT l.id, lt.translation
+                    FROM operator_locations ol
+                        INNER JOIN locations l
+                            ON l.id = ol.location_id
+                        INNER JOIN location_translations lt
+                            ON lt.location_id = l.id AND lt.language_id = 2
+                    WHERE ol.user_id = u.id
+                )loc) AS locations
+                FROM users u 
+                    WHERE u.role_id = 2 ${WherePart}
                 ${order_part}
                 ${OffSet}
             )op) AS operators

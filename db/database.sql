@@ -54,15 +54,6 @@ CREATE TABLE users(
 );
 
 
-CREATE TABLE operator_locations(
-    id BIGSERIAL PRIMARY KEY NOT NULL,
-    user_id BIGINT NOT NULL,
-    location_id BIGINT NOT NULL,
-
-    CONSTRAINT location_id_fk FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE,
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
-);
-
 CREATE TABLE user_permissions(
     id BIGSERIAL PRIMARY KEY NOT NULL,
     validity tsrange NOT NULL,
@@ -70,6 +61,42 @@ CREATE TABLE user_permissions(
     user_id BIGINT NOT NULL,
 
     CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE 
+);
+
+---------------locations----------------
+CREATE TABLE locations(
+    id SERIAL PRIMARY KEY NOT NULL,
+    absolute_name VARCHAR(100) NOT NULL,
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
+    comment VARCHAR(150),
+    main_location_id SMALLINT,
+    UNIQUE(main_location_id, absolute_name_name),
+
+    CONSTRAINT main_location_id_fk 
+        FOREIGN KEY (main_location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE location_translations(
+    id SERIAL PRIMARY KEY NOT NULL,
+    translation VARCHAR (100) NOT NULL,
+    language_id SMALLINT NOT NULL,
+    location_id SMALLINT NOT NULL,
+    UNIQUE(translation, language_id),
+
+    CONSTRAINT location_id_fk 
+        FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT language_id_fk 
+        FOREIGN KEY (language_id) REFERENCES languages(id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE operator_locations(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    user_id BIGINT NOT NULL,
+    location_id BIGINT NOT NULL,
+    UNIQUE(user_id, location_id),
+
+    CONSTRAINT location_id_fk FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE,
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
 );
 
 -----------ACCESS IP ADDRESS----------------
@@ -200,31 +227,6 @@ CREATE TABLE specification_value_translations(
         FOREIGN KEY(spec_value_id) REFERENCES  specification_values(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
----------------locations----------------
-CREATE TABLE locations(
-    id SERIAL PRIMARY KEY NOT NULL,
-    absolute_name VARCHAR(100) NOT NULL,
-    "enabled" BOOLEAN NOT NULL DEFAULT true,
-    comment VARCHAR(150),
-    main_location_id SMALLINT,
-    UNIQUE(main_location_id, absolute_name_name),
-
-    CONSTRAINT main_location_id_fk 
-        FOREIGN KEY (main_location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
-CREATE TABLE location_translations(
-    id SERIAL PRIMARY KEY NOT NULL,
-    translation VARCHAR (100) NOT NULL,
-    language_id SMALLINT NOT NULL,
-    location_id SMALLINT NOT NULL,
-    UNIQUE(translation, language_id),
-
-    CONSTRAINT location_id_fk 
-        FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT language_id_fk 
-        FOREIGN KEY (language_id) REFERENCES languages(id) ON UPDATE CASCADE ON DELETE CASCADE
-);
 
 
 -------------Real Estates-------------
