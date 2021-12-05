@@ -803,6 +803,11 @@ const AddLocation = async (req, res) =>{
         }
     } catch (e) {
         console.log(e)
+        if(e.message.includes("duplicate key value violates unique constraint")){
+            let message = {}
+            message["phone"] = "Оператор с таким телефон уже был создан" 
+            return res.status(409).send({error:message})
+        }
         return res.status(status.error).json({"message":"Error"})
     }
 }
@@ -818,6 +823,8 @@ const GetLocations = async (req, res) =>{
             INNER JOIN location_translations ltt
                 ON ltt.location_id = l.id AND ltt.language_id = 2        
         WHERE l.main_location_id IS NULL
+        ORDER BY l.id ASC
+
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -838,7 +845,9 @@ const GetRegions = async (req, res) =>{
                 ON lt.location_id = l.id AND lt.language_id = 1
             INNER JOIN location_translations ltt
                 ON ltt.location_id = l.id AND ltt.language_id = 2 
-        WHERE l.main_location_id = ${id}
+        WHERE l.main_location_id = ${id} AND l.enabled = true
+        ORDER BY l.id ASC
+
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -851,12 +860,48 @@ const GetRegions = async (req, res) =>{
 
 const ActivationOfLocation = async (req, res) =>{
     const {id} = req.params
-    const {enabled} = req.body
+    const {comment} = req.body
     const query_text = `
-        UPDATE locations SET enabled = ${enabled} WHERE id = ${id}
+        UPDATE locations SET comment = '${comment}', enabled = false WHERE id = ${id}
     `
     try {
         await database.query(query_text)
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetDeletedRegions = async (req, res) =>{
+    const {id} = req.params
+    const query_text = `
+        SELECT l.id, lt.translation AS name_tm, lt.translation AS name_ru, l.enabled, l.comment
+        FROM locations l
+            INNER JOIN location_translations lt
+                ON lt.location_id = l.id AND lt.language_id = 1
+            INNER JOIN location_translations ltt
+                ON ltt.location_id = l.id AND ltt.language_id = 2 
+        WHERE l.main_location_id = ${id} AND l.enabled = false
+        ORDER BY l.id ASC
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        // console.log(rows)
+        return res.status(200).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        return res.json(false)
+    }
+}
+
+const ActivateLocation = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE locations SET enabled = true WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
         return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
@@ -1035,10 +1080,11 @@ const GetAllUsers = async (req, res) =>{
                 FROM users 
                 WHERE role_id = 3 ${WherePart}),
             (SELECT json_agg(op) FROM (
-                SELECT u.id, u.full_name, u.email, u.phone, up.is_active, validity
+                SELECT u.id, u.full_name, u.email, u.phone, u.owner_id,  
+                up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val
                 FROM users u
                     LEFT JOIN user_permissions up  
-                        ON up.user_id = u.id AND validity:: tsrange @> localtimestamp
+                        ON up.user_id = u.id AND (lower(validity) <= localtimestamp OR upper(validity) >= localtimestamp) AND is_active = true
                     WHERE u.role_id = 3 ${WherePart}
                 ${order_part}
                 ${OffSet}
@@ -1056,7 +1102,7 @@ const GetAllUsers = async (req, res) =>{
 const ChangePermission = async (req, res) =>{
     const {id} = req.params;
     const {is_active} = req.body;
-    console.log(is_active)
+    // console.log(is_active)
     const query_text = `
         UPDATE user_permissions SET is_active = ${is_active} WHERE user_id = ${id}
     `
@@ -1067,6 +1113,39 @@ const ChangePermission = async (req, res) =>{
         console.log(e)
         return res.status(status.error).send(false)
     }
+}
+
+const GivePermission = async (req, res) =>{
+    // console.log("Hello i am in controller")
+    const {id} = req.params;
+    const {start_date, end_date} = req.body;
+    // console.log(start_date, end_date)
+
+    const query_text = `
+        INSERT INTO user_permissions(user_id, validity) VALUES (${id}, '[${start_date}, ${end_date}]' ) RETURNING user_id
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        const s_query = `
+            SELECT u.id, u.full_name, u.email, u.phone, up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val
+            FROM users u
+                LEFT JOIN user_permissions up  
+                    ON up.user_id = u.id AND (lower(validity) <= localtimestamp OR upper(validity) >= localtimestamp)
+                WHERE u.role_id = 3 AND u.id = ${rows[0].user_id}
+        `
+        console.log("Error after first query")
+        try {
+            const k = await database.query(s_query, [])
+            return res.status(status.success).json({"rows":k.rows[0]})
+        } catch (e) {
+            console.log(e)
+            return res.status(status.error).send(false)
+        }
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
 }
 
 const GetStatistics = async (req, res) =>{
@@ -1519,6 +1598,7 @@ module.exports = {
     AddSpecVal,
     GetLocations,
     GetRegions,
+    GetDeletedRegions,
 
     UploadPageImages,
     GetImagePlaces,
@@ -1526,6 +1606,7 @@ module.exports = {
     DeleteImagePlace,
 
     AddTypeImage,
+    ActivateLocation,
 
     GetStatistics,
     GetTypes,
@@ -1533,6 +1614,7 @@ module.exports = {
 
     GetAllUsers,
     ChangePermission,
+    GivePermission,
 
     GetConfirmRealEstates,
     NotActivatedEstates,

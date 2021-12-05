@@ -46,6 +46,8 @@ router.get('/main-locations',VerifyAdminAccessToken, VerifyIsAdmin, AdminControl
 router.get('/region-locations/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetRegions)
 router.post('/enable-location/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivationOfLocation)
 router.post('/update-location/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.UpdateLocation)
+router.get('/get-deleted-regions/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetDeletedRegions)
+router.post('/activate-location/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateLocation)
 
 router.get('/page-image-places', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetImagePlaces)
 router.get('/get-page-images/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetPageImages)
@@ -58,6 +60,7 @@ router.get('/get-price-statistics',  VerifyAdminAccessToken, VerifyIsAdmin, Admi
 
 router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetAllUsers)
 router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)
+router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GivePermission)
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )

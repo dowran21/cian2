@@ -205,7 +205,9 @@ CREATE TABLE locations(
     id SERIAL PRIMARY KEY NOT NULL,
     absolute_name VARCHAR(100) NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
+    comment VARCHAR(150),
     main_location_id SMALLINT,
+    UNIQUE(main_location_id, absolute_name_name),
 
     CONSTRAINT main_location_id_fk 
         FOREIGN KEY (main_location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -216,6 +218,7 @@ CREATE TABLE location_translations(
     translation VARCHAR (100) NOT NULL,
     language_id SMALLINT NOT NULL,
     location_id SMALLINT NOT NULL,
+    UNIQUE(translation, language_id),
 
     CONSTRAINT location_id_fk 
         FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE,

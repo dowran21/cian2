@@ -396,7 +396,7 @@ req.body should be like this;
     } 
 *****************************/
 
-    const {type_id, category_id, area, position, price, descriptions, specifications, location_id } = req.body
+    const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
     // console.log(req.body)
     const user_id = req.user.id
     console.log(user_id)
@@ -413,7 +413,7 @@ req.body should be like this;
         const {rows} = await database.query(user_query, [])
         console.log(rows)
         if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
-            return res.status(422).send(false)
+            return res.status(444).send(false)
         }
     } catch (e) {
         console.log(e)
@@ -470,13 +470,14 @@ req.body should be like this;
 
             ),insert2 AS(
                 INSERT INTO real_estate_translations(description, real_estate_id, language_id)
-                VALUES ${descriptions?.map(item => `('${item.description}', (SELECT id FROM inserted), ${item.language_id})`).join(',')}
+                VALUES ('${description_tm}', (SELECT id FROM inserted), 1), ('${description_ru}', (SELECT id FROM inserted), 2)
 
             )${spec_value_part} SELECT id FROM inserted
         `
-        console.log(query_text)
+        // console.log(query_text)
         const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
-        
+        console.log("Hello it is me")
+        console.log(rows)
         return res.status(status.success).json({"rows":rows[0]})
 
     } catch(e) {
