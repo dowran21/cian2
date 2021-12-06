@@ -16,6 +16,9 @@ router.post('/delete-operator/:id', ParamsSchemaMiddleware(Schema.IdSchema), Ver
 router.post('/update-operator/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), SchemaMiddleware(Schema.UpdateOperator), AdminController.UpdateOperator)
 router.get('/get-all-operators', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetOperators);
 router.post('/change-operator-password/:id', VerifyAdminAccessToken, VerifyIsAdmin, SchemaMiddleware(Schema.ChangePassword), AdminController.ChangeOperatorPassword);
+router.get('/get-operator-locations/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetOperatorLocations)
+router.get('/get-not-operator-locations/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetNotOperatorLocations)
+router.post('/remove-location-from-operator/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RemoveLocationFromOperator)
 
 router.post('/add-specification', VerifyAdminAccessToken, VerifyIsAdmin, SchemaMiddleware(Schema.AddSpecification), AdminController.AddSpecification)
 router.get('/get-specification/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetSpecificationByID)

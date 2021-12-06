@@ -2,6 +2,7 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
+const { query } = require("../db/index.js");
 // const { QuerySchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
 // const { compareSync } = require("bcrypt");
 
@@ -244,6 +245,60 @@ const RecoveryOperator = async (req, res) =>{
         const {rows} = await database
     } catch (e) {
         
+    }
+}
+
+const GetOperatorLocations = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        SELECT lt.translation, ol.id AS op_loc_id, ol.location_id AS id
+        FROM operator_locations ol
+            INNER JOIN location_translations lt
+                ON lt.location_id = ol.location_id
+            
+        WHERE ol.user_id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetNotOperatorLocations = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        SELECT l.id, lt.translation
+        FROM locations l
+            LEFT JOIN operator_locations ol
+                ON ol.location_id = l.id
+            INNER JOIN location_translations lt
+                ON lt.location_id = l.id AND lt.language_id = 2
+            WHERE ol.id IS NULL AND l.main_location_id IS NULL
+            ORDER BY l.id ASC
+    `   
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const RemoveLocationFromOperator = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        DELETE FROM operator_locations WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).sned(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
     }
 }
 
@@ -559,6 +614,8 @@ const AddType = async (req, res) =>{
         return res.status(status.error).json({"message":e.message})
     }
 }
+
+
 
 const GetTypeByID = async (req, res) =>{
     const {id} = req.params
@@ -1581,6 +1638,9 @@ module.exports = {
     GetDeletedOperators,
     RecoveryOperator,
     ChangeOperatorPassword,
+    GetOperatorLocations,
+    GetNotOperatorLocations,
+    RemoveLocationFromOperator,
 
     AddSpecification,
     GetSpecificationByID,

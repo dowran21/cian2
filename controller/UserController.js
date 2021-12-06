@@ -520,55 +520,89 @@ const UpdateRealEstateSpec = async (req, res) =>{
 }
 
 const GetUserRealEstateByID = async (req, res) =>{
-    const {id} = req.body
-    const {uuid} = req.params
-    try {
-        const query_text = `
-        SELECT re.id, re.created_at, re.area, re.position, rep.price,
+    const {lang, id} = req.params
+    const query_text = `
+        SELECT DISTINCT ON (re.id) re.area::text, rep.price::text, ret.description AS description_tm, rett.description AS description_tm, 
+        re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
+        concat(
+            CASE 
+                WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
+                END ||
+            lt.translation
+        ) AS location,
+        real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type, 
+        u.full_name, u.id::text AS user_id,
+        (SELECT COUNT(real.id)::text FROM real_estates real WHERE real.user_id = re.user_id) AS user_real_estate_count,
+        
+        (SELECT json_agg(image) FROM (
+            SELECT destination FROM real_estate_images rei
+            WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
+        )image) AS images, 
 
-            (SELECT json_agg(description) FROM (
-                SELECT ret.language_id, ret.description FROM real_estate_translations ret
-                    WHERE ret.real_estate_id = re.id
-            )description) AS descriptions,
+        (SELECT json_agg(rejection) FROM(
+            SELECT rec.id, rec.comment
+            FROM real_estate_comments rec
+            WHERE rec.real_estate_id = $1
+            ORDER BY rec.id DESC LIMIT 1
+        )rejection) AS rejections,
 
-            (SELECT json_agg(image) FROM (
-                SELECT ret.destination FROM real_estate_images ret WHERE ret.real_estate_id = re.id
-            )image) AS images,
-
-            (SELECT json_agg(rejection) FROM(
-                SELECT rec.id, rec.comment
-                FROM real_estate_comments rec
-                WHERE rec.real_estate_id = re.id
-            )rejection) AS rejections,
-
-            (SELECT json_agg(specification) FROM (
-                SELECT st.name,
-
-                    (SELECT json_agg(value) FROM
-                            (SELECT sv.absolute_value, svt.name FROM specification_values sv
-                                LEFT JOIN specification_value_translations svt
-                                    ON sv.id = svt.spec_value_id AND svt.language_id = $1
-                                INNER JOIN real_estate_specification_values resv
-                                    ON resv.spec_value_id = sv.id
-                            WHERE resv.real_estate_id = re.id AND sv.spec_id = st.spec_id
-                    )value) AS values
-
+        (SELECT json_agg(specification) FROM(
+            SELECT DISTINCT ON (resvv.spec_id) st.name, 
+                
+                (SELECT json_agg(value) FROM(
+                    SELECT sv.absolute_value, svt.name FROM specification_values sv
+                        LEFT JOIN specification_value_translations svt
+                            ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                        INNER JOIN real_estate_specification_values resv 
+                            ON resv.spec_value_id = sv.id
+                    WHERE resv.real_estate_id = re.id AND sv.spec_id = st.spec_id
+                )value) AS values
+                
             FROM specification_translations st
-            INNER JOIN real_estate_specification_values resv ON resv.spec_id = st.spec_id
-            WHERE resv.real_estate_id = re.id AND st.language_id = $1
+                INNER JOIN real_estate_specification_values resvv
+                    ON resvv.spec_id = st.spec_id 
+            WHERE st.language_id = l.id AND resvv.real_estate_id = $1 
+
         )specification) AS specifications
 
         FROM real_estates re
-        INNER JOIN real_estate_prices rep
-        ON rep.real_estate_id = re.id AND rep.is_active = TRUE
-        WHERE user_id = $2 AND re.id = $3 AND re.status_id <> 2
-    `
-        const {rows} = await database(query_text, [id, ]);
-        return res.json(rows)
-    } catch (e) {
-        console.log(e)
-        throw e;
-    }
+        INNER JOIN users u
+            ON u.id = re.user_id
+        INNER JOIN languages l 
+            ON l.language_code = $2
+        INNER JOIN owner_type_translations ott
+            ON ott.owner_id = u.owner_id AND ott.language_id = l.id
+        INNER JOIN ctypes ctp 
+            ON ctp.id = re.ctype_id 
+        INNER JOIN types t
+            ON t.id = ctp.type_id
+        INNER JOIN categories c
+            ON c.id = ctp.category_id
+        LEFT JOIN vip_real_estates vre 
+            ON vre.real_estate_id = re.id AND vip_dates:: tsrange @> localtimestamp
+        INNER JOIN type_translations tt 
+            ON tt.type_id = ctp.type_id AND tt.language_id = l.id
+        LEFT JOIN real_estate_translations ret 
+            ON ret.real_estate_id = re.id AND ret.language_id = 1
+        LEFT JOIN real_estate_translations rett 
+            ON rett.real_estate_id = re.id AND rett.language_id = 2
+        INNER JOIN real_estate_prices rep 
+            ON rep.real_estate_id = re.id AND rep.is_active = true 
+        LEFT JOIN location_translations lt
+            ON lt.location_id = re.location_id AND lt.language_id = l.id
+        LEFT JOIN locations lc 
+            ON lc.id = re.location_id
+        LEFT JOIN location_translations ltt
+            ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+        WHERE re.id = $1 
+   `
+   try {
+       const {rows} = await database.query(query_text, [id, lang]);
+       return res.status(status.success).json({"rows":rows[0]})
+   } catch (e) {
+       console.log(e)
+       return res.status(status.error).send(false)
+   }
 }
 
 const AddWishList = async (req, res) =>{
