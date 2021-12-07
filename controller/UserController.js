@@ -1,3 +1,4 @@
+const { ParameterStatusMessage } = require('pg-protocol/dist/messages');
 const database = require('../db/index.js')
 const UserHelper = require('../utils/index.js');
 const { SendSMS } = require('../utils/sms.js');
@@ -488,10 +489,7 @@ req.body should be like this;
 }
 
 const AddImage = async (req, res) =>{
-    console.log("hello i am in controller")
-    console.log(req.fields)
     const files = req.files
-    console.log(req.files)
     const {id} = req.params
     if (files?.length){
         // console.log(files)
@@ -607,22 +605,43 @@ const GetUserRealEstateByID = async (req, res) =>{
 
 const AddWishList = async (req, res) =>{
     const {id} = req.params
-    const uuid = req.user.id
+    // const uuid = req.user.id
+    const user_id = req.user.id
 
     const query_text = `
-        INSERT INTO user_wish_list(user_id, real_estate_id) VALUES ($1, $2)
+        INSERT INTO user_wish_list(user_id, real_estate_id) VALUES ($1, $2) ON CONFLICT (user_id, real_estate_id) DO NOTHING
         `
     try {
-        const {rows} = await database.query(query_text, [uuid, id])
-        return res.json(true)
+        const {rows} = await database.query(query_text, [user_id, id])
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.json(false)
     }
 }
 
+const AddToWishListMobile = async (req, res) =>{
+    const user_id = req.user.id
+    const {real_estates} = req.body;
+    console.log(req.body)
+    console.log(real_estates.length)
+    try {
+        const query_text = `
+            INSERT INTO user_wish_list(user_id, real_estate_id) VALUES ${real_estates.map(item => `(${user_id}, ${item})`).join(',')} 
+                ON CONFLICT (user_id, real_estate_id) DO NOTHING 
+        `
+        console.log(query_text)
+        const {rows} = await database.query(query_text,[])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetWishList = async (req, res) =>{
-    const {uuid, lang} = req.params
+    const user_id = req.user.id
+    const {lang} = req.params
     const {page, limit} = req.query
     let offSet = ``
     if (page && limit){
@@ -631,29 +650,85 @@ const GetWishList = async (req, res) =>{
 
     const query_text = `
         SELECT
+            (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            LEFT JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+            LEFT JOIN languages l 
+                ON l.language_code = $2
+            INNER JOIN real_estate_translations ret
+                ON ret.real_estate_id = re.id AND ret.language_id = l.id
+            LEFT JOIN type_translations tt 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            INNER JOIN types t
+                ON t.id = cp.type_id
+            INNER JOIN categories c 
+                ON c.id = cp.category_id
+            INNER JOIN user_wish_list uwl
+                ON uwl.user_id = $1
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4     
+        ) AS count) AS count
+        ,
 
-            (SELECT COUNT(id) FROM user_wish_list
-                WHERE user_id = $1
-            ) AS count,
+            (SELECT json_agg(all) FROM(
+                (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
+        concat(
+            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+        
+        (SELECT json_agg(dest) FROM (
+            SELECT rei.destination FROM real_estate_images rei
+            WHERE rei.real_estate_id = re.id AND rei.is_active = true
+        )dest) AS images, 
+        ret.description
 
-            (SELECT json_agg(res) FROM (
-                SELECT re.id, re.area, rep.price, ret.description, re.position, re.created_at,
-                    (SELECT destination FROM real_estate_images rei WHERE rei.real_estate_id = re.id LIMIT 1)
-                FROM real_estates re
-                LEFT JOIN real_estate_prices rep ON rep.real_estate_id = re.id
-                INNER JOIN languages l ON l.language_code = $2
-                LEFT JOIN real_estate_translations ret ON ret.real_estate_id = re.id AND ret.language_id = l.id
-                INNER JOIN user_wish_list uwl ON uwl.real_estate_id = re.id
-                WHERE uwl.user_id = $1
-                ORDER BY uwl.added_time DESC ${offSet}
-            )res) AS real_estates_all
+        FROM real_estates re 
+            INNER JOIN ctypes cp 
+                ON cp.id = re.ctype_id
+            LEFT JOIN real_estate_prices rep 
+                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+            LEFT JOIN languages l 
+                ON l.language_code = $2
+            INNER JOIN real_estate_translations ret
+                ON ret.real_estate_id = re.id AND ret.language_id = l.id
+            LEFT JOIN type_translations tt 
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
+            LEFT JOIN vip_real_estates vre 
+                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+            LEFT JOIN location_translations lt
+                ON lt.location_id = re.location_id AND lt.language_id = l.id
+            LEFT JOIN locations lc 
+                ON lc.id = re.location_id
+            LEFT JOIN location_translations ltt
+                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            LEFT JOIN users u
+                ON u.id = re.user_id
+            LEFT JOIN types t
+                ON t.id = cp.type_id
+            LEFT JOIN categories c 
+                ON c.id = cp.category_id
+            INNER JOIN user_wish_list uwl
+                ON uwl.user_id = $1
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  
+        ORDER BY  re.id DESC  
+            )all) AS real_estates_all
             `
     try {
-        const {rows} = await database.query(query_text, [uuid, lang])
-        return res.specification("Hi my friend")
+        const {rows} = await database.query(query_text, [ user_id, lang])
+        console.log(rows)
+        return res.status(status.success).json({rows:rows[0]})
     } catch (e) {
         console.log(e)
-        throw e
+        return res.status(status.error).send(false)
     }
 }
 
@@ -743,5 +818,6 @@ module.exports = {
     AddToVIP,
     UpateRealEstate,
     ChangePassword,
-    SendCodeAgain
+    SendCodeAgain,
+    AddToWishListMobile
 }

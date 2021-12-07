@@ -2,9 +2,7 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
-const { query } = require("../db/index.js");
-// const { QuerySchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
-// const { compareSync } = require("bcrypt");
+const { off } = require("process");
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -254,7 +252,7 @@ const GetOperatorLocations = async (req, res) =>{
         SELECT lt.translation, ol.id AS op_loc_id, ol.location_id AS id
         FROM operator_locations ol
             INNER JOIN location_translations lt
-                ON lt.location_id = ol.location_id
+                ON lt.location_id = ol.location_id AND lt.language_id = 2
             
         WHERE ol.user_id = ${id}
     `
@@ -273,9 +271,9 @@ const GetNotOperatorLocations = async (req, res) =>{
         SELECT l.id, lt.translation
         FROM locations l
             LEFT JOIN operator_locations ol
-                ON ol.location_id = l.id
+                ON ol.location_id = l.id AND ol.user_id = ${id  }
             INNER JOIN location_translations lt
-                ON lt.location_id = l.id AND lt.language_id = 2
+                ON lt.location_id = l.id AND lt.language_id = 2 
             WHERE ol.id IS NULL AND l.main_location_id IS NULL
             ORDER BY l.id ASC
     `   
@@ -289,17 +287,34 @@ const GetNotOperatorLocations = async (req, res) =>{
 }
 
 const RemoveLocationFromOperator = async (req, res) =>{
+    console.log("Hello i am in controller")
     const {id} = req.params;
     const query_text = `
         DELETE FROM operator_locations WHERE id = ${id}
     `
     try {
         const {rows} = await database.query(query_text, [])
-        return res.status(status.success).sned(true)
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
     }
+}
+
+const AddOperatorLocation = async(req, res) =>{
+    const {locations} = req.body
+    const {id} = req.params;
+    const query_text = `
+        INSERT INTO operator_locations (user_id, location_id) VALUES ${locations.map(item => `(${id}, ${item.id})`).join(',')}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
 }
 
 const AddSpecification = async (req, res) =>{
@@ -587,35 +602,61 @@ const AddType = async (req, res) =>{
      {
         "absolute_name" : "Kakoy_to",
         "main_type_id" : 1,
-        "translations" : [{"language_id":1, "name" : "bir zat"}, 
-        {"language_id":2, "name" : "cto to"}],
+        "name_tm":
+        "name_ru":
         "categories" : [1, 2]
     }
      *****************************************/
-    const body = req.body
-    const translations = body.translations
-    const categories = body.categories
+    const {name_tm, name_ru, categories, main_type_id} = req.body
+    
     try {
         const query_text = `
             WITH inserted AS ( 
                 INSERT INTO types(absolute_name, main_type_id) VALUES ($1, $2) RETURNING id
             ), inserte AS (
                 INSERT INTO type_translations(name, language_id, type_id) 
-                VALUES ${translations?.map(item => `('${item.name}', ${item.language_id}, (SELECT id FROM inserted))`).join(',')}
+                VALUES ('${name_tm}', 1, (SELECT id FROM inserted)), ('${name_ru}', 2, (SELECT id FROM inserted))
             ), insert_ctype AS 
                 (INSERT INTO ctypes(category_id, type_id) 
                 VALUES ${categories?.map(item => `(${item}, (SELECT id FROM inserted))`)})
                 SELECT id FROM inserted
             `
-        const {rows} = await database.query(query_text, [body.absolute_name, body.main_type_id])
-        return res.status(status.success).json({"id":rows[0].id})
+        const {rows} = await database.query(query_text, [name_ru, main_type_id])
+        try {
+            const s_query = `
+                SELECT ct.name, ctp.id, 
+                t.absolute_name, cti.destination, tt.name AS name_ru, ttt.name AS name_tm 
+                , mtt.name AS main_type_name
+            FROM types t
+                INNER JOIN type_translations mtt
+                    ON mtt.type_id = t.main_type_id AND mtt.language_id = 2 
+                INNER JOIN types tp
+                    ON t.main_type_id = tp.id
+                INNER JOIN type_translations tt
+                    ON tt.type_id = t.id AND tt.language_id = 2
+                INNER JOIN type_translations ttt
+                    ON ttt.type_id = t.id AND ttt.language_id = 1
+                INNER JOIN ctypes ctp
+                    ON ctp.type_id = t.id
+                INNER JOIN category_translations ct 
+                    ON ct.category_id = ctp.category_id AND ct.language_id = 2
+                LEFT JOIN ctype_image cti
+                    ON cti.ctype_id = ctp.id
+            WHERE t.main_type_id IS NOT NULL AND t.id = ${rows[0].id}
+            `
+            const k = await database.query(s_query, [])
+            const s = k.rows;
+            // console.log(rows)
+            return res.status(status.success).json({rows:s})
+        } catch (e) {
+            console.log(e)
+            return res.status(status.error).send("Spmmething went wrong")
+        }
     }catch(e){
         console.log(e)
         return res.status(status.error).json({"message":e.message})
     }
 }
-
-
 
 const GetTypeByID = async (req, res) =>{
     const {id} = req.params
@@ -1628,6 +1669,55 @@ const NotActivatedEstates = async (req, res) =>{
 
 }
 
+const GetLogs = async (req, res) =>{
+    const {page, limit, search, start_date, end_date} = req.query
+
+    let offSet = ``
+
+    if(page && limit){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }else{
+        offSet = ``
+    }
+    let where_part = ``
+    if(search){
+        where_part += ` AND (u.full_name ~* '${search}' OR u.phone ~* '${search}') `
+    }
+    console.log(offSet)
+    if(start_date && end_date){
+        where_part += ` AND l.log_time >= '${start_date}'::date AND l.log_time <= '${end_date}'::date`
+    }else if(start_date && !end_date){
+        where_part += ` AND l.log_time >= '${start_date}'::date`
+    }else if(!start_date && end_date){
+        where_part += ` AND l.log_time <= '${end_date}'::date`
+    }else{
+        where_part += ``
+    }
+    const query_text = `
+    SELECT (SELECT COUNT(l.id) 
+            FROM logs l
+                INNER JOIN users u
+                    ON u.id = l.user_id 
+            WHERE l.id > 0 ${where_part}     
+        ) AS count,
+    (SELECT json_agg(lo) FROM (
+        SELECT to_char(l.log_time, 'DD/MM/YYYY') AS time, l.user_id, l.id AS log_id,
+            u.full_name, u.phone, l.data ->> 'id' AS real_estate_id, l.data -> 'is_active' AS activation, l.data -> 'comment' AS comment
+        FROM logs l
+            INNER JOIN users u
+                ON u.id = l.user_id 
+            WHERE l.id > 0 ${where_part}
+            ${offSet}
+    )lo) AS logs
+    `
+    try {
+        const {rows} = await database.query(query_text, []);
+        return res.status(status.success).json({rows:rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false);
+    }
+}
 
 module.exports = {
     AdminLogin,
@@ -1641,6 +1731,7 @@ module.exports = {
     GetOperatorLocations,
     GetNotOperatorLocations,
     RemoveLocationFromOperator,
+    AddOperatorLocation,
 
     AddSpecification,
     GetSpecificationByID,
@@ -1688,6 +1779,8 @@ module.exports = {
     GetConfirmRealEstates,
     NotActivatedEstates,
     RealestateByID,
-    ActivateRealEstate
+    ActivateRealEstate,
+
+    GetLogs,
 
 }

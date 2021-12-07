@@ -61,7 +61,7 @@ const Schema = {
             'string.min':"{#label} minimum 3 sany bolmaly",
             'string.max':"{#label} maksimum 150 sany bomaly"
         }),
-        email: Joi.string().email().min(1).max(100).label('Email').messages({
+        email: Joi.string().email().allow("").min(1).max(100).label('Email').messages({
             'string.pattern.base': '{#label} talaba laýyk däl!',
             'string.email': `{#label} talaba laýyk däl!`,
             'string.min': `{#label} azyndan {#limit} simwol bolmaly!`,

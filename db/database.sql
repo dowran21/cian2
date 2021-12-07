@@ -389,6 +389,15 @@ CREATE TABLE ctype_image(
     CONSTRAINT type_id_fk FOREIGN KEY (ctype_id) REFERENCES ctypes(id)
 );
 
+CREATE TABLE user_wish_list(
+    user_id BIGINT NOT NULL,
+    real_estate_id BIGINT NOT NULL,
+    UNIQUE (user_id, real_estate_id),
+
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE
+);
+
 -----------------logs-------------------
 CREATE TABLE event_types(
     id SMALLINT NOT NULL PRIMARY KEY,

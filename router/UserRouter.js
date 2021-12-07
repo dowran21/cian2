@@ -31,5 +31,6 @@ router.post('/:lang/update-real-estate-specification/:real_estate_id/:spec_id', 
 router.post('/:lang/add-to-vip/:id', VerifyUserAccessToken, UserController.AddToVIP)
 router.get('/:lang/get-wish-list', VerifyUserAccessToken, UserController.GetWishList)
 router.post('/:lang/add-to-wish-list/:id', VerifyUserAccessToken, UserController.AddWishList)
+router.post('/:lang/add-to-wish-list-mobile', VerifyUserAccessToken, UserController.AddToWishListMobile)
 
 module.exports = router

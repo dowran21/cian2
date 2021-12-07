@@ -19,6 +19,7 @@ router.post('/change-operator-password/:id', VerifyAdminAccessToken, VerifyIsAdm
 router.get('/get-operator-locations/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetOperatorLocations)
 router.get('/get-not-operator-locations/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetNotOperatorLocations)
 router.post('/remove-location-from-operator/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RemoveLocationFromOperator)
+router.post('/add-operator-locations/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.AddOperatorLocation)
 
 router.post('/add-specification', VerifyAdminAccessToken, VerifyIsAdmin, SchemaMiddleware(Schema.AddSpecification), AdminController.AddSpecification)
 router.get('/get-specification/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.GetSpecificationByID)
@@ -64,6 +65,8 @@ router.get('/get-price-statistics',  VerifyAdminAccessToken, VerifyIsAdmin, Admi
 router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetAllUsers)
 router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)
 router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GivePermission)
+
+router.get('/get-logs', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLogs);
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )

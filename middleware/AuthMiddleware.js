@@ -139,8 +139,10 @@ const VerifyIsAdmin = async (req, res, next) =>{
 }
 
 const VerifyEstateUser = async (req, res, next) =>{
+    console.log("hello i am in verifyestate user")
     const {id} = req.params
     const user_id = req.user.id
+    console.log(req.files)
     const query_text = `
         SELECT id FROM real_estates re 
             WHERE re.id = $1 AND user_id = $2
@@ -152,7 +154,7 @@ const VerifyEstateUser = async (req, res, next) =>{
             next ()
         }
         else {
-            return res.status(422).json({"message":"It isn't your real estate"})
+            return res.status(444).json({"message":"It isn't your real estate"})
         }
     }catch(e){
         console.log(e)
