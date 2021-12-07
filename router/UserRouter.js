@@ -32,5 +32,7 @@ router.post('/:lang/add-to-vip/:id', VerifyUserAccessToken, UserController.AddTo
 router.get('/:lang/get-wish-list', VerifyUserAccessToken, UserController.GetWishList)
 router.post('/:lang/add-to-wish-list/:id', VerifyUserAccessToken, UserController.AddWishList)
 router.post('/:lang/add-to-wish-list-mobile', VerifyUserAccessToken, UserController.AddToWishListMobile)
+router.post('/:lang/drop-wish-list', VerifyUserAccessToken, UserController.DropWishList)
+
 
 module.exports = router

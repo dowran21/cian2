@@ -649,83 +649,97 @@ const GetWishList = async (req, res) =>{
     }
 
     const query_text = `
-        SELECT
-            (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
-            INNER JOIN ctypes cp 
-                ON cp.id = re.ctype_id
-            LEFT JOIN real_estate_prices rep 
-                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-            LEFT JOIN languages l 
-                ON l.language_code = $2
-            INNER JOIN real_estate_translations ret
-                ON ret.real_estate_id = re.id AND ret.language_id = l.id
-            LEFT JOIN type_translations tt 
-                ON tt.type_id = cp.type_id AND tt.language_id = l.id
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            LEFT JOIN location_translations lt
-                ON lt.location_id = re.location_id AND lt.language_id = l.id
-            LEFT JOIN locations lc 
-                ON lc.id = re.location_id
-            LEFT JOIN location_translations ltt
-                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            INNER JOIN types t
-                ON t.id = cp.type_id
-            INNER JOIN categories c 
-                ON c.id = cp.category_id
-            INNER JOIN user_wish_list uwl
-                ON uwl.user_id = $1
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4     
-        ) AS count) AS count
-        ,
+    SELECT
+    (SELECT COUNT (count.id) FROM (
+        SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
+        INNER JOIN ctypes cp 
+            ON cp.id = re.ctype_id
+        LEFT JOIN real_estate_prices rep 
+            ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+        LEFT JOIN languages l 
+            ON l.language_code = $2
+        INNER JOIN real_estate_translations ret
+            ON ret.real_estate_id = re.id AND ret.language_id = l.id
+        LEFT JOIN type_translations tt 
+            ON tt.type_id = cp.type_id AND tt.language_id = l.id
+        LEFT JOIN vip_real_estates vre 
+            ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+        LEFT JOIN location_translations lt
+            ON lt.location_id = re.location_id AND lt.language_id = l.id
+        LEFT JOIN locations lc 
+            ON lc.id = re.location_id
+        LEFT JOIN location_translations ltt
+            ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+        INNER JOIN types t
+            ON t.id = cp.type_id
+        INNER JOIN categories c 
+            ON c.id = cp.category_id
+        INNER JOIN user_wish_list uwl
+            ON uwl.user_id = $1
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4     
+    ) AS count) AS count,
 
-            (SELECT json_agg(all) FROM(
-                (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
-        concat(
-            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
-        
-        (SELECT json_agg(dest) FROM (
-            SELECT rei.destination FROM real_estate_images rei
-            WHERE rei.real_estate_id = re.id AND rei.is_active = true
-        )dest) AS images, 
-        ret.description
+        (SELECT json_agg(all1) FROM(
+            SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
+            concat(
+                CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+            (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+            
+            (SELECT json_agg(dest) FROM (
+                SELECT rei.destination FROM real_estate_images rei
+                WHERE rei.real_estate_id = re.id AND rei.is_active = true
+            )dest) AS images, 
+            ret.description
 
-        FROM real_estates re 
-            INNER JOIN ctypes cp 
-                ON cp.id = re.ctype_id
-            LEFT JOIN real_estate_prices rep 
-                ON rep.real_estate_id = re.id AND rep.is_active = 'true'
-            LEFT JOIN languages l 
-                ON l.language_code = $2
-            INNER JOIN real_estate_translations ret
-                ON ret.real_estate_id = re.id AND ret.language_id = l.id
-            LEFT JOIN type_translations tt 
-                ON tt.type_id = cp.type_id AND tt.language_id = l.id
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
-            LEFT JOIN location_translations lt
-                ON lt.location_id = re.location_id AND lt.language_id = l.id
-            LEFT JOIN locations lc 
-                ON lc.id = re.location_id
-            LEFT JOIN location_translations ltt
-                ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-            LEFT JOIN users u
-                ON u.id = re.user_id
-            LEFT JOIN types t
-                ON t.id = cp.type_id
-            LEFT JOIN categories c 
-                ON c.id = cp.category_id
-            INNER JOIN user_wish_list uwl
-                ON uwl.user_id = $1
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  
-        ORDER BY  re.id DESC  
-            )all) AS real_estates_all
+            FROM real_estates re 
+                INNER JOIN ctypes cp 
+                    ON cp.id = re.ctype_id
+                LEFT JOIN real_estate_prices rep 
+                    ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+                LEFT JOIN languages l 
+                    ON l.language_code = $2
+                INNER JOIN real_estate_translations ret
+                    ON ret.real_estate_id = re.id AND ret.language_id = l.id
+                LEFT JOIN type_translations tt 
+                    ON tt.type_id = cp.type_id AND tt.language_id = l.id
+                LEFT JOIN vip_real_estates vre 
+                    ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
+                LEFT JOIN location_translations lt
+                    ON lt.location_id = re.location_id AND lt.language_id = l.id
+                LEFT JOIN locations lc 
+                    ON lc.id = re.location_id
+                LEFT JOIN location_translations ltt
+                    ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+                LEFT JOIN users u
+                    ON u.id = re.user_id
+                LEFT JOIN types t
+                    ON t.id = cp.type_id
+                LEFT JOIN categories c 
+                    ON c.id = cp.category_id
+                INNER JOIN user_wish_list uwl
+                    ON uwl.user_id = $1
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  
+            ORDER BY  re.id DESC  
+        )all1) AS real_estates_all
             `
     try {
         const {rows} = await database.query(query_text, [ user_id, lang])
         console.log(rows)
         return res.status(status.success).json({rows:rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const DropWishList = async (req, res) =>{
+    const user_id = req.user.id
+    const query_text = `
+        DELETE FROM user_wish_list WHERE user_id = ${user_id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -814,6 +828,8 @@ module.exports = {
     ForgotPassword,
     AddWishList,
     GetWishList,
+    DropWishList,
+
     AddImage,
     AddToVIP,
     UpateRealEstate,

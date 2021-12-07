@@ -111,6 +111,7 @@ const GetOperators = async (req, res) =>{
             (SELECT COUNT(*) 
                 FROM users 
                 WHERE role_id = 2 ${WherePart}),
+                
             (SELECT json_agg(op) FROM (
                 SELECT u.id, u.full_name, u.email, u.phone, u.deleted,
                 (SELECT json_agg(loc) FROM (
