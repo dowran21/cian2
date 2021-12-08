@@ -42,9 +42,9 @@ const VerifyAdminRefreshToken = async (req, res, next) =>{
 
 const VerifyUserAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
-    console.log(token)
+    // console.log(req)
     if (!token){
-        return res.status(status.bad).send("Token not provided")
+        return res.status(450).send("Token not provided")
     }
 
     token = token.replace("Bearer ", "")

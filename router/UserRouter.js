@@ -21,7 +21,7 @@ router.post('/:lang/add-real-estate', ParamsSchemaMiddleware(Schema.LangSchema),
 
 router.get('/:lang/user-real-estates',  ParamsSchemaMiddleware(Schema.LangSchema), VerifyUserAccessToken,  UserController.UserRealEstates)
 router.get('/:lang/user-real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, UserController.GetUserRealEstateByID)
-router.post('/:lang/add-real-estate-images/:id', ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, VerifyEstateUser, upload.array("picture", 15), resize_image, UserController.AddImage )
+router.post('/:lang/add-real-estate-images/:id', upload.array("picture", 15), resize_image, UserController.AddImage )
 router.post('/:lang/update-real-estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
 
 router.post('/:lang/update-real-estate-specification/:real_estate_id/:spec_id', VerifyUserAccessToken, UserController.UpdateRealEstateSpec)
@@ -32,7 +32,8 @@ router.post('/:lang/add-to-vip/:id', VerifyUserAccessToken, UserController.AddTo
 router.get('/:lang/get-wish-list', VerifyUserAccessToken, UserController.GetWishList)
 router.post('/:lang/add-to-wish-list/:id', VerifyUserAccessToken, UserController.AddWishList)
 router.post('/:lang/add-to-wish-list-mobile', VerifyUserAccessToken, UserController.AddToWishListMobile)
-router.post('/:lang/drop-wish-list', VerifyUserAccessToken, UserController.DropWishList)
+router.post('/:lang/drop-wish-list', VerifyUserAccessToken, UserController.DropWishList);
+router.post('/:lang/remove-from-wish-list/:id', VerifyUserAccessToken, UserController.RemoveFromWishList)
 
 
 module.exports = router

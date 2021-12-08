@@ -489,8 +489,11 @@ req.body should be like this;
 }
 
 const AddImage = async (req, res) =>{
+    console.log("hello i am in controller")
     const files = req.files
     const {id} = req.params
+    console.log(req.files);
+    // console.log(req)
     if (files?.length){
         // console.log(files)
         const query_text = `
@@ -675,12 +678,12 @@ const GetWishList = async (req, res) =>{
         INNER JOIN categories c 
             ON c.id = cp.category_id
         INNER JOIN user_wish_list uwl
-            ON uwl.user_id = $1
+            ON uwl.user_id = $1 AND uwl.real_estate_id = re.id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4     
     ) AS count) AS count,
 
         (SELECT json_agg(all1) FROM(
-            SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
+            SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name,
             concat(
                 CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
             (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -717,14 +720,14 @@ const GetWishList = async (req, res) =>{
                 LEFT JOIN categories c 
                     ON c.id = cp.category_id
                 INNER JOIN user_wish_list uwl
-                    ON uwl.user_id = $1
+                    ON uwl.user_id = $1 AND uwl.real_estate_id = re.id
             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  
             ORDER BY  re.id DESC  
         )all1) AS real_estates_all
             `
     try {
         const {rows} = await database.query(query_text, [ user_id, lang])
-        console.log(rows)
+        // console.log(rows)
         return res.status(status.success).json({rows:rows[0]})
     } catch (e) {
         console.log(e)
@@ -739,6 +742,21 @@ const DropWishList = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const RemoveFromWishList = async (req, res) =>{
+    const user_id = req.user.id;
+    const {id} = req.params;
+    const query_text = `
+        DELETE FROM user_wish_list WHERE user_id = ${user_id} AND real_estate_id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
         return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
@@ -835,5 +853,6 @@ module.exports = {
     UpateRealEstate,
     ChangePassword,
     SendCodeAgain,
-    AddToWishListMobile
+    AddToWishListMobile,
+    RemoveFromWishList
 }
