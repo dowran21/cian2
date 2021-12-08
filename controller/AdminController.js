@@ -1422,6 +1422,36 @@ const GetPriceStatistics = async (req, res) =>{
     }
 }
 
+const GetUsersStatistics = async (req, res)=>{
+    const query_text = `
+        SELECT o.id,
+            (SELECT COUNT(*) FROM users u WHERE u.owner_id = o.id ) AS count
+        FROM owners o
+    `
+    try {
+        const {rows} = await database.query(query_text,[])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const GetActiveStatistics = async (req, res) =>{
+    const query_text = `
+        SELECT 
+            (SELECT COUNT(re.id) FROM real_estates re WHERE re.status_id IN (1, 3)) AS active,
+            (SELECT COUNT(re.id) FROM real_estates re WHERE re.status_id IN (2, 4 )) AS deactive
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({"rows":rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetConfirmRealEstates = async (req, res) =>{
     const {page, limit, search, is_active, status_id} = req.query
     let offSet = ``
@@ -1720,6 +1750,8 @@ const GetLogs = async (req, res) =>{
     }
 }
 
+
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -1772,6 +1804,8 @@ module.exports = {
     GetStatistics,
     GetTypes,
     GetPriceStatistics,
+    GetUsersStatistics,
+    GetActiveStatistics,
 
     GetAllUsers,
     ChangePermission,
@@ -1781,6 +1815,7 @@ module.exports = {
     NotActivatedEstates,
     RealestateByID,
     ActivateRealEstate,
+
 
     GetLogs,
 

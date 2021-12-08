@@ -2,7 +2,7 @@ const express = require('express')
 const router = new express.Router()
 const AdminController = require('../controller/AdminController.js')
 const {resize_page_images} = require('../middleware/resize.js')
-const {VerifyAdminAccessToken, VerifyAdminRefreshToken, VerifyIsAdmin} = require('../middleware/AuthMiddleware.js')
+const {VerifyAdminAccessToken, VerifyAdminRefreshToken, VerifyIsAdmin, VerifyCodeAccessToken} = require('../middleware/AuthMiddleware.js')
 const Schema = require('../schemas/AdminSchema');
 const {SchemaMiddleware, ParamsSchemaMiddleware, QuerySchemaMiddleware} = require('../middleware/SchemaMiddleware')
 const upload = require('../middleware/upload')
@@ -67,6 +67,8 @@ router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin
 router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GivePermission)
 
 router.get('/get-logs', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLogs);
+router.get('/get-user-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUsersStatistics)
+router.get('/get-active-real-estates', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetActiveStatistics)
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )
