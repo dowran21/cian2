@@ -1080,13 +1080,14 @@ const GetSpecByID = async (req, res) =>{
 const GetHistoryView = async (req, res) =>{
     const {lang} = req.params;
     const {page, limit} = req.query;
+    const {real_estates} = req.body;
     let offSet = ``
     if(page && limit) {
         offSet = `OFFSET ${page*limit} LIMIT ${limit}`
     }
     const query_text = `
         WITH selected AS 
-            (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
+            (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name,
             concat(
                 CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
             (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -1103,7 +1104,7 @@ const GetHistoryView = async (req, res) =>{
                 LEFT JOIN real_estate_prices rep 
                     ON rep.real_estate_id = re.id AND rep.is_active = 'true'
                 LEFT JOIN languages l 
-                    ON l.language_code = $2
+                    ON l.language_code = $1
                 INNER JOIN real_estate_translations ret
                     ON ret.real_estate_id = re.id AND ret.language_id = l.id
                 LEFT JOIN type_translations tt 
@@ -1122,13 +1123,8 @@ const GetHistoryView = async (req, res) =>{
                     ON t.id = cp.type_id
                 LEFT JOIN categories c 
                     ON c.id = cp.category_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  
-            ORDER BY  re.id DESC  ${offSet}), 
-
-                        
-        inserted AS (INSERT INTO view_address 
-            SELECT $1,  id, 1 FROM selected 
-            ON CONFLICT (ip_address, real_estate_id, view_type_id) DO NOTHING)
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  AND re.id IN (${real_estates.map(item => `${item}`).join(',')})
+            ORDER BY  re.id DESC  ${offSet})
         
         SELECT
             (SELECT COUNT (count.id) FROM (SELECT  DISTINCT ON (re.id) re.id FROM real_estates re  
@@ -1137,7 +1133,7 @@ const GetHistoryView = async (req, res) =>{
                 LEFT JOIN real_estate_prices rep 
                     ON rep.real_estate_id = re.id AND rep.is_active = 'true'
                 LEFT JOIN languages l 
-                    ON l.language_code = $2
+                    ON l.language_code = $1
                 INNER JOIN real_estate_translations ret
                     ON ret.real_estate_id = re.id AND ret.language_id = l.id
                 LEFT JOIN type_translations tt 
@@ -1160,8 +1156,14 @@ const GetHistoryView = async (req, res) =>{
             (SELECT json_agg(res) FROM 
                 selected 
             res) AS real_estates_all
-    
     `
+    try {
+        const {rows} = await database.query(query_text,[lang])
+        return res.status(status.success).json({rows:rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 module.exports = {

@@ -337,7 +337,7 @@ const LoadUser = async (req, res) =>{
 const UserRealEstates = async (req, res) =>{
     const {lang} = req.params
     const user_id = req.user.id
-    console.log(user_id)
+    // console.log(user_id)
     try {
         const query_text = `
             SELECT re.id, rep.price::text, re.is_active,
@@ -369,9 +369,8 @@ const UserRealEstates = async (req, res) =>{
             WHERE re.user_id = ${user_id}
         `
         const {rows} = await database.query(query_text, [])
-        console.log(rows)
+        // console.log(rows)
         return res.status(status.success).json({rows})
-
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -398,9 +397,7 @@ req.body should be like this;
 *****************************/
 
     const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
-    // console.log(req.body)
     const user_id = req.user.id
-    console.log(user_id)
     try {
         const user_query = `
             SELECT u.id, u.max_count, u.owner_id, 
@@ -513,17 +510,10 @@ const AddImage = async (req, res) =>{
     return res.status(status.bad).json({"message":"there is no file"})
 }
 
-const UpdateRealEstateSpec = async (req, res) =>{
-    const {real_estate_id, lang, spec_id} = req.params;
-    const {id, is_multiple, is_required, values} = req.body;
-    
-
-}
-
 const GetUserRealEstateByID = async (req, res) =>{
     const {lang, id} = req.params
     const query_text = `
-        SELECT DISTINCT ON (re.id) re.area::text, rep.price::text, ret.description AS description_tm, rett.description AS description_tm, 
+        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, ret.description AS description_tm, rett.description AS description_ru, 
         re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
         concat(
             CASE 
@@ -548,7 +538,7 @@ const GetUserRealEstateByID = async (req, res) =>{
         )rejection) AS rejections,
 
         (SELECT json_agg(specification) FROM(
-            SELECT DISTINCT ON (resvv.spec_id) st.name, 
+            SELECT DISTINCT ON (resvv.spec_id) st.name, s.is_multiple, s.is_required, s.id,
                 
                 (SELECT json_agg(value) FROM(
                     SELECT sv.absolute_value, svt.name FROM specification_values sv
@@ -562,6 +552,8 @@ const GetUserRealEstateByID = async (req, res) =>{
             FROM specification_translations st
                 INNER JOIN real_estate_specification_values resvv
                     ON resvv.spec_id = st.spec_id 
+                INNER JOIN specifications s
+                    ON s.id = st.spec_id
             WHERE st.language_id = l.id AND resvv.real_estate_id = $1 
 
         )specification) AS specifications
@@ -819,18 +811,35 @@ const AddToVIP = async (req, res) =>{
 }
 
 const UpateRealEstate = async (req, res) =>{
-    const {status_id} = req.body
-    const {id} = req.params
-    try {
-        const query_text = `
-        UPDATE real_estates SET status_id = ${status_id} WHERE id = ${id}
-        `
-        await database.query(query_text, [])
-        return res.status(200).json(true)
-    } catch (e) {
-        console.log(e)
-        return res.status(400).json(false)
+    const {id} = req.params;
+    console.log(req.body);
+    const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
+    let i = 0;
+    let j=0;
+    let spec_value_part = ``
+    if (specifications && specifications.length){
+        spec_value_part = `, insert_spec AS (INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
+                                VALUES`
+        for (i=0; i<specifications?.length; i++){
+            let specification = specifications[i]
+            if (specification.values.length){
+                const values = specification.values
+                if (i!=0){
+                    spec_value_part += `,`
+                } 
+                for (j=0; j<values?.length; j++){
+                    
+                    spec_value_part += ` ((SELECT id FROM inserted), ${specification.id}, ${values[j]})`
+                    if (j!=(values?.length-1)){
+                        spec_value_part += `,`;
+                    }
+                }
+            
+            }
+        }
+        spec_value_part += ` ) `
     }
+    return res.status(status.success).send(true)
 }
 
 module.exports = {
@@ -842,7 +851,7 @@ module.exports = {
 
     AddRealEstate,
     GetUserRealEstateByID,
-    UpdateRealEstateSpec,
+    
     ForgotPassword,
     AddWishList,
     GetWishList,

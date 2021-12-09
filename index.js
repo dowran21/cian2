@@ -12,7 +12,7 @@ const port = process.env.PORT || 3000
 let dir = path.join(__dirname, 'uploads')
 
 app.use(morgan('dev'))
-const allowedOrigins = ['http://localhost:3001',"http://109.106.244.215:3000",'http://localhost:3000','http://localhost:2000','http://127.0.0.1:3000', 'http://localhost:2000', 'http://109.106.244.215:2000', `http://192.168.31.240:3000`,`http://192.168.31.8:3000` ];
+const allowedOrigins = ['http://localhost:3001','http://gamysh.com',"http://109.106.244.215:3000",'http://localhost:3000','http://localhost:2000','http://127.0.0.1:3000', 'http://localhost:2000', 'http://109.106.244.215:2000', `http://192.168.31.240:3000`,`http://192.168.31.8:3000` ];
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);

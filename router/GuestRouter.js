@@ -28,7 +28,7 @@ router.get('/:lang/get-types-count/:id', ParamsSchemaMiddleware(Schema.IDSchema)
 router.get('/room-specification', GuestController.RoomSpecController)
 router.get('/:lang/types-of-category/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetTypesOfCategory)
 router.get('/:lang/get-specification/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetSpecByID)
-router.get('/:lang/get-history-view', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetHistoryView)
+router.post('/:lang/get-history-view', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetHistoryView)
 
 router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
 
