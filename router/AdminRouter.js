@@ -60,7 +60,8 @@ router.post('/delete-place-image/:id', VerifyAdminAccessToken, VerifyIsAdmin, Pa
 
 router.get('/all-real-estate-statistics', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetStatistics )
 router.get('/get-all-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetTypes)
-router.get('/get-price-statistics',  VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetPriceStatistics)
+router.get('/get-price-statistics',  VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetPriceStatistics);
+router.get('/get-user-chart', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUserChart)
 
 router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetAllUsers)
 router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)

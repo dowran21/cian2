@@ -1437,6 +1437,30 @@ const GetUsersStatistics = async (req, res)=>{
     }
 }
 
+const GetUserChart = async (req, res) =>{
+    const {date_part} = req.query;
+    let inter = ``
+    if(date_part){
+        inter = `${date_part}`
+    }else{
+        inter = `day`
+    }
+    const query_text = `
+        SELECT date_trunc('${inter}', u.created_at), COUNT(u.id)
+            FROM users u
+            WHERE u.role_id = 3 
+            GROUP BY date_trunc('${inter}', u.created_at) 
+    `
+    try {
+        console.log(query_text)
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetActiveStatistics = async (req, res) =>{
     const query_text = `
         SELECT 
@@ -1804,6 +1828,7 @@ module.exports = {
     GetPriceStatistics,
     GetUsersStatistics,
     GetActiveStatistics,
+    GetUserChart,
 
     GetAllUsers,
     ChangePermission,
