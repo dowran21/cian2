@@ -1400,7 +1400,7 @@ const GetPriceStatistics = async (req, res) =>{
 
     const query_text = `
     SELECT  
-        date_trunc('day', re.created_at), AVG(rep.price)
+        to_char(date_trunc('day', re.created_at), 'MM-DD') AS created_at, AVG(rep.price)
         FROM real_estates re
             INNER JOIN real_estate_prices rep
                 ON rep.real_estate_id = re.id AND rep.is_active = true
@@ -1410,8 +1410,8 @@ const GetPriceStatistics = async (req, res) =>{
                     ON lc.id = re.location_id
             INNER JOIN real_estate_specification_values resv
                     ON resv.real_estate_id = re.id
-        WHERE re.id > 0 AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date  ${where_part} ${spec_part}
-        GROUP BY date_trunc('day', re.created_at)
+        WHERE re.id > 0   ${where_part} ${spec_part}
+        GROUP BY date_trunc('day', re.created_at) 
         `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1749,8 +1749,6 @@ const GetLogs = async (req, res) =>{
         return res.status(status.error).send(false);
     }
 }
-
-
 
 module.exports = {
     AdminLogin,
