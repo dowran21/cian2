@@ -617,7 +617,7 @@ const CommerceFilter = async (req, res) =>{
         SELECT c.id AS category_id, (
             
             SELECT json_agg(esta) FROM (
-                SELECT t.id AS type_id, tt.name,
+                SELECT t.id AS type_id, tt.name, destination,
             
                     (SELECT COUNT(*) 
                         FROM real_estates re
@@ -634,7 +634,10 @@ const CommerceFilter = async (req, res) =>{
                         ON cp.category_id = c.id AND cp.type_id = t.id
                     INNER JOIN type_translations tt
                         ON tt.type_id = t.id AND tt.language_id = l.id 
+                    INNER JOIN ctype_image ci
+                        ON ci.ctype_id = cp.id
                     WHERE t.main_type_id = 2
+                    
         )esta) estates
 
         FROM categories c

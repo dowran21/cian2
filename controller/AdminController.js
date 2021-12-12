@@ -1506,9 +1506,9 @@ const GetConfirmRealEstates = async (req, res) =>{
     }else{
         offSet = ``
     }
-
+    console.log(is_active)
     let active_part = ``
-    if(is_active){
+    if(is_active=="false" || is_active == "true"){
         active_part = ` AND re.is_active = ${is_active}`
     }else{
         active_part = ` AND re.is_active IS NULL`
@@ -1580,7 +1580,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     )re) AS real_estates   
             `
         const {rows} = await database.query(query_text, [])
-        // console.log(rows) 
+        console.log(query_text) 
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
@@ -1686,7 +1686,7 @@ const RealestateByID = async (req, res) =>{
             ON lc.id = re.location_id
         LEFT JOIN location_translations ltt
             ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-    WHERE re.id = $1 AND re.is_active IS NULL AND re.status_id <> 2 AND re.status_id <> 4
+    WHERE re.id = $1 AND re.status_id <> 2 AND re.status_id <> 4
     `
     try {
         const {rows} = await database.query(query_text, [id])

@@ -1,4 +1,0 @@
-/*!
- * Flickity asNavFor v2.0.1
- * enable asNavFor for Flickity
- */
