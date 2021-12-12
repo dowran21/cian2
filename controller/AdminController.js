@@ -3,6 +3,7 @@ const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
 const { off } = require("process");
+const { response } = require("express");
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -1136,8 +1137,8 @@ const GetTypes = async (req, res) =>{
         SELECT t.id, tt.name 
         FROM types t
             INNER JOIN type_translations tt
-                ON tt.type_id = t.id
-        WHERE t.main_type_id IS NULL
+                ON tt.type_id = t.id AND tt.language_id = 2
+        WHERE t.main_type_id IS NOT NULL
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1388,22 +1389,28 @@ const GetPriceStatistics = async (req, res) =>{
     }
 
     //---------------------dates-------------//
-    // if(start_date && end_date){
-    //     where_part += ` AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date`
-    // }else if(start_date && !end_date){
-    //     where_part += ` AND re.created_at >= '${start_date}'::date`
-    // }else if(!start_date && end_date){
-    //     where_part += ` AND re.created_at <= '${end_date}'::date`
-    // }else{
-    //     where_part += ``
-    // }
+    if(start_date && end_date){
+        where_part += ` AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date`
+    }else if(start_date && !end_date){
+        where_part += ` AND re.created_at >= '${start_date}'::date`
+    }else if(!start_date && end_date){
+        where_part += ` AND re.created_at <= '${end_date}'::date`
+    }else{
+        where_part += ``
+    }
 
     const query_text = `
     SELECT  
-        to_char(date_trunc('day', re.created_at), 'MM-DD') AS created_at, AVG(rep.price)
+        to_char(date_trunc('day', re.created_at), 'MM-DD') AS created_at, AVG(rep.price) AS "Продажа", AVG(repp.price) AS "Аренда"
         FROM real_estates re
-            INNER JOIN real_estate_prices rep
-                ON rep.real_estate_id = re.id AND rep.is_active = true
+            INNER JOIN ctypes ctp 
+                ON ctp.id = re.ctype_id
+            INNER JOIN categories c
+                ON c.id = ctp.category_id
+            LEFT JOIN real_estate_prices rep
+                ON rep.real_estate_id = re.id AND rep.is_active = true AND ctp.category_id = 1
+            LEFT JOIN real_estate_prices repp
+                ON repp.real_estate_id = re.id AND repp.is_active = true AND ctp.category_id = 2
             INNER JOIN ctypes cp 
                 ON cp.id = re.ctype_id
             INNER JOIN locations lc 
@@ -1438,7 +1445,19 @@ const GetUsersStatistics = async (req, res)=>{
 }
 
 const GetUserChart = async (req, res) =>{
-    const {date_part} = req.query;
+    const {date_part, start_date, end_date} = req.query;
+    let where_part = `` 
+
+    if(start_date && end_date){
+        where_part += ` AND u.created_at >= '${start_date}'::date AND u.created_at <= '${end_date}'::date`
+    }else if(start_date && !end_date){
+        where_part += ` AND u.created_at >= '${start_date}'::date`
+    }else if(!start_date && end_date){
+        where_part += ` AND u.created_at <= '${end_date}'::date`
+    }else{
+        where_part += ``
+    }
+    
     let inter = ``
     if(date_part){
         inter = `${date_part}`
@@ -1446,13 +1465,16 @@ const GetUserChart = async (req, res) =>{
         inter = `day`
     }
     const query_text = `
-        SELECT date_trunc('${inter}', u.created_at), COUNT(u.id)
+        SELECT date_trunc('${inter}', u.created_at), COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
             FROM users u
-            WHERE u.role_id = 3 
+            LEFT JOIN owners o 
+                ON o.id = u.owner_id AND o.id = 1
+            LEFT JOIN owners oo 
+                ON oo.id = u.owner_id AND oo.id = 2
+            WHERE u.role_id = 3 ${where_part} 
             GROUP BY date_trunc('${inter}', u.created_at) 
     `
     try {
-        console.log(query_text)
         const {rows} = await database.query(query_text, [])
         return res.status(status.success).json({rows})
     } catch (e) {
@@ -1676,6 +1698,57 @@ const RealestateByID = async (req, res) =>{
     }
 }
 
+const GetRealEstateStatistics = async (req, res) =>{
+    const {date_part, start_date, end_date, type_id} = req.query;
+    let where_part = `` 
+    
+    if(type_id){
+        where_part += ` AND ctp.type_id = ${type_id}`
+    }
+
+    if(start_date && end_date){
+        where_part += ` AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date`
+    }else if(start_date && !end_date){
+        where_part += ` AND re.created_at >= '${start_date}'::date`
+    }else if(!start_date && end_date){
+        where_part += ` AND re.created_at <= '${end_date}'::date`
+    }else{
+        where_part += ``
+    }
+    
+    let inter = ``
+    if(date_part){
+        inter = `${date_part}`
+    }else{
+        inter = `day`
+    }
+    const query_text = `
+        SELECT date_trunc('${inter}', re.created_at), COUNT(s.id) AS "На продаже",
+        COUNT(ss.id) AS "Проданные", COUNT(sss.id) AS "Сдается в аренду", COUNT(ssss.id) AS "Сдано в аренду"
+        FROM real_estates re
+            LEFT JOIN statuses s
+                ON s.id = re.status_id AND s.id = 1
+            LEFT JOIN statuses ss
+                ON ss.id = re.status_id AND ss.id = 2
+            LEFT JOIN statuses sss
+                ON sss.id = re.status_id AND sss.id = 3 
+            LEFT JOIN statuses ssss
+                ON ssss.id = re.status_id AND ssss.id = 3
+            INNER JOIN ctypes ctp 
+                ON ctp.id = re.ctype_id
+            WHERE re.id > 0 ${where_part}    
+        GROUP BY date_trunc('${inter}', re.created_at) 
+        
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows:rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const NotActivatedEstates = async (req, res) =>{
     const query_text = `
         WITH selected AS ( 
@@ -1829,6 +1902,7 @@ module.exports = {
     GetUsersStatistics,
     GetActiveStatistics,
     GetUserChart,
+    GetRealEstateStatistics,
 
     GetAllUsers,
     ChangePermission,

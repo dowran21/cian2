@@ -15,6 +15,8 @@ router.post('/send-code-again', VerifyCodeAccessToken, UserController.SendCodeAg
 router.post('/forgot-password', UserController.ForgotPassword)
 router.post('/change-password', VerifyCodeAccessToken, UserController.ChangePassword)
 router.get('/load-user', VerifyUserRefreshToken, UserController.LoadUser)
+router.post('/update-user', VerifyUserAccessToken, UserController.UpdateUser)
+router.post('/send-code', VerifyUserAccessToken, UserController.SendCode)
 
 router.post('/:lang/add-real-estate', ParamsSchemaMiddleware(Schema.LangSchema), VerifyUserAccessToken, SchemaMiddleware(Schema.Real_estate), UserController.AddRealEstate)
 

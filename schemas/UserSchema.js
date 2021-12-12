@@ -114,7 +114,8 @@ const Schema = {
         area:Joi.string().allow(""),
         spec_values:Joi.string().allow(""),
         page:Joi.number().allow(""),
-        limit:Joi.number().allow("")
+        limit:Joi.number().allow(""),
+        owner_id:Joi.number().allow("   ")
     }),
 
     LangSchema:Joi.object({

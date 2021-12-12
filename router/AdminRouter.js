@@ -70,6 +70,7 @@ router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, 
 router.get('/get-logs', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLogs);
 router.get('/get-user-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUsersStatistics)
 router.get('/get-active-real-estates', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetActiveStatistics)
+router.get('/get-real-estate-statistics', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetRealEstateStatistics)
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )

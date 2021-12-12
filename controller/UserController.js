@@ -131,6 +131,30 @@ const SendCodeAgain = async (req, res) =>{
     }
 }
 
+const SendCode = async (req, res) =>{
+    const user_id = req.user.id
+    const requestip = require('request-ip')
+    const ip = requestip.getClientIp(req)
+    const code = Math.floor(Math.random()*(999999-100000) + 100000)
+    const query_text = `
+           WITH inserted AS(
+                INSERT INTO access_ip (user_id, ip_address, code) 
+                VALUES (${user_id}, ${ip}, ${code}) 
+                ON CONFLICT (user_id, ip_address) DO UPDATE SET code =${code}
+            ) SELECT * FROM users WHERE id = ${user_id}
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        const mess = `Code: ${code}`
+        SendSMS({phone:rows[0].phone, mess})
+        const access_token = await UserHelper.GenerateCodeAccessToken(data);
+        return res.status(status.success).json({"access_token":access_token})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const UserLogin = async (req, res) =>{
     /*******************
      {
@@ -255,7 +279,7 @@ const ForgotPassword = async (req, res) =>{
         const {rows} = await database.query(user_query, [])
         user = rows[0]
         if(!user){
-            return res.status(status.notfound).send(false)
+            return res.status(status.notfound).send({error:{"phone":"User with this phone doesn't exist"}})
         }
     } catch (e) {
         console.log(e)
@@ -273,7 +297,7 @@ const ForgotPassword = async (req, res) =>{
             const mess = `Code: ${code}`
             SendSMS({phone, mess})
             const access_token = await UserHelper.GenerateCodeAccessToken(data);
-            return res.status(status.success).json({"access_token":access_token, code})
+            return res.status(status.success).json({"token":access_token, code})
         }else{
             return res.status(status.notfound).send(false)
         }
@@ -308,7 +332,7 @@ const ChangePassword = async (req, res) =>{
                 return res.status(status.error).send(false)
             }
         }else{
-            return res.status(status.bad).send(false)
+            return res.status(status.bad).send({error:{"code":"Code is not correct"}})
         }
     } catch (e) {
         console.log(e)
@@ -327,6 +351,22 @@ const LoadUser = async (req, res) =>{
         const access_token = await UserHelper.GenerateUserAccessToken(data)
         // const refresh_token = await AdminHelper.GenerateOperatorRefreshToken(data)
         return res.status(status.success).json({"token":access_token, "data":data})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const UpdateUser = async (req, res) =>{
+    const {full_name, phone, email} = req.body;
+    console.log(req.body);
+    const user_id = req.user.id;
+    const query_text = `
+        UPDATE users SET full_name = '${full_name}', phone = '${phone}', email = '${email}' WHERE id = ${user_id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -848,6 +888,7 @@ module.exports = {
     VerifyUserCode,
     UserRealEstates,
     LoadUser,
+    UpdateUser,
 
     AddRealEstate,
     GetUserRealEstateByID,
@@ -856,6 +897,7 @@ module.exports = {
     AddWishList,
     GetWishList,
     DropWishList,
+    SendCode,
 
     AddImage,
     AddToVIP,

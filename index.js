@@ -32,6 +32,7 @@ app.use('/api', Routers)
 
 app.use('/uploads', express.static(dir))
 
+app.get('/.well-known/pki-validation', express.static('/.well-known/pki-validation'))
 
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
