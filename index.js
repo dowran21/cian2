@@ -26,13 +26,12 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.static('/.well-known/pki-validation/'))
+app.use(express.static(path.join(__dirname, 'build')))
 
 app.use('/api', Routers)
 
 app.use('/uploads', express.static(dir))
 
-app.use('/.well-known/pki-validation', express.static('/.well-known/pki-validation/'))
 
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
