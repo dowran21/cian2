@@ -1,0 +1,28 @@
+server {
+    listen 80;
+    server_name gamysh.com www.gamysh.com;
+    return 301 https://gamysh.com$request_uri;
+}
+
+server {
+
+        listen 443 ssl;
+
+        server_name gamysh.com www.gamysh.com;
+        root /var/www/cian/cian2/build;
+        #ssl on;
+        ssl_certificate /etc/nginx/ssl/gamysh.com/gamysh_com.crt;
+        ssl_certificate_key /etc/nginx/ssl/gamysh.com/private.key;
+
+        location / {
+                proxy_pass http://localhost:2000;
+        }
+
+       location /.well-known/pki-validation {
+                sendfile on;
+                sendfile_max_chunk 1m;
+                alias  /.well-known/pki-validation;
+                autoindex on;
+  }
+
+}

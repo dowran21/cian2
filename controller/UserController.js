@@ -553,41 +553,41 @@ const AddImage = async (req, res) =>{
 const GetUserRealEstateByID = async (req, res) =>{
     const {lang, id} = req.params
     const query_text = `
-        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, ret.description AS description_tm, rett.description AS description_ru, 
-        re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
-        concat(
-            CASE 
-                WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
-                END ||
-            lt.translation
-        ) AS location,
-        real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type, 
-        u.full_name, u.id::text AS user_id,
-        (SELECT COUNT(real.id)::text FROM real_estates real WHERE real.user_id = re.user_id) AS user_real_estate_count,
-        
-        (SELECT json_agg(image) FROM (
-            SELECT destination FROM real_estate_images rei
-            WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
-        )image) AS images, 
+        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, 
+            ret.description AS description_tm, rett.description AS description_ru, position[0] AS lat, position[1] AS lng,
+            re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
+            concat(
+                CASE 
+                    WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
+                    END ||
+                lt.translation
+            ) AS location,
+            real_estate_name($1, l.id, tt.name, area), 
+           
+            
+            (SELECT json_agg(image) FROM (
+                SELECT destination FROM real_estate_images rei
+                WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
+            )image) AS images, 
 
-        (SELECT json_agg(rejection) FROM(
-            SELECT rec.id, rec.comment
-            FROM real_estate_comments rec
-            WHERE rec.real_estate_id = $1
-            ORDER BY rec.id DESC LIMIT 1
-        )rejection) AS rejections,
+            (SELECT json_agg(rejection) FROM(
+                SELECT rec.id, rec.comment
+                FROM real_estate_comments rec
+                WHERE rec.real_estate_id = $1
+                ORDER BY rec.id DESC LIMIT 1
+            )rejection) AS rejections,
 
-        (SELECT json_agg(specification) FROM(
-            SELECT DISTINCT ON (resvv.spec_id) st.name, s.is_multiple, s.is_required, s.id,
-                
-                (SELECT json_agg(value) FROM(
-                    SELECT sv.absolute_value, svt.name FROM specification_values sv
-                        LEFT JOIN specification_value_translations svt
-                            ON svt.spec_value_id = sv.id AND svt.language_id = l.id
-                        INNER JOIN real_estate_specification_values resv 
-                            ON resv.spec_value_id = sv.id
-                    WHERE resv.real_estate_id = re.id AND sv.spec_id = st.spec_id
-                )value) AS values
+            (SELECT json_agg(specification) FROM(
+                SELECT DISTINCT ON (resvv.spec_id) st.name, s.is_multiple, s.is_required, s.id,
+                    
+                    (SELECT json_agg(value) FROM(
+                        SELECT sv.id AS value_id, sv.absolute_value, svt.name FROM specification_values sv
+                            LEFT JOIN specification_value_translations svt
+                                ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                            INNER JOIN real_estate_specification_values resv 
+                                ON resv.spec_value_id = sv.id
+                        WHERE resv.real_estate_id = re.id AND sv.spec_id = st.spec_id
+                    )value) AS values
                 
             FROM specification_translations st
                 INNER JOIN real_estate_specification_values resvv
@@ -907,3 +907,35 @@ module.exports = {
     AddToWishListMobile,
     RemoveFromWishList
 }
+
+/*
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDiQDuEhPjHKo5G
+AiextGLkvrnxrpk7jL6tDqpRAvi2MHcFvY+FGggGAvkcY+/fvVGqfOUsNjJtQA6I
+SB8zm25gpcqNHpD4jhaXCwjLnpQ5IujVpQ5/YzgCvtlb9OL0ddy7NuJFubJSrSIj
+Mb8mJt9AR7sRz+N8PyVkH2+fEzt06MlT63UV88VnqEeTiLbDo0kgL+ECJ+FqVtiO
+J/BKy8W+J/fOBmFNxsl/R1eAwdXgYAALAer8B5Y2t37WdtsnglhlPUCuSGBKBNey
+DgO+M9AACd6jQ1kHtuzfg0Cq+TOSz3KIDqG4OMeG6Qmql87qWyu4oYF8EQM6O1mR
+BDmRaqvlAgMBAAECggEACJNOrjMsCsB+LAEg6AdiSDFCcvqfLDalc4G+yttF+gHU
+QQ9yRSU7cJ7kOkM/cEeItOGO/iH/v0xSQLAbHqWhhWBDUR37eLBKAueUKcOU8qV0
+FcTvy7xC/zeknWumvoVJHH90DBiBvch6JsNX72ZBx/nwCTjL8oWiMS1P2cOs2T13
+RK//Z+1mnJUmqX8jgS7S58LgEptfImNooyLDSx6PWyLswy6Tj6ra8aBqGnngzR9S
+f8dI+cmTnwP4/bmClcApyEqJ+aleJ3w5OBtjEaGfZPrxq5SvrBIa3r3BtGrQEBiK
+Og0bIuRzGgaIddFvnwqlrjoO9mq9eCrhU9BkdQEw8QKBgQD1ghdRr/i/bpIjdtcd
+8D2ZuCixVCpjS8uEGS4aGdoBTsMfDEw6JN/YMNj9/5MVhpKYOqAFLEOa1MCUZEb4
+MPOOWyOEY06jOjHNRSoFyZOYWdvbx4oBV9KlF0vMgzdBl454xeDS2ZPdjBeNweK8
++C5w8QuDFK+h3wQlONQzb5+F5wKBgQDr63aM8GjUTMuakFjcz9v9DZB6jeSUMuTi
+1EPKCtPUv/Uj+q8m7bP32j74VKmsQQ4qe7COuAFCo41h0fsWkbA6iJ/kQmLg1rDA
+mcMZDvAV/VVQGVEfi259SS7AMgKd/1BmvBBqsipGEOkjPdhfz1AbkMj9Hj0dcxbl
+VEzaSm9uUwKBgQCqxBcWQbFi7jUGJ/ZPI7ilQJxFZAar1J+1vZH8o7ioqjE8WmB3
+HQj6Jlf4rJmRIm67JiQCFRzdCFj/npRitCHlBe25ex3KmYLkhdRJ/EEGepJb1/pd
+Hsos/PxDP43iuNlnljPgVWjtdDE57/+Xc4VSF8frICteC3KltVachGrQRwKBgA9H
+DEJMPz2gS38S4e5Kt6BHhJerIKZINXJK9Kjc0qLwW1udHEKVGhZu160VLnetLtGp
+eOGFIO/Dz6AKDQyFGrhvqIsLkYOl44RVcMDqqrmB0kiBmzNDwD/0wUZI9spsgjRk
+8Vs3dm1bIv3ZP23U6wcd9SYPEz4Y+d6X+vIX5+dpAoGAKJ1Yx7TYzc2gX4ba76pT
+zFYz20z9t8BvG8hxTSfZ2fTWWWYN/tUNN3NVttZqxv24gZza9Sc5Bg3kEOZR6vrs
+BPDvM3xxzQedNCucQ1rxPXSnf9rIhyUsgY6jDiea6Lytwn0YFh/uduAYZqWqltDH
+PQMd6GSWURBfNQYXU4ohRi4=
+-----END PRIVATE KEY-----
+
+*/
