@@ -441,7 +441,7 @@ req.body should be like this;
     let user = {}
     try {
         const user_query = `
-            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission
+            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission,
                 
                 (SELECT COUNT(*) 
                     FROM real_estates
@@ -459,6 +459,7 @@ req.body should be like this;
             return res.status(444).send(false)
         }
     } catch (e) {
+        console.log("I am in user select error")
         console.log(e)
         return res.status(status.error).send(false)
     }
@@ -525,6 +526,8 @@ req.body should be like this;
             try {
                 await database.query(`UPDATE real_estates SET is_active = true WHERE id = ${rows[0].id}`)
             } catch (e) {
+                console.log("I am in user update estate error")
+
                 console.log(e)
                 return res.status(status.error).send("Something went wrong")
             }
@@ -532,6 +535,7 @@ req.body should be like this;
         return res.status(status.success).json({"rows":rows[0]})
 
     } catch(e) {
+        console.log("I am in user add error")
         console.log(e)
         return res.status(status.error).send(false)
 

@@ -1465,7 +1465,7 @@ const GetUserChart = async (req, res) =>{
         inter = `day`
     }
     const query_text = `
-        SELECT date_trunc('${inter}', u.created_at), COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
+        SELECT to_char(date_trunc('day', u.created_at), 'MM-DD') AS created_at, COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
             FROM users u
             LEFT JOIN owners o 
                 ON o.id = u.owner_id AND o.id = 1
@@ -1735,7 +1735,7 @@ const GetRealEstateStatistics = async (req, res) =>{
         inter = `day`
     }
     const query_text = `
-        SELECT date_trunc('${inter}', re.created_at), COUNT(s.id) AS "На продаже",
+        SELECT to_char(date_trunc('day', re.created_at), 'MM-DD') AS created_at, COUNT(s.id) AS "На продаже",
         COUNT(ss.id) AS "Проданные", COUNT(sss.id) AS "Сдается в аренду", COUNT(ssss.id) AS "Сдано в аренду"
         FROM real_estates re
             LEFT JOIN statuses s
@@ -1745,7 +1745,7 @@ const GetRealEstateStatistics = async (req, res) =>{
             LEFT JOIN statuses sss
                 ON sss.id = re.status_id AND sss.id = 3 
             LEFT JOIN statuses ssss
-                ON ssss.id = re.status_id AND ssss.id = 3
+                ON ssss.id = re.status_id AND ssss.id = 4
             INNER JOIN ctypes ctp 
                 ON ctp.id = re.ctype_id
             WHERE re.id > 0 ${where_part}    
