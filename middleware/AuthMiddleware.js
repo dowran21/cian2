@@ -6,6 +6,7 @@ const database = require('../db/index.js')
 
 const VerifyAdminAccessToken = async (req, res, next) =>{
     let token = req.headers.authorization
+    // console.log(token)
     if (!token){
         return res.status(status.bad).send("Token not provided")
     }

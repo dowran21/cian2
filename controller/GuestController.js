@@ -120,7 +120,7 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
-    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -133,7 +133,10 @@ const AllRealEstate = async (req, res) =>{
     if (page !== 'null' && limit !== 'null' && page && limit){
         offSet = `OFFSET ${page*limit} LIMIT ${limit}`
     }
-    
+    //-------------only from excepted owner-----------/
+    if(owner_id){
+        where_part += ` AND u.owner_id = ${owner_id} `
+    }
     ///------------------------main_type_id ------------------//
     if(main_type_id){
         where_part += ` AND t.main_type_id = ${main_type_id}`
@@ -198,6 +201,7 @@ const AllRealEstate = async (req, res) =>{
     if(spec_values){
         try {
             specifications = JSON.parse(spec_values)
+            console.log(specifications)
             if(specifications.length){
                 for(let i=0; i<specifications.length; i++){
                     if(specifications[i]?.values.length){
@@ -238,7 +242,7 @@ const AllRealEstate = async (req, res) =>{
     
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, re.created_at::text, u.full_name,
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name,
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -269,7 +273,7 @@ const AllRealEstate = async (req, res) =>{
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
                 ${spec_part}
-            LEFT JOIN users u
+            INNER JOIN users u
                 ON u.id = re.user_id
             LEFT JOIN types t
                 ON t.id = cp.type_id
@@ -306,6 +310,8 @@ const AllRealEstate = async (req, res) =>{
                 ${spec_part} 
             INNER JOIN types t
                 ON t.id = cp.type_id
+            INNER JOIN users u
+                ON u.id = re.user_id
             INNER JOIN categories c 
                 ON c.id = cp.category_id
             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part}   
@@ -316,27 +322,7 @@ const AllRealEstate = async (req, res) =>{
         res) AS real_estates_all
         `
     try {
-        // console.log(query_text)
         const {rows} = await database.query(query_text, [ip, lang])
-        let i = 0;
-        let j = 0;
-        let k = 0;
-        let real_estates_all = []
-        if (rows[0].vip_real_estates){
-            for ( k; k<(rows[0].real_estates_all.length+rows[0].vip_real_estates.length); k++){
-                if (k%3 == 2 && rows[0].vip_real_estates[i]){
-                    real_estates_all[k] = rows[0].vip_real_estates[i];
-                    i++;
-                }else{
-                    if(rows[0].real_estates_all[k]){
-                        real_estates_all[k] = rows[0].real_estates_all[j]
-                        j++
-                    }
-                }
-            }
-        }else{
-            real_estates_all = rows[0].real_estates_all
-        }
         // console.log(rows);
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
@@ -347,7 +333,7 @@ const AllRealEstate = async (req, res) =>{
 }
 
 const RealEstatePositions = async (req, res) =>{
-    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
     let offSet = ``
     let ctype_part =``
@@ -388,8 +374,13 @@ const RealEstatePositions = async (req, res) =>{
             price1 = {};
         }
     }
+    
     // console.log(price1, "hello parsed price")
     // console.log(price)
+    //-------------only from excepted owner-----------/
+    if(owner_id){
+        where_part += ` AND u.owner_id = ${owner_id} `
+    }
     if (price1?.min && price1?.max){
         where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
     }else if(price1?.min && !price1?.max){
@@ -477,7 +468,7 @@ const RealEstatePositions = async (req, res) =>{
 }
 
 const CountForFilter = async (req, res) =>{
-    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit} = req.query
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
     let where_part = ``
     let spec_part = ``
@@ -490,7 +481,10 @@ const CountForFilter = async (req, res) =>{
     if (location_id && location_id !== 'null'){
         where_part += ` AND (lc.id = ${location_id} OR lc.main_location_id = ${location_id})`
     }
-
+    //-------------only from excepted owner-----------/
+    if(owner_id){
+        where_part += ` AND u.owner_id = ${owner_id} `
+    }
     //---------------------ctype part -----------------------//
     if (type_id !== 'null' && type_id){
         where_part += ` AND cp.type_id = ${type_id}` 
@@ -540,6 +534,27 @@ const CountForFilter = async (req, res) =>{
         where_part +=``
     }
     
+    let specifications = ``
+    if(spec_values){
+        try {
+            specifications = JSON.parse(spec_values)
+            console.log(specifications)
+            if(specifications.length){
+                for(let i=0; i<specifications.length; i++){
+                    if(specifications[i]?.values.length){
+                        spec_part += `
+                            INNER JOIN real_estate_specification_values resv${i}
+                                ON resv${i}.real_estate_id = re.id AND resv${i}.spec_id = ${specifications[i]?.id} AND (${specifications[i].values.map(item => `resv${i}.spec_value_id = ${item}`).join('OR ')})    
+                        `
+                    }
+                    
+                }
+            }
+        } catch (e) {
+            console.log(e)
+        }   
+    }
+    
     //----------about to have an image---------// 
     if (images && images !== null && images !== 'undefined'){
         image_part = `RIGHT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
@@ -556,9 +571,13 @@ const CountForFilter = async (req, res) =>{
                     ON t.id = cp.type_id
                 INNER JOIN categories c 
                     ON c.id = cp.category_id
+                INNER JOIN real_estate_prices rep 
+                    ON rep.real_estate_id = re.id AND rep.is_active = 'true'
                 ${spec_part}
                 LEFT JOIN locations lc 
                     ON lc.id = re.location_id
+                INNER JOIN users u
+                    ON u.id = re.user_id
                 WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 
                     ${where_part} ) AS real_estaates
     `
@@ -613,6 +632,7 @@ const FlatFilter = async (req, res) =>{
 
 const CommerceFilter = async (req, res) =>{
     const {lang} = req.params
+
     const query_text = `
         SELECT c.id AS category_id, (
             
@@ -634,7 +654,7 @@ const CommerceFilter = async (req, res) =>{
                         ON cp.category_id = c.id AND cp.type_id = t.id
                     INNER JOIN type_translations tt
                         ON tt.type_id = t.id AND tt.language_id = l.id 
-                    INNER JOIN ctype_image ci
+                    LEFT JOIN ctype_image ci
                         ON ci.ctype_id = cp.id
                     WHERE t.main_type_id = 2
                     
@@ -644,6 +664,7 @@ const CommerceFilter = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [])
+        // console.log(rows)
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)

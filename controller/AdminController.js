@@ -31,7 +31,7 @@ const AdminLogin = async (req, res) =>{
         }
         let data = {}
         let access_token = ``;
-        let refresh_token = ``
+        let refresh_token = ``;
         if(user.role_id==1){
             data = {"id":user.id, "phone":user.phone, "email":user.email, "role_id":user.role_id}
             access_token = await AdminHelper.GenerateAdminAccessToken(data)
@@ -63,7 +63,7 @@ const LoadAdmin = async (req, res) =>{
             access_token = await AdminHelper.GenerateAdminAccessToken(data);
         }
         if(user.role_id ==2){
-            access_token = await AdminHelper.GenerateOperatorAccessToken(data);
+            access_token = await AdminHelper.GenerateAdminAccessToken(data);
         }
         // const refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
         return res.status(status.success).json({"access_token":access_token, "data":data})
@@ -1506,6 +1506,13 @@ const GetConfirmRealEstates = async (req, res) =>{
     }else{
         offSet = ``
     }
+    let op_join = ``
+    let op_where = ``
+    let user = req.user
+    if(user.role_id === 2){
+        op_join = `INNER JOIN operator_locations ol
+            ON ol.location_id = lc.main_location_id AND ol.user_id = ${user.id}`
+    }
     console.log(is_active)
     let active_part = ``
     if(is_active=="false" || is_active == "true"){
@@ -1518,7 +1525,9 @@ const GetConfirmRealEstates = async (req, res) =>{
     if(status_id){
         status_part = ` AND re.status_id = ${status_id}`
     }
-
+    if(is_active =="all"){
+        active_part = ``
+    }
     let where_part = ``
     if(search){
         where_part += ` AND (u.phone ~* '${search}' OR u.full_name ~* '${search}')`
@@ -1559,6 +1568,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ON lc.id = re.location_id
                     LEFT JOIN location_translations ltt
                         ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+                        ${op_join}
                 WHERE re.id > 0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                     OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
                 ORDER BY  re.id DESC  
@@ -1573,6 +1583,9 @@ const GetConfirmRealEstates = async (req, res) =>{
             ) 
                 SELECT (SELECT COUNT(*) 
                     FROM real_estates re
+                    LEFT JOIN locations lc 
+                        ON lc.id = re.location_id
+                        ${op_join}
                     WHERE re.id >0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                         OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
                     ), (SELECT json_agg(re) FROM(
@@ -1580,7 +1593,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     )re) AS real_estates   
             `
         const {rows} = await database.query(query_text, [])
-        console.log(query_text) 
+        // console.log(query_text) 
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
@@ -1690,7 +1703,6 @@ const RealestateByID = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [id])
-        // console.log(rows[0].specifications)
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)

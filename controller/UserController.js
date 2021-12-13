@@ -438,18 +438,23 @@ req.body should be like this;
 
     const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
     const user_id = req.user.id
+    let user = {}
     try {
         const user_query = `
-            SELECT u.id, u.max_count, u.owner_id, 
+            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission
                 
                 (SELECT COUNT(*) 
                     FROM real_estates
                 WHERE user_id = ${user_id}) AS count
 
-            FROM users u WHERE u.id = ${user_id}
+            FROM users u 
+            LEFT JOIN user_permissions up
+                ON up.user_id = u.id AND is_active = true AND up.validity::tsrange @> localtimestamp
+            WHERE u.id = ${user_id}
             `
         const {rows} = await database.query(user_query, [])
-        console.log(rows)
+        // console.log(rows)
+        user = rows[0]
         if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
             return res.status(444).send(false)
         }
@@ -514,8 +519,16 @@ req.body should be like this;
         `
         // console.log(query_text)
         const {rows} = await database.query(query_text, [user_id, price, area, status_id, location_id])
-        console.log("Hello it is me")
-        console.log(rows)
+        // console.log("Hello it is me")
+        // console.log(rows)
+        if(user?.user_permission){
+            try {
+                await database.query(`UPDATE real_estates SET is_active = true WHERE id = ${rows[0].id}`)
+            } catch (e) {
+                console.log(e)
+                return res.status(status.error).send("Something went wrong")
+            }
+        }
         return res.status(status.success).json({"rows":rows[0]})
 
     } catch(e) {
@@ -908,34 +921,3 @@ module.exports = {
     RemoveFromWishList
 }
 
-/*
------BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDiQDuEhPjHKo5G
-AiextGLkvrnxrpk7jL6tDqpRAvi2MHcFvY+FGggGAvkcY+/fvVGqfOUsNjJtQA6I
-SB8zm25gpcqNHpD4jhaXCwjLnpQ5IujVpQ5/YzgCvtlb9OL0ddy7NuJFubJSrSIj
-Mb8mJt9AR7sRz+N8PyVkH2+fEzt06MlT63UV88VnqEeTiLbDo0kgL+ECJ+FqVtiO
-J/BKy8W+J/fOBmFNxsl/R1eAwdXgYAALAer8B5Y2t37WdtsnglhlPUCuSGBKBNey
-DgO+M9AACd6jQ1kHtuzfg0Cq+TOSz3KIDqG4OMeG6Qmql87qWyu4oYF8EQM6O1mR
-BDmRaqvlAgMBAAECggEACJNOrjMsCsB+LAEg6AdiSDFCcvqfLDalc4G+yttF+gHU
-QQ9yRSU7cJ7kOkM/cEeItOGO/iH/v0xSQLAbHqWhhWBDUR37eLBKAueUKcOU8qV0
-FcTvy7xC/zeknWumvoVJHH90DBiBvch6JsNX72ZBx/nwCTjL8oWiMS1P2cOs2T13
-RK//Z+1mnJUmqX8jgS7S58LgEptfImNooyLDSx6PWyLswy6Tj6ra8aBqGnngzR9S
-f8dI+cmTnwP4/bmClcApyEqJ+aleJ3w5OBtjEaGfZPrxq5SvrBIa3r3BtGrQEBiK
-Og0bIuRzGgaIddFvnwqlrjoO9mq9eCrhU9BkdQEw8QKBgQD1ghdRr/i/bpIjdtcd
-8D2ZuCixVCpjS8uEGS4aGdoBTsMfDEw6JN/YMNj9/5MVhpKYOqAFLEOa1MCUZEb4
-MPOOWyOEY06jOjHNRSoFyZOYWdvbx4oBV9KlF0vMgzdBl454xeDS2ZPdjBeNweK8
-+C5w8QuDFK+h3wQlONQzb5+F5wKBgQDr63aM8GjUTMuakFjcz9v9DZB6jeSUMuTi
-1EPKCtPUv/Uj+q8m7bP32j74VKmsQQ4qe7COuAFCo41h0fsWkbA6iJ/kQmLg1rDA
-mcMZDvAV/VVQGVEfi259SS7AMgKd/1BmvBBqsipGEOkjPdhfz1AbkMj9Hj0dcxbl
-VEzaSm9uUwKBgQCqxBcWQbFi7jUGJ/ZPI7ilQJxFZAar1J+1vZH8o7ioqjE8WmB3
-HQj6Jlf4rJmRIm67JiQCFRzdCFj/npRitCHlBe25ex3KmYLkhdRJ/EEGepJb1/pd
-Hsos/PxDP43iuNlnljPgVWjtdDE57/+Xc4VSF8frICteC3KltVachGrQRwKBgA9H
-DEJMPz2gS38S4e5Kt6BHhJerIKZINXJK9Kjc0qLwW1udHEKVGhZu160VLnetLtGp
-eOGFIO/Dz6AKDQyFGrhvqIsLkYOl44RVcMDqqrmB0kiBmzNDwD/0wUZI9spsgjRk
-8Vs3dm1bIv3ZP23U6wcd9SYPEz4Y+d6X+vIX5+dpAoGAKJ1Yx7TYzc2gX4ba76pT
-zFYz20z9t8BvG8hxTSfZ2fTWWWYN/tUNN3NVttZqxv24gZza9Sc5Bg3kEOZR6vrs
-BPDvM3xxzQedNCucQ1rxPXSnf9rIhyUsgY6jDiea6Lytwn0YFh/uduAYZqWqltDH
-PQMd6GSWURBfNQYXU4ohRi4=
------END PRIVATE KEY-----
-
-*/
