@@ -533,7 +533,7 @@ const CountForFilter = async (req, res) =>{
     }else{
         where_part +=``
     }
-    
+
     let specifications = ``
     if(spec_values){
         try {
@@ -1013,6 +1013,7 @@ const GetUserRealEstates = async (req, res) =>{
     `
     try {
         const {rows} = await database.query(query_text, [id, lang])
+        console.log(rows)
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)

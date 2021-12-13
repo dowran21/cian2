@@ -409,7 +409,7 @@ const UserRealEstates = async (req, res) =>{
             WHERE re.user_id = ${user_id}
         `
         const {rows} = await database.query(query_text, [])
-        // console.log(rows)
+        console.log(rows)
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)
