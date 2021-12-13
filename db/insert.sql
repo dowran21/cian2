@@ -324,11 +324,11 @@ WITH inserted AS (
                 ('5', 1, (SELECT id FROM inserted_val4))
             ), inserted_val5 AS(
             INSERT INTO specification_values (spec_id, absolute_value)
-            VALUES ((SELECT id FROM inserted), '6+') RETURNING id
+            VALUES ((SELECT id FROM inserted), '6') RETURNING id
         ), inseert_val_trans5 AS (
             INSERT INTO specification_value_translations(name, language_id, spec_value_id)
-            VALUES ('6+', 2, (SELECT id FROM inserted_val5)),
-                ('6+', 1, (SELECT id FROM inserted_val5))
+            VALUES ('6', 2, (SELECT id FROM inserted_val5)),
+                ('6', 1, (SELECT id FROM inserted_val5))
             )
                 SELECT id FROM inserted;
 
