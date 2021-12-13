@@ -54,7 +54,7 @@ CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_n
                 CASE 
                     WHEN language_id = 1 THEN ' m'
                     WHEN language_id = 2 THEN ' м'
-                END, E'\u00B2', ' ', E'\u00B7',' ', '' ||
+                END, E'\u00B2', ' ', '' ||
             CASE WHEN            
             (SELECT sv.absolute_value
                 FROM specification_values sv
@@ -62,7 +62,7 @@ CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_n
                         ON s.id = sv.spec_id
                     INNER JOIN real_estate_specification_values resv 
                         ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-            WHERE resv.spec_id = 3 AND resv.real_estate_id = re_id) IS NOT NULL THEN 
+            WHERE resv.spec_id = 3 AND resv.real_estate_id = re_id) IS NOT NULL THEN  E'\u00B7' || ' ' ||
             (SELECT sv.absolute_value
                 FROM specification_values sv
                     INNER JOIN specifications s ON s.id = sv.spec_id
