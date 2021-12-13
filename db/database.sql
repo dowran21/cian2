@@ -70,7 +70,7 @@ CREATE TABLE locations(
     "enabled" BOOLEAN NOT NULL DEFAULT true,
     comment VARCHAR(150),
     main_location_id SMALLINT,
-    UNIQUE(main_location_id, absolute_name_name),
+    UNIQUE(main_location_id, absolute_name),
 
     CONSTRAINT main_location_id_fk 
         FOREIGN KEY (main_location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE
