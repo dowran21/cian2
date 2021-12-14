@@ -21,7 +21,7 @@ const UserRegistration = async (req, res) =>{
     const code = Math.floor(Math.random()*(999999-100000) + 100000)
     console.log(code)
     const {full_name, email, phone, password, owner_id} = req.body
-
+    console.log(owner_id);
     let max_count = 0;
     if (owner_id == 1){
         max_count = 3
