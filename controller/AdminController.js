@@ -914,7 +914,7 @@ const AddLocation = async (req, res) =>{
         console.log(e)
         if(e.message.includes("duplicate key value violates unique constraint")){
             let message = {}
-            message["phone"] = "Оператор с таким телефон уже был создан" 
+            message["phone"] = "Локация с таким назанием уже был создан" 
             return res.status(409).send({error:message})
         }
         return res.status(status.error).json({"message":"Error"})
@@ -925,7 +925,7 @@ const GetLocations = async (req, res) =>{
     const {lang} = req.params
     // console.log("hello getlocations")
     const query_text = `
-        SELECT l.id, lt.translation AS name_tm, lt.translation AS name_ru, l.enabled
+        SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
         FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1
@@ -948,7 +948,7 @@ const GetRegions = async (req, res) =>{
     // console.log("hello getregions")
     const {id} = req.params
     const query_text = `
-        SELECT l.id, lt.translation AS name_tm, lt.translation AS name_ru, l.enabled
+        SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
         FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1
