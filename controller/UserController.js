@@ -409,7 +409,7 @@ const UserRealEstates = async (req, res) =>{
             WHERE re.user_id = ${user_id}
         `
         const {rows} = await database.query(query_text, [])
-        console.log(rows)
+        // console.log(rows)
         return res.status(status.success).json({rows})
     } catch (e) {
         console.log(e)
@@ -438,6 +438,7 @@ req.body should be like this;
 
     const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
     const user_id = req.user.id
+    console.log(req.body)
     let user = {}
     try {
         const user_query = `
@@ -472,6 +473,7 @@ req.body should be like this;
     }
     let i = 0;
     let j=0;
+    console.log(specifications)
     let spec_value_part = ``
     if (specifications && specifications.length){
 
@@ -570,7 +572,7 @@ const AddImage = async (req, res) =>{
 const GetUserRealEstateByID = async (req, res) =>{
     const {lang, id} = req.params
     const query_text = `
-        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, 
+        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, re.location_id,
             ret.description AS description_tm, rett.description AS description_ru, position[0] AS lat, position[1] AS lng,
             re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
             concat(
@@ -583,7 +585,7 @@ const GetUserRealEstateByID = async (req, res) =>{
            
             
             (SELECT json_agg(image) FROM (
-                SELECT destination FROM real_estate_images rei
+                SELECT id, destination FROM real_estate_images rei
                 WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
             )image) AS images, 
 
@@ -653,6 +655,20 @@ const GetUserRealEstateByID = async (req, res) =>{
        console.log(e)
        return res.status(status.error).send(false)
    }
+}
+
+const DeleteImage = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        DELETE FROM real_estate_images WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 const AddWishList = async (req, res) =>{
@@ -871,6 +887,7 @@ const UpateRealEstate = async (req, res) =>{
     const {id} = req.params;
     console.log(req.body);
     const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
+    console.log(specifications)
     let i = 0;
     let j=0;
     let spec_value_part = ``
@@ -909,6 +926,7 @@ module.exports = {
 
     AddRealEstate,
     GetUserRealEstateByID,
+    DeleteImage,
     
     ForgotPassword,
     AddWishList,

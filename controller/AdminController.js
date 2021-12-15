@@ -1498,6 +1498,53 @@ const GetActiveStatistics = async (req, res) =>{
     }
 }
 
+const GetUserForActivation = async (req, res) =>{
+    const {page, limit, search} = req.query;
+    let offSet = ``
+    if(page && limit){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    let where_part = ``
+    if(search){
+        where_part = ` AND (u.full_name ~* '${search}' OR u.phone ~* '${search}')`
+    }
+    const query_text = `
+        WITH selected AS (
+            SELECT ai.ip_address, ai.id AS access_ip, u.id AS user_id, ai.activated, u.full_name, u.phone, ai.code
+            FROM users u
+                INNER JOIN access_ip ai
+                    ON ai.user_id = u.id AND ai.activated = false
+                WHERE ai.id > 0 ${where_part}
+            ${offSet}
+        ) SELECT 
+            (SELECT COUNT(*) FROM users u
+            INNER JOIN access_ip ai
+                ON ai.user_id = u.id AND ai.activated = false), 
+            (SELECT json_agg(us) FROM (SELECT * FROM selected)us) AS act_users
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows:rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const ActivateIP = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE access_ip SET activated = true WHERE id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text,[])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetConfirmRealEstates = async (req, res) =>{
     const {page, limit, search, is_active, status_id} = req.query
     let offSet = ``
@@ -1919,6 +1966,9 @@ module.exports = {
     GetAllUsers,
     ChangePermission,
     GivePermission,
+
+    GetUserForActivation,
+    ActivateIP,
 
     GetConfirmRealEstates,
     NotActivatedEstates,

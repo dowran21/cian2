@@ -25,7 +25,7 @@ router.get('/:lang/user-real-estates',  ParamsSchemaMiddleware(Schema.LangSchema
 router.get('/:lang/user-real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, UserController.GetUserRealEstateByID)
 router.post('/:lang/add-real-estate-images/:id', ParamsSchemaMiddleware(Schema.IDSchema), VerifyUserAccessToken, VerifyEstateUser, upload.array("picture", 15), resize_image, UserController.AddImage )
 router.post('/:lang/update-real-estate/:id', VerifyUserAccessToken, UserController.UpateRealEstate)
-
+router.post('/:lang/delete-image/:id', VerifyUserAccessToken, UserController.DeleteImage)
 
 router.post('/:lang/add-to-vip/:id', VerifyUserAccessToken, UserController.AddToVIP)
 router.get('/:lang/get-wish-list', VerifyUserAccessToken, UserController.GetWishList)
