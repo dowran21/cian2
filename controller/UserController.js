@@ -375,12 +375,16 @@ const UpdateUser = async (req, res) =>{
 
 ////////User real estates///////////
 const UserRealEstates = async (req, res) =>{
-    const {lang} = req.params
+    const {lang, page, limit} = req.params
     const user_id = req.user.id
+    let offSet = ``
+    if(page && limit) {
+        offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
+    }
     // console.log(user_id)
     try {
         const query_text = `
-            SELECT re.id, rep.price::text, re.is_active,
+            WITH selected AS (SELECT re.id, rep.price::text, re.is_active, re.status_id,
                 concat(CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
                 
                 (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -406,11 +410,16 @@ const UserRealEstates = async (req, res) =>{
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
             LEFT JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = true
-            WHERE re.user_id = ${user_id}
+            WHERE re.user_id = ${user_id})
+            ${offSet}
+            SELECT (
+                SELECT COUNT(*) FROM real_estates
+                WHERE user_id = ${user_id}
+            ), (SELECT json_agg(re) FROM (SELECT * FROM selected)re) AS real_estates
         `
         const {rows} = await database.query(query_text, [])
         // console.log(rows)
-        return res.status(status.success).json({rows})
+        return res.status(status.success).json({"rows":rows[0]})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -572,7 +581,7 @@ const AddImage = async (req, res) =>{
 const GetUserRealEstateByID = async (req, res) =>{
     const {lang, id} = req.params
     const query_text = `
-        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, re.location_id,
+        SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, re.location_id, 
             ret.description AS description_tm, rett.description AS description_ru, position[0] AS lat, position[1] AS lng,
             re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
             concat(
@@ -886,10 +895,11 @@ const AddToVIP = async (req, res) =>{
 const UpateRealEstate = async (req, res) =>{
     const {id} = req.params;
     console.log(req.body);
-    const {type_id, category_id, area, position, price, description_ru, description_tm, specifications, location_id } = req.body
+    const { area, position, price, description_ru, description_tm, specifications, location_id } = req.body
     console.log(specifications)
     let i = 0;
     let j=0;
+
     let spec_value_part = ``
     if (specifications && specifications.length){
         spec_value_part = `, insert_spec AS (INSERT INTO real_estate_specification_values(real_estate_id, spec_id, spec_value_id)
@@ -903,7 +913,7 @@ const UpateRealEstate = async (req, res) =>{
                 } 
                 for (j=0; j<values?.length; j++){
                     
-                    spec_value_part += ` ((SELECT id FROM inserted), ${specification.id}, ${values[j]})`
+                    spec_value_part += ` (${id}, ${specification.id}, ${values[j]})`
                     if (j!=(values?.length-1)){
                         spec_value_part += `,`;
                     }
@@ -913,7 +923,40 @@ const UpateRealEstate = async (req, res) =>{
         }
         spec_value_part += ` ) `
     }
+    await database.query(`DELETE FROM real_estate_specification_values WHERE real_estate_id = ${id}`, [])
+    const query_text = `
+        WITH updated AS (
+            UPDATE real_estates SET area = ${area}, location_id = ${location_id}, position = '(${position.lat}, ${position.lng})', is_active = null WHERE id = ${id}
+        ), updated_price AS (
+            UPDATE real_estate_prices SET price = ${price} WHERE real_estate_id = ${id}
+        ), update_trans_tm AS (
+            UPDATE real_estate_translations SET description = '${description_tm}' WHERE language_id = 1
+        ), update_trans_ru AS (
+            UPDATE real_estate_translations SET description = '${description_ru}' WHERE language_id = 2
+        ) ${spec_value_part} SELECT ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text,[])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
     return res.status(status.success).send(true)
+}
+
+const RemoveRealEstate = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE real_estates SET status_id = real_estates.status_id*2 WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
 }
 
 module.exports = {
@@ -937,6 +980,7 @@ module.exports = {
     AddImage,
     AddToVIP,
     UpateRealEstate,
+    RemoveRealEstate,
     ChangePassword,
     SendCodeAgain,
     AddToWishListMobile,

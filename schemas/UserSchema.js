@@ -14,7 +14,7 @@ const Schema = {
         location_id:Joi.number().label("Локация").required("{#label} Обязателень").messages({
             'number.base':"{#label} локация неправильно"
         }),
-        area:Joi.number().required("{#label} required").max(9999999).label('площадь').messages({
+        area:Joi.number().required("{#label} required").max(99999).label('площадь').messages({
             'number.base':'{#label} неправильный',
             'any.required':'{#label} is required',
         }),
@@ -22,7 +22,7 @@ const Schema = {
             lat:Joi.number().required("{#label} обязательно").min(-90).max(90),
             lng:Joi.number().required("{#label} обязательно").min(-180).max(180),
             }).description("Пожалуйста используйте правильные {lng, lat}"),
-        price: Joi.number().required().max(2147860).label('Цена').messages({
+        price: Joi.number().required().max(9999999999).label('Цена').messages({
             'any.required':'{#label} неправильно',
             'number.base':'{#label} это не число',
         }),
@@ -54,7 +54,50 @@ const Schema = {
                 }),
             )
     }),
-
+    Update_real_estate:Joi.object({
+        location_id:Joi.number().label("Локация").required("{#label} Обязателень").messages({
+            'number.base':"{#label} локация неправильно"
+        }),
+        area:Joi.number().required("{#label} required").max(99999).label('площадь').messages({
+            'number.base':'{#label} неправильный',
+            'any.required':'{#label} обязательно',
+        }),
+        position: Joi.object({
+            lat:Joi.number().required("{#label} обязательно").min(-90).max(90),
+            lng:Joi.number().required("{#label} обязательно").min(-180).max(180),
+            }).description("Пожалуйста используйте правильные {lng, lat}"),
+        price: Joi.number().required().max(9999999999).label('Цена').messages({
+            'any.required':'{#label} неправильно',
+            'number.base':'{#label} это не число',
+        }),
+        description_tm: Joi.string().min(10).max(500).required().messages({
+            'is_empty':"{#label} обязателень",
+            'string.min':"{#label} минимум 10 символов",
+            'string.max':"{#label} максимум 500 символов"
+        }),
+        description_ru: Joi.string().min(10).max(500).required().messages({
+            'is_empty':"{#label} обязателень",
+            'string.min':"{#label} минимум 10 символов",
+            'string.max':"{#label} максимум 500 символов"
+        }),
+        specifications: Joi.array().items(Joi.object({
+                id:Joi.number().required().label('Спецификация').messages({
+                    'any.required':'{#label} Спецификация обязательно',
+                }),
+                is_required: Joi.boolean().required(),
+                is_multiple: Joi.boolean().required(),
+                values: Joi.array()
+                    .when('is_required', {is:true, 
+                        then : Joi.when('is_multiple', {is:true, then: Joi.array().required().min(1) }) })
+                    .when('is_required', {is:true, 
+                        then : Joi.when('is_multiple', {is:false, then: Joi.array().required().min(1).max(1) }) })
+                    .when('is_required', {is:false, 
+                        then : Joi.when('is_multiple', {is:true, then: Joi.array().min(0) }) })
+                    .when('is_required', {is:false, 
+                        then : Joi.when('is_multiple', {is:false, then: Joi.array().required().max(1) }) })
+                }),
+            )
+    }),
     Registration:Joi.object({
         full_name:Joi.string().min(3).max(140).label("Full name").required("{#label} is required").messages({
             'is_empty':"{#label} bos bolmaly dal",

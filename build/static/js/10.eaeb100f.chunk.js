@@ -1,2 +1,0 @@
-(this.webpackJsonpfrontend=this.webpackJsonpfrontend||[]).push([[10],{337:function(e,t,n){"use strict";n.r(t);var r=n(1);t.default=function(){return Object(r.jsx)("div",{className:"h-screen w-screen bg-white flex justify-center content-center flex-wrap",children:Object(r.jsx)("p",{className:"font-sans text-gray-800 text-3xl error-text",children:"404"})})}}}]);
-//# sourceMappingURL=10.eaeb100f.chunk.js.map
