@@ -66,6 +66,7 @@ router.get('/get-user-chart', VerifyAdminAccessToken, VerifyIsAdmin, AdminContro
 router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetAllUsers)
 router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)
 router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GivePermission)
+router.post('/change-user-type/:id', VerifyAdminAccessToken, AdminController.ChangeUserType)
 
 router.get('/get-logs', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLogs);
 router.get('/get-user-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUsersStatistics)

@@ -1257,6 +1257,21 @@ const GivePermission = async (req, res) =>{
 
 }
 
+const ChangeUserType = async (req, res) =>{
+    const {id} = req.params;
+    const {owner_id} = req.body;
+    const query_text = `
+        UPDATE users SET owner_id = ${owner_id} WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetStatistics = async (req, res) =>{
     const {specification_values, location_id, type_id, category_id, price, area, start_date, end_date} = req.query
     let spec_part = ``
@@ -1966,6 +1981,7 @@ module.exports = {
     GetAllUsers,
     ChangePermission,
     GivePermission,
+    ChangeUserType,
 
     GetUserForActivation,
     ActivateIP,
