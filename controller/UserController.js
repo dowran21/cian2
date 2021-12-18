@@ -930,9 +930,9 @@ const UpateRealEstate = async (req, res) =>{
         ), updated_price AS (
             UPDATE real_estate_prices SET price = ${price} WHERE real_estate_id = ${id}
         ), update_trans_tm AS (
-            UPDATE real_estate_translations SET description = '${description_tm}' WHERE language_id = 1
+            UPDATE real_estate_translations SET description = '${description_tm}' WHERE language_id = 1 AND real_estate_id = ${id}
         ), update_trans_ru AS (
-            UPDATE real_estate_translations SET description = '${description_ru}' WHERE language_id = 2
+            UPDATE real_estate_translations SET description = '${description_ru}' WHERE language_id = 2 AND real_estate_id = ${id}
         ) ${spec_value_part} SELECT ${id}
     `
     try {

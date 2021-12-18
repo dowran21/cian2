@@ -46,7 +46,7 @@ const resize_page_images = async (req, res, next) =>{
         const name = req.file.originalname.replace(' ', '');
         req.file.path = `uploads/page-images/${date}-${name}`
         await sharp(`./uploads/${req.file.filename}`)
-            .resize(600, 600)
+            .resize(1920, 1286)
             .toFile(`./uploads/page-images/${date}-${name}`)
         
         fs.unlinkSync(`./uploads/${req.file.filename}`)

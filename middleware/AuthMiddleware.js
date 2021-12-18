@@ -60,6 +60,25 @@ const VerifyUserAccessToken = async (req, res, next) =>{
     });
 }
 
+const VerifyUserAccessTokenNext = async (req, res, next) =>{
+    let token = req?.headers?.authorization
+    console.log(token)
+    if (!token){
+        next()
+    }
+
+    token = token.replace("Bearer ", "")
+    JWT.verify(token, process.env.USER_ACCESS_KEY, async (err, decoded) =>{
+        if(err){
+            console.log("I am in error")
+            console.log(err)
+            next()
+        }
+        req.user = decoded;
+        next()
+    });
+}
+
 const VerifyUserRefreshToken = async (req, res, next) =>{
     let token = req.headers.authorization
     if (!token){
@@ -172,5 +191,6 @@ module.exports = {
     VerifyOperatorAccessToken,
     VerifyAdminRefreshToken,
     VerifyIsAdmin,
-    VerifyEstateUser
+    VerifyEstateUser,
+    VerifyUserAccessTokenNext
 }

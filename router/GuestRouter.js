@@ -1,12 +1,13 @@
 const express = require('express')
 const router = new express.Router()
 const {QuerySchemaMiddleware, ParamsSchemaMiddleware} = require('../middleware/SchemaMiddleware')
-const Schema = require('../schemas/UserSchema')
+const Schema = require('../schemas/UserSchema');
+const {VerifyUserAccessTokenNext} = require('../middleware/AuthMiddleware')
 
 const GuestController = require('../controller/GuestController.js')
 
 router.get('/languages', GuestController.Languages)
-router.get('/:lang/all-real-estates', ParamsSchemaMiddleware(Schema.LangSchema), QuerySchemaMiddleware(Schema.RealEstateFilter), GuestController.AllRealEstate)
+router.get('/:lang/all-real-estates', ParamsSchemaMiddleware(Schema.LangSchema),  QuerySchemaMiddleware(Schema.RealEstateFilter), GuestController.AllRealEstate)
 router.get('/:lang/categories-types', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.TypeCategoryController)
 router.get('/:lang/real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRealEstateByID)
 router.get('/:lang/user-real-estates/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetUserRealEstates )

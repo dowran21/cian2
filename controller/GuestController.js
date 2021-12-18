@@ -120,8 +120,18 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
-    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
+    const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
+    let user_wish = ``
+    let wish_list_join = ``
+    if(user_id){
+        console.log(user_id);
+        user_wish = ` uwl.id AS wish_list, `
+        wish_list_join = ` LEFT JOIN user_wish_list uwl
+            ON uwl.user_id = ${user_id} AND uwl.real_estate_id = re.id`
+    }else{
+        user_wish = ` 0 AS wish_list, `
+    }
     let offSet = ``
     let ctype_part =``
     let spec_part = ``
@@ -164,8 +174,6 @@ const AllRealEstate = async (req, res) =>{
             price1 = {};
         }
     }
-    // console.log(price1, "hello parsed price")
-    // console.log(price)
     if (price1?.min && price1?.max){
         where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
     }else if(price1?.min && !price1?.max){
@@ -242,7 +250,7 @@ const AllRealEstate = async (req, res) =>{
     
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name,
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name, ${user_wish}
         concat(
             CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
@@ -273,6 +281,7 @@ const AllRealEstate = async (req, res) =>{
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
                 ${spec_part}
+                ${wish_list_join}
             INNER JOIN users u
                 ON u.id = re.user_id
             LEFT JOIN types t

@@ -390,6 +390,7 @@ CREATE TABLE ctype_image(
 );
 
 CREATE TABLE user_wish_list(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
     user_id BIGINT NOT NULL,
     real_estate_id BIGINT NOT NULL,
     UNIQUE (user_id, real_estate_id),
@@ -425,6 +426,14 @@ CREATE TABLE logs(
         FOREIGN KEY (table_id) REFERENCES tables(id) ON UPDATE CASCADE ON DELETE SET null
 );
 
+
+CREATE TABLE front_translations (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    language_id SMALLINT NOT NULL,
+    translations VARCHAR (500) NOT NULL,
+
+    CONSTRAINT language_id_fk FOREIGN KEY (language_id) REFERENCES languages(id)
+);
 
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;
