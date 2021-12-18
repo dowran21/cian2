@@ -153,7 +153,7 @@ const Schema = {
         category_id: Joi.number().label("Yerleshyan yeri").messages({
             'number.pattern.base':"it should be a number"
         }).allow(""),
-        user_id:Joi.string().allow(""),
+        user_id:Joi.number().allow(""),
         price:Joi.string().allow(""),
         area:Joi.string().allow(""),
         spec_values:Joi.string().allow(""),
