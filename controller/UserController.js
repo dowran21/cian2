@@ -672,7 +672,8 @@ const DeleteImage = async (req, res) =>{
         DELETE FROM real_estate_images WHERE id = ${id}
     `
     try {
-        const {rows} = await database.query(query_text, [])
+        console.log("hello world")
+        await database.query(query_text, [])
         return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
@@ -700,14 +701,11 @@ const AddWishList = async (req, res) =>{
 const AddToWishListMobile = async (req, res) =>{
     const user_id = req.user.id
     const {real_estates} = req.body;
-    console.log(req.body)
-    console.log(real_estates.length)
     try {
         const query_text = `
             INSERT INTO user_wish_list(user_id, real_estate_id) VALUES ${real_estates.map(item => `(${user_id}, ${item})`).join(',')} 
                 ON CONFLICT (user_id, real_estate_id) DO NOTHING 
         `
-        console.log(query_text)
         const {rows} = await database.query(query_text,[])
         return res.status(status.success).send(true)
     } catch (e) {

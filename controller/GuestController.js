@@ -880,7 +880,7 @@ const GetWishList = async (req, res) =>{
     const {real_estates} = req.body
     console.log(req.body)
     // console.log(real_estates)
-   if(!real_estates.length){
+   if(!real_estates?.length){
         return res.status(status.success).json({"rows":[]})
    }
     try {

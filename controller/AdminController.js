@@ -1602,7 +1602,8 @@ const GetConfirmRealEstates = async (req, res) =>{
         const query_text = `
         WITH selected AS ( 
     
-            SELECT re.id, rep.price, u.phone, re.is_active, u.full_name, ott.translation AS type_of_owner,
+            SELECT DISTINCT ON (re.id) re.id, rep.price, u.phone, re.is_active, u.full_name, ott.translation AS type_of_owner, 
+                to_char(re.created_at, 'YYYY/MM/DD HH24:MI') AS created_at, to_char(lg.log_time, 'YYYY/MM/DD HH24:MI') AS logged_time,
                 concat(
                     CASE 
                         WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
@@ -1630,6 +1631,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ON lc.id = re.location_id
                     LEFT JOIN location_translations ltt
                         ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+                    LEFT JOIN logs lg
+                        ON re.id = (lg.data ->>'id')::bigint AND lg.event_type_id =1
                         ${op_join}
                 WHERE re.id > 0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                     OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
@@ -1647,6 +1650,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                     FROM real_estates re
                     LEFT JOIN locations lc 
                         ON lc.id = re.location_id
+                    INNER JOIN users u
+                        ON u.id = re.user_id
                         ${op_join}
                     WHERE re.id >0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                         OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
@@ -1655,7 +1660,6 @@ const GetConfirmRealEstates = async (req, res) =>{
                     )re) AS real_estates   
             `
         const {rows} = await database.query(query_text, [])
-        // console.log(query_text) 
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
@@ -1666,6 +1670,7 @@ const GetConfirmRealEstates = async (req, res) =>{
 const ActivateRealEstate = async (req, res) =>{
     const {id} = req.params
     const {is_active, comment} = req.body
+    console.log(req.body)
     let comment_part = ``
     if(is_active){
         comment_part = ``
