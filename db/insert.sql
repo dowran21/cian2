@@ -36,10 +36,9 @@ INSERT INTO view_type(id, absolute_name) VALUES
 (1, 'impression_count'),
 (2, 'view_count');
 
-INSERT INTO vip_types(id, name, days) VALUES
-(1, '3-gunluk', 3),
-(2, '5-gunluk', 5),
-(3, '7-gunluk', 7);
+INSERT INTO vip_types(id, name) VALUES
+(1, 'vip'),
+(2, 'top');
 
 INSERT INTO image_places(id, place) VALUES
 (1, 'Main Page'),

@@ -40,8 +40,29 @@ const GetSpecificationsForType = async (req, res) =>{
 
 const GetSpecificationsForTypes = async (req, res) =>{
     const {category_id, lang} = req.params
-    const {type_id} = req.body;
-
+    const {type_id} = req.query;
+    let types = []
+    if(type_id){
+        try {
+            types = JSON.parse(type_id);
+        } catch (e) {
+            throw e
+            types = ``
+        }
+    }
+    let join_part = ``
+    if (types && types.length > 0){
+        for(let i=0; i<types.length; i++){
+            join_part += `
+                INNER JOIN ctypes ctp${i}
+                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2
+                INNER JOIN type_specifications ts${i} 
+                    ON ts${i}.spec_id = s.id AND ts${i}.ctype_id = ctp${i}.id AND ts${i}.deleted = false`
+        }
+    }else{
+        return res.status(status.success).send(true)
+    }
+    console.log(types)
     try {
         const query_text = `
             SELECT s.id AS specification_id, s.is_multiple, s.is_required, st.name,
@@ -61,14 +82,11 @@ const GetSpecificationsForTypes = async (req, res) =>{
                         ON l.language_code = $1
                     LEFT JOIN specification_translations st 
                         ON st.spec_id = s.id AND st.language_id = l.id
-                    INNER JOIN ctypes ctp
-                        ON ctp.type_id = $2 AND ctp.category_id = $3
-                    INNER JOIN type_specifications ts 
-                        ON ts.spec_id = s.id AND ts.ctype_id = ctp.id AND ts.deleted = false 
+                     ${join_part}
             WHERE s.is_active = true
-            ORDER BY ts1.queue_position ASC
+            ORDER BY ts0.queue_position ASC
     ` 
-        const {rows} = await database.query(query_text, [lang, type_id, category_id])
+        const {rows} = await database.query(query_text, [lang, category_id])
         // console.log(rows)
         res.status(status.success).json({"rows":rows})
     } catch (e) {
@@ -161,7 +179,7 @@ const Languages = async (req, res) =>{
 const AllRealEstate = async (req, res) =>{
     const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
-    console.log(req.query)
+    // console.log(req.query)
     console.log(type_id)
     let user_wish = ``
     let wish_list_join = ``
@@ -194,8 +212,14 @@ const AllRealEstate = async (req, res) =>{
             types = JSON.parse(type_id);
         } catch (e) {
             throw e
+            types = ``
         }
     }
+
+    if (types && types.length > 0){
+        where_part += ` AND cp.type_id IN (${types.map(item => `${item}`).join(',')})` 
+    }
+    console.log(types)
     if(main_type_id){
         where_part += ` AND t.main_type_id = ${main_type_id}`
     }
@@ -205,9 +229,7 @@ const AllRealEstate = async (req, res) =>{
     }
 
     //---------------------ctype part -----------------------//
-    if (types && types.length > 0){
-        where_part += ` AND cp.type_id IN (${types.map(item => `${item}`).join(',')})` 
-    }
+    
 
     if (category_id ){
         where_part += ` AND cp.category_id = ${category_id}` 
@@ -300,7 +322,7 @@ const AllRealEstate = async (req, res) =>{
     WITH selected AS 
         (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name, ${user_wish} u.owner_id,
         concat(lt.translation || ', ' || CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation  END ) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, area)),
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id,
         
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei
@@ -319,14 +341,14 @@ const AllRealEstate = async (req, res) =>{
                 ON ret.real_estate_id = re.id AND ret.language_id = l.id
             LEFT JOIN type_translations tt 
                 ON tt.type_id = cp.type_id AND tt.language_id = l.id
-            LEFT JOIN vip_real_estates vre 
-                ON vre.real_estate_id = re.id AND vre.vip_dates:: tsrange @> localtimestamp
             LEFT JOIN location_translations lt
                 ON lt.location_id = re.location_id AND lt.language_id = l.id
             LEFT JOIN locations lc 
                 ON lc.id = re.location_id
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+            LEFT JOIN vip_real_estates vre
+                ON vre.real_estate_id = re.id AND vre.vip_dates::tsrange @> localtimestamp
                 ${spec_part}
                 ${wish_list_join}
             INNER JOIN users u
@@ -370,7 +392,8 @@ const AllRealEstate = async (req, res) =>{
                 ON u.id = re.user_id
             INNER JOIN categories c 
                 ON c.id = cp.category_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part}   
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part}
+            ORDER BY vre.vip_type_id ASC NULLS LAST, vre.id ASC NULLS LAST, vre.created_at
         ) AS count),
 
         (SELECT json_agg(res) FROM 
@@ -413,10 +436,19 @@ const RealEstatePositions = async (req, res) =>{
     }
 
     //---------------------ctype part -----------------------//
-    if (type_id !== 'null' && type_id){
-        where_part += ` AND cp.type_id = ${type_id}` 
+    let types = []
+    if(type_id){
+        try {
+            types = JSON.parse(type_id);
+        } catch (e) {
+            throw e
+            types = ``
+        }
     }
 
+    if (types && types.length > 0){
+        where_part += ` AND cp.type_id IN (${types.map(item => `${item}`).join(',')})` 
+    }
     if (category_id && category_id !== 'null'){
         where_part += ` AND cp.category_id = ${category_id}` 
     }
@@ -542,8 +574,18 @@ const CountForFilter = async (req, res) =>{
         where_part += ` AND u.owner_id = ${owner_id} `
     }
     //---------------------ctype part -----------------------//
-    if (type_id !== 'null' && type_id){
-        where_part += ` AND cp.type_id = ${type_id}` 
+    let types = []
+    if(type_id){
+        try {
+            types = JSON.parse(type_id);
+        } catch (e) {
+            throw e
+            types = ``
+        }
+    }
+
+    if (types && types.length > 0){
+        where_part += ` AND cp.type_id IN (${types.map(item => `${item}`).join(',')})` 
     }
 
     if (category_id && category_id !== 'null'){
@@ -786,14 +828,14 @@ const GetRealEstateByID = async (req, res) => {
             INSERT INTO view_address VALUES ($3, $1, 2)
             ON CONFLICT DO NOTHING)
 
-        SELECT DISTINCT ON (re.id) re.area::text, rep.price::text, ret.description, 
+        SELECT DISTINCT ON (re.id) re.area::text, rep.price::text, ret.description, ctp.type_id, ctp.category_id,   
             re.created_at::text, ${position_part}
             concat(
                 CASE 
                     WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
                     END ||
                 lt.translation
-            ) AS location,
+            ) AS location, 
             real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type, 
             u.full_name, u.id::text AS user_id,
             (SELECT COUNT(real.id)::text FROM real_estates real WHERE real.user_id = re.user_id) AS user_real_estate_count,
@@ -839,7 +881,7 @@ const GetRealEstateByID = async (req, res) => {
                 ON ret.real_estate_id = re.id AND ret.language_id = l.id AND ret.is_active = true
             INNER JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = true 
-            LEFT JOIN location_translations lt
+            LEFT JOIN location_translations lt 
                 ON lt.location_id = re.location_id AND lt.language_id = l.id
             LEFT JOIN locations lc 
                 ON lc.id = re.location_id

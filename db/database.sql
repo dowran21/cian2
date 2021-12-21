@@ -318,8 +318,7 @@ CREATE TABLE real_estate_specification_values(
 ----------------VIP dates------------------
 CREATE TABLE vip_types(
     id SERIAL PRIMARY KEY NOT NULL,
-    "name" VARCHAR (100) NOT NULL,
-    "days" INTEGER NOT NULL
+    "name" VARCHAR (100) NOT NULL
 );
 
 CREATE TABLE vip_real_estates(
@@ -399,7 +398,24 @@ CREATE TABLE user_wish_list(
     CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE
 );
 
------------------logs-------------------
+------------push notifications------------
+CREATE TABLE pushes(
+    id SMALLSERIAL PRIMARY KEY NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE push_messages(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    user_id BIGINT NOT NULL,
+    "message" VARCHAR (300),
+    is_sent BOOLEAN NOT NULL DEFAULT FALSE,
+    push_id BIGINT NOT NULL,
+
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
+    CONSTRAINT push_id_fk FOREIGN KEY (push_id) REFERENCES pushes(id) ON UPDATE CASCADE
+);
+
+-------------------logs-------------------
 CREATE TABLE event_types(
     id SMALLINT NOT NULL PRIMARY KEY,
     event_type CHARACTER VARYING(50) NOT NULL

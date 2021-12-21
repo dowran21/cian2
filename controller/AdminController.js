@@ -798,39 +798,6 @@ const UpdateRealEstate = async (req, res) =>{
     }
 }
 
-const AddToVIP = async (req, res) =>{
-    const {id} = req.params
-    const {vip_id} = req.body
-    let days = 0
-    try {
-        const query_text = `SELECT days FROM vip_types WHERE id = ${vip_id}`
-        const {rows} = await database.query(query_text, [])
-        days = rows[0].days
-    } catch (e) {
-        console.log(e)
-        return res.json({"message":"Not Succesfully"})        
-    }
-    const query_text = `
-        INSERT INTO vip_real_estates(real_estate_id, vip_dates, vip_type_id) 
-        VALUES(
-            ${id}, 
-                tsrange(
-                    localtimestamp,
-                    localtimestamp + INTERVAL '${days} DAY',
-                    '[]'
-                ),
-            ${vip_id}
-        ) 
-    `
-    try {
-        await database.query(query_text, [])
-        return res.json({"message":"Succesfully added"})
-    } catch (e) {
-        console.log(e)
-        return res.json({"message":"Something went wrong"})
-    }
-}
-
 const AddMainLocation = async (req, res)=>{
     /************************
      {
@@ -1609,7 +1576,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                         WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
                             END 
                         || lt.translation) AS location,
-                (SELECT real_estate_name(re.id, l.id, tt.name, area))
+                (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id, to_char(lower(vre.vip_dates), 'DD.MM.YYYY') AS vip_lower_date,
+                to_char(upper(vre.vip_dates), 'DD.MM.YYYY') AS vip_upper_date, vre.id AS vip_id
     
      
                 FROM real_estates re  
@@ -1629,6 +1597,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ON lt.location_id = re.location_id AND lt.language_id = l.id
                     LEFT JOIN locations lc 
                         ON lc.id = re.location_id
+                    LEFT JOIN vip_real_estates vre
+                        ON vre.real_estate_id = re.id AND (lower(vre.vip_dates) <= localtimestamp OR upper(vre.vip_dates) >= localtimestamp)  
                     LEFT JOIN location_translations ltt
                         ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
                     LEFT JOIN logs lg
@@ -1793,6 +1763,32 @@ const RealestateByID = async (req, res) =>{
     try {
         const {rows} = await database.query(query_text, [id])
         return res.status(status.success).json(rows[0])
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const AddToVIP = async (req, res) =>{
+    const {id, re_id} = req.params;
+    const {start_date, rate} = req.body;
+    console.log(start_date)
+    // let days = 0
+    const query_text = `
+        INSERT INTO vip_real_estates(real_estate_id, vip_dates, vip_type_id) 
+        VALUES(
+            ${re_id}, 
+                tsrange(
+                    '${start_date}'::date,
+                    '${start_date}'::date + INTERVAL '${rate} DAY',
+                    '[]'
+                ),
+            ${id}
+        ) 
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
