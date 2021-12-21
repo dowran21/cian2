@@ -1606,8 +1606,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ${op_join}
                 WHERE re.id > 0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                     OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
-                ORDER BY  re.id DESC  
-                LIMIT 15
+                ORDER BY  re.id DESC
+                
             ), updated AS (
                 UPDATE real_estates SET selected = true, 
                     selected_time = tsrange (
@@ -1626,7 +1626,9 @@ const GetConfirmRealEstates = async (req, res) =>{
                     WHERE re.id >0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                         OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
                     ), (SELECT json_agg(re) FROM(
-                        SELECT * FROM selected 
+                        SELECT * FROM selected
+                        ORDER BY vip_type_id ASC NULLS LAST, vip_id ASC NULLS LAST, created_at DESC
+                        ${offSet}
                     )re) AS real_estates   
             `
         const {rows} = await database.query(query_text, [])
