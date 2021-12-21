@@ -1698,6 +1698,20 @@ const ActivateRealEstate = async (req, res) =>{
     }
 }
 
+const DeleteImage = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        DELETE FROM real_estate_images WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const RealestateByID = async (req, res) =>{
     const {id} = req.params
     const query_text = `
@@ -1712,7 +1726,7 @@ const RealestateByID = async (req, res) =>{
             real_estate_name($1, l.id, tt.name, area), u.phone, ott.translation AS owner_type,
 
             (SELECT json_agg(image) FROM (
-                SELECT destination FROM real_estate_images rei
+                SELECT id, destination FROM real_estate_images rei
                 WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
             )image) AS images, 
 
@@ -1926,6 +1940,55 @@ const GetLogs = async (req, res) =>{
     }
 }
 
+const GetComplaints = async (req, res) =>{
+    const {page, limit, accepted} = req.query;
+    let offSet = ``
+    if(page && limit){
+        offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    const query_text = `
+    SELECT (
+         SELECT 
+            COUNT(*)  FROM complaints c WHERE c.accepted = false
+        ) AS count,
+        (SELECT json_agg(com) FROM (
+            SELECT c.id, c.message, c.accepted, 
+                u.phone AS sender_phone, u.full_name AS sender_name,
+                us.phone AS address_phone, us.full_name AS address_name, real_estate_id 
+            FROM complaints c
+            INNER JOIN users u
+                ON u.id = c.user_id
+            INNER JOIN real_estates re
+                ON re.id = c.real_estate_id
+            INNER JOIN users us
+                ON us.id = re.user_id
+            WHERE c.accepted = ${accepted}
+            ${offSet}
+        )com) AS complaints
+   `
+    try {
+    const {rows} = await database.query(query_text, [])
+    return res.status(status.success).json({rows:rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const AcceptComplaint = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE complaints SET accepted = true WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -1995,8 +2058,9 @@ module.exports = {
     NotActivatedEstates,
     RealestateByID,
     ActivateRealEstate,
-
+    DeleteImage,
 
     GetLogs,
-
+    GetComplaints,
+    AcceptComplaint,
 }

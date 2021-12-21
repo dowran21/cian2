@@ -38,6 +38,45 @@ const GetSpecificationsForType = async (req, res) =>{
     }
 }
 
+const GetSpecificationsForTypes = async (req, res) =>{
+    const {category_id, lang} = req.params
+    const {type_id} = req.body;
+
+    try {
+        const query_text = `
+            SELECT s.id AS specification_id, s.is_multiple, s.is_required, st.name,
+
+                (SELECT json_agg(value) FROM (
+                    SELECT sv.id AS value_id, sv.absolute_value, svt.name 
+                        FROM specification_values sv
+                            LEFT JOIN specification_value_translations svt 
+                                ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                        WHERE sv.spec_id = s.id AND sv.enable = true
+                        ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                            integer) ELSE null END ASC, sv.absolute_value ASC
+                )value) AS values
+                
+            FROM specifications s
+                    INNER JOIN languages l 
+                        ON l.language_code = $1
+                    LEFT JOIN specification_translations st 
+                        ON st.spec_id = s.id AND st.language_id = l.id
+                    INNER JOIN ctypes ctp
+                        ON ctp.type_id = $2 AND ctp.category_id = $3
+                    INNER JOIN type_specifications ts 
+                        ON ts.spec_id = s.id AND ts.ctype_id = ctp.id AND ts.deleted = false 
+            WHERE s.is_active = true
+            ORDER BY ts1.queue_position ASC
+    ` 
+        const {rows} = await database.query(query_text, [lang, type_id, category_id])
+        // console.log(rows)
+        res.status(status.success).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(e)
+    }
+}
+
 const GetSpecForTypeSearch = async (req, res) =>{
     const {type_id, lang} = req.params
     try {
@@ -122,6 +161,7 @@ const Languages = async (req, res) =>{
 const AllRealEstate = async (req, res) =>{
     const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
+    // console.log(type_id)
     let user_wish = ``
     let wish_list_join = ``
     if(user_id){
@@ -250,9 +290,8 @@ const AllRealEstate = async (req, res) =>{
     
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name, ${user_wish}
-        concat(
-            CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name, ${user_wish} u.owner_id,
+        concat(lt.translation || ', ' || CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation  END ) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)),
         
         (SELECT json_agg(dest) FROM (
@@ -1202,6 +1241,7 @@ const GetHistoryView = async (req, res) =>{
 
 module.exports = {
     GetSpecificationsForType,
+    GetSpecificationsForTypes,
     GetSpecForTypeSearch,
     GetNotRequiredSpecificationsForType,
     Languages,

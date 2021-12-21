@@ -35,5 +35,6 @@ router.post('/:lang/add-to-wish-list-mobile', VerifyUserAccessToken, UserControl
 router.post('/:lang/drop-wish-list', VerifyUserAccessToken, UserController.DropWishList);
 router.post('/:lang/remove-from-wish-list/:id', VerifyUserAccessToken, UserController.RemoveFromWishList)
 
+router.post('/:lang/make-complaint/:id', VerifyUserAccessToken, UserController.MakeComplaint)
 
 module.exports = router

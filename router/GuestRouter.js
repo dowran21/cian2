@@ -7,7 +7,7 @@ const {VerifyUserAccessTokenNext} = require('../middleware/AuthMiddleware')
 const GuestController = require('../controller/GuestController.js')
 
 router.get('/languages', GuestController.Languages)
-router.get('/:lang/all-real-estates', ParamsSchemaMiddleware(Schema.LangSchema),  QuerySchemaMiddleware(Schema.RealEstateFilter), GuestController.AllRealEstate)
+router.get('/:lang/all-real-estates', ParamsSchemaMiddleware(Schema.LangSchema),   GuestController.AllRealEstate)
 router.get('/:lang/categories-types', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.TypeCategoryController)
 router.get('/:lang/real-estate/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetRealEstateByID)
 router.get('/:lang/user-real-estates/:id', ParamsSchemaMiddleware(Schema.IDSchema), GuestController.GetUserRealEstates )
@@ -32,5 +32,7 @@ router.get('/:lang/get-specification/:id', ParamsSchemaMiddleware(Schema.IDSchem
 router.post('/:lang/get-history-view', ParamsSchemaMiddleware(Schema.LangSchema), GuestController.GetHistoryView)
 
 router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
+router.get('/:lang/specifications-for-types/:category_id', GuestController.GetSpecificationsForTypes)
+
 
 module.exports = router

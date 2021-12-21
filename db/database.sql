@@ -435,6 +435,17 @@ CREATE TABLE front_translations (
     CONSTRAINT language_id_fk FOREIGN KEY (language_id) REFERENCES languages(id)
 );
 
+CREATE TABLE complaints (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    "message" VARCHAR (250) NOT NULL,
+    real_estate_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    accepted BOOLEAN DEFAULT FALSE,
+
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE
+);
+
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO dowran;

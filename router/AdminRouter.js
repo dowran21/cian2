@@ -6,6 +6,7 @@ const {VerifyAdminAccessToken, VerifyAdminRefreshToken, VerifyIsAdmin, VerifyCod
 const Schema = require('../schemas/AdminSchema');
 const {SchemaMiddleware, ParamsSchemaMiddleware, QuerySchemaMiddleware} = require('../middleware/SchemaMiddleware')
 const upload = require('../middleware/upload')
+// const { IdSchema } = require('../schemas/AdminSchema')
 
 
 router.post('/login', AdminController.AdminLogin)
@@ -69,6 +70,8 @@ router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, 
 router.post('/change-user-type/:id', VerifyAdminAccessToken, AdminController.ChangeUserType)
 
 router.get('/get-logs', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLogs);
+router.get('/get-complaints', VerifyAdminAccessToken, AdminController.GetComplaints);
+router.post(`/accept-complaint/:id`, VerifyAdminAccessToken, AdminController.AcceptComplaint)
 router.get('/get-user-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUsersStatistics)
 router.get('/get-active-real-estates', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetActiveStatistics)
 router.get('/get-real-estate-statistics', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetRealEstateStatistics)
@@ -78,7 +81,8 @@ router.post('/activate-user-ip/:id', VerifyAdminAccessToken, AdminController.Act
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )
-router.post('/activation-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateRealEstate)
+router.post('/activation-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateRealEstate);//shunan duzetmeli
+router.post('/delete-image/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteImage);
 router.post('/get-confirm-vip', VerifyAdminAccessToken, AdminController.GetConfirmRealEstates)
 
 module.exports = router

@@ -294,8 +294,8 @@ const ForgotPassword = async (req, res) =>{
         const {rows} = await database.query(query_text, [])
         if (rows){
             data = {"id":user.id}
-            const mess = `Code: ${code}`
-            SendSMS({phone, mess})
+            const message = `Code: ${code}`
+            SendSMS({phone, message})
             const access_token = await UserHelper.GenerateCodeAccessToken(data);
             return res.status(status.success).json({"token":access_token, code})
         }else{
@@ -575,7 +575,7 @@ const AddImage = async (req, res) =>{
             return res.status(status.error).json(false)
         }
     }
-    return res.status(status.bad).json({"message":"there is no file"})
+    return res.status(status.bad).json({"messageage":"there is no file"})
 }
 
 const GetUserRealEstateByID = async (req, res) =>{
@@ -672,7 +672,6 @@ const DeleteImage = async (req, res) =>{
         DELETE FROM real_estate_images WHERE id = ${id}
     `
     try {
-        console.log("hello world")
         await database.query(query_text, [])
         return res.status(status.success).send(true)
     } catch (e) {
@@ -957,6 +956,22 @@ const RemoveRealEstate = async (req, res) =>{
     }
 }
 
+const MakeComplaint = async (req, res) =>{
+    const {id} = req.params;
+    const user_id = req.user.id;
+    const {message} = req.body;
+    const query_text = `
+        INSERT INTO complaints(real_estate_id, user_id, message) VALUES (${id}, ${user_id}, '${message}')
+    `
+    try{
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    }catch(e){
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     UserRegistration,
     UserLogin,
@@ -982,6 +997,7 @@ module.exports = {
     ChangePassword,
     SendCodeAgain,
     AddToWishListMobile,
-    RemoveFromWishList
+    RemoveFromWishList,
+    MakeComplaint
 }
 
