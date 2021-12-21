@@ -322,7 +322,7 @@ const AllRealEstate = async (req, res) =>{
     WITH selected AS 
         (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name, ${user_wish} u.owner_id,
         concat(lt.translation || ', ' || CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation  END ) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id,  vre.id AS vip_id
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id,  vre.id AS vip_id,
         
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei
@@ -358,7 +358,7 @@ const AllRealEstate = async (req, res) =>{
             LEFT JOIN categories c 
                 ON c.id = cp.category_id
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} 
-        ORDER BY  re.id DESC 
+        ORDER BY  re.id DESC),
 
                     
     inserted AS (INSERT INTO view_address 
@@ -393,15 +393,13 @@ const AllRealEstate = async (req, res) =>{
             INNER JOIN categories c 
                 ON c.id = cp.category_id
             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part}
-            ORDER BY vre.vip_type_id ASC NULLS LAST, vre.id ASC NULLS LAST, re.created_at
         ) AS count),
 
         (SELECT json_agg(res) FROM 
             (SELECT * FROM selected 
-                ORDER BY vip_type_id ASC NULLS LAST, vip_id ASC NULLS LAST, re.id DESC
+                ORDER BY vip_type_id ASC NULLS LAST, vip_id ASC NULLS LAST, id DESC
                 ${offSet}
-            )
-        res) AS real_estates_all
+            )res) AS real_estates_all
         `
     try {
         const {rows} = await database.query(query_text, [ip, lang])
