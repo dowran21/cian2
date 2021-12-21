@@ -1669,7 +1669,7 @@ const GetConfirmRealEstates = async (req, res) =>{
 
 const ActivateRealEstate = async (req, res) =>{
     const {id} = req.params
-    const {is_active, comment} = req.body
+    const {is_active, comment, description_tm, description_ru} = req.body
     console.log(req.body)
     let comment_part = ``
     if(is_active){
@@ -1684,9 +1684,17 @@ const ActivateRealEstate = async (req, res) =>{
     const query_text = `
         WITH updated AS (
             UPDATE real_estates SET is_active = ${is_active} WHERE id = ${id} RETURNING *
+        ), updated_trans_tm AS(
+            UPDATE real_estate_translations
+                SET description = '${description_tm}' WHERE language_id = 1 AND real_estate_id = ${id}
+        ), updated_trans_ru AS(
+            UPDATE real_estate_translations
+                SET description = '${description_ru}' WHERE language_id = 2 AND real_estate_id = ${id}
         ) ${comment_part} INSERT INTO logs (user_id, event_type_id, table_id, data) 
             VALUES (${user_id}, 1, 1, 
-                (SELECT json_build_object('id', id, 'is_active', is_active ${!is_active ? `, 'comment', '${comment}'`: ''}) FROM updated)
+                (SELECT json_build_object('id', id, 'is_active', is_active, ${!is_active ? ` 'comment', '${comment}',`: ''} 
+                'description_tm', '${description_tm}', 'description_ru', '${description_ru}') 
+                 FROM updated)
                 )
         `
     try {

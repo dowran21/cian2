@@ -161,11 +161,11 @@ const Languages = async (req, res) =>{
 const AllRealEstate = async (req, res) =>{
     const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
     const {lang} = req.params
-    // console.log(type_id)
+    console.log(req.query)
+    console.log(type_id)
     let user_wish = ``
     let wish_list_join = ``
     if(user_id){
-        console.log(user_id);
         user_wish = ` uwl.id AS wish_list, `
         wish_list_join = ` LEFT JOIN user_wish_list uwl
             ON uwl.user_id = ${user_id} AND uwl.real_estate_id = re.id`
@@ -188,6 +188,14 @@ const AllRealEstate = async (req, res) =>{
         where_part += ` AND u.owner_id = ${owner_id} `
     }
     ///------------------------main_type_id ------------------//
+    let types = []
+    if(type_id){
+        try {
+            types = JSON.parse(type_id);
+        } catch (e) {
+            throw e
+        }
+    }
     if(main_type_id){
         where_part += ` AND t.main_type_id = ${main_type_id}`
     }
@@ -197,11 +205,11 @@ const AllRealEstate = async (req, res) =>{
     }
 
     //---------------------ctype part -----------------------//
-    if (type_id !== 'null' && type_id){
-        where_part += ` AND cp.type_id = ${type_id}` 
+    if (types && types.length > 0){
+        where_part += ` AND cp.type_id IN (${types.map(item => `${item}`).join(',')})` 
     }
 
-    if (category_id && category_id !== 'null'){
+    if (category_id ){
         where_part += ` AND cp.category_id = ${category_id}` 
     }
 
