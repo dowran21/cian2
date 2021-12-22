@@ -986,9 +986,9 @@ const ActivateLocation = async (req, res) =>{
 }
 
 const UpdateLocation = async (req, res) =>{
-    // {
-// "name_tm"; "name_ru", enabled 
-    // }
+    /*
+         "name_tm"; "name_ru", enabled 
+    */ 
     console.log(req.body)
 
     const {id} = req.params
@@ -1786,11 +1786,11 @@ const AddToVIP = async (req, res) =>{
                     '[]'
                 ),
             ${id}
-        ) 
-    `
+        ) RETURNING vip_type_id, to_char(lower(vip_dates), 'DD.MM.YYYY') AS vip_lower_date,
+        to_char(upper(vip_dates), 'DD.MM.YYYY') AS vip_upper_date, id, real_estate_id`
     try {
-        await database.query(query_text, [])
-        return res.status(status.success).send(true)
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows:rows[0]})
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
