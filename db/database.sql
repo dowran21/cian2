@@ -401,18 +401,36 @@ CREATE TABLE user_wish_list(
 ------------push notifications------------
 CREATE TABLE pushes(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    type_id SMALLINT,
+    category_id SMALLINT,
+    min_price BIGINT,
+    max_price BIGINT,
+    min_area BIGINT,
+    max_area BIGINT,
+    message_tm VARCHAR (300),
+    message_ru VARCHAR (300),   
+    
+    CONSTRAINT type_id_fk FOREIGN KEY (type_id) REFERENCES types(id),
+    CONSTRAINT category_id_fk FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
 CREATE TABLE push_messages(
     id BIGSERIAL PRIMARY KEY NOT NULL,
     user_id BIGINT NOT NULL,
-    "message" VARCHAR (300),
     is_sent BOOLEAN NOT NULL DEFAULT FALSE,
     push_id BIGINT NOT NULL,
 
     CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
     CONSTRAINT push_id_fk FOREIGN KEY (push_id) REFERENCES pushes(id) ON UPDATE CASCADE
+);
+
+CREATE TABLE real_estate_notifies(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    real_estate_id BIGINT NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id)
 );
 
 -------------------logs-------------------

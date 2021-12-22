@@ -1995,6 +1995,79 @@ const AcceptComplaint = async (req, res) =>{
     }
 }
 
+const AddNotify = async (req, res) => {
+    const {min_price, max_price, min_area, max_area, type_id, category_id, message_tm, message_ru} = req.body;
+    let where_part = ``;
+
+    if (min_area && max_area){
+        where_part += ` AND re.area > ${min_area}  AND re.area < ${max_area}`
+    }else if(min_area && !max_area){
+        where_part += ` AND re.area > ${min_area}`
+    }else if(!min_area && max_area){
+        where_part += ` AND re.area < ${max_area}`
+    }else{
+        where_part +=``
+    }
+
+    if (min_price && max_price){
+        where_part += ` AND (rep.price > ${min_price} AND rep.price < ${max_price})`
+    }else if(min_price && !max_price){
+        where_part += ` AND rep.price > ${min_price}`
+    }else if(!min_price && max_price){
+        where_part += ` AND rep.price < ${max_price}`
+    }else{
+        where_part +=``
+    }
+
+    if (category_id ){
+        where_part += ` AND cp.category_id = ${category_id}` 
+    }
+
+    if (type_id ){
+        where_part += ` AND cp.type_id = ${type_id}` 
+    }
+    const query_text = `
+        WITH inserted AS (
+            INSERT INTO pushes (min_price, max_price, min_area, max_area, type_id, category_id, message_tm, message_ru,) 
+            VALUES (${min_price ? `${min_price}`: `null`}, ${max_price ? `${max_price}`: `null`},
+                 ${min_area ? `${min_area}`: `null`}, ${max_area ? `${max_area}`: `null`}, 
+                 ${type_id ? `${type_id}`: `null` }, ${category_id ? `${category_id}`: `null` }, '${message_tm}', '${message_ru}',)
+            RETURNING *
+        ), selected AS (
+            SELECT u.id
+            FROM users u
+                LEFT JOIN real_estates re
+                    ON re.user_id = u.id
+                INNER JOIN ctypes cp
+                    ON cp.id = re.ctype_id
+                INNER JOIN real_estate_prices rep
+                    ON rep.real_estate_id = re.id AND rep.is_active = true
+            WHERE re.id > 0 ${where_part}
+        ) INSERT INTO push_messages (user_id, push_id) SELECT id ,  (SELECT id FROM inserted) FROM selected        
+    `   
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const AddNotifyEstate = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        INSERT INTO real_estate_notifies (real_estate_id) VALUES (${id})
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2069,4 +2142,7 @@ module.exports = {
     GetLogs,
     GetComplaints,
     AcceptComplaint,
+
+    AddNotify,
+    AddNotifyEstate
 }

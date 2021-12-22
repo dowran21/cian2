@@ -5,7 +5,7 @@ const upload = require('../middleware/upload.js')
 const {SchemaMiddleware, QuerySchemaMiddleware, ParamsSchemaMiddleware} = require('../middleware/SchemaMiddleware.js')
 const Schema = require('../schemas/UserSchema.js')
 const {resize_image} = require('../middleware/resize')
-const { VerifyUserAccessToken, VerifyCodeAccessToken, VerifyUserRefreshToken, VerifyEstateUser } = require('../middleware/AuthMiddleware.js')
+const { VerifyUserAccessToken, VerifyCodeAccessToken, VerifyUserRefreshToken, VerifyEstateUser, VerifyAdminAccessToken } = require('../middleware/AuthMiddleware.js')
 
 
 router.post('/registration', SchemaMiddleware(Schema.Registration), UserController.UserRegistration)
@@ -36,5 +36,7 @@ router.post('/:lang/drop-wish-list', VerifyUserAccessToken, UserController.DropW
 router.post('/:lang/remove-from-wish-list/:id', VerifyUserAccessToken, UserController.RemoveFromWishList)
 
 router.post('/:lang/make-complaint/:id', VerifyUserAccessToken, UserController.MakeComplaint)
+router.get('/:lang/get-notifications', VerifyUserAccessToken, UserController.GetNotifications)
+router.post('/:lang/update-notification/:id', VerifyUserAccessToken, UserController.UpdateNotification)
 
 module.exports = router

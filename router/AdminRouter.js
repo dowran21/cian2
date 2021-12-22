@@ -86,4 +86,7 @@ router.post('/activation-real-estate/:id/:re_id', VerifyAdminAccessToken, Params
 router.post('/delete-image/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteImage);
 router.post('/get-confirm-vip', VerifyAdminAccessToken, AdminController.GetConfirmRealEstates)
 
+router.post('/add-push-notify', VerifyAdminAccessToken, AdminController.AddNotify)
+router.post('/add-to-notification/:id', VerifyAdminAccessToken, AdminController.AddNotifyEstate)
+
 module.exports = router

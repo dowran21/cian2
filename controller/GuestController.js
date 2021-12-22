@@ -46,8 +46,8 @@ const GetSpecificationsForTypes = async (req, res) =>{
         try {
             types = JSON.parse(type_id);
         } catch (e) {
-            throw e
-            types = ``
+            console.log(e);
+            console.log("I am in all specifications error")
         }
     }
     let join_part = ``
@@ -211,8 +211,8 @@ const AllRealEstate = async (req, res) =>{
         try {
             types = JSON.parse(type_id);
         } catch (e) {
-            throw e
-            types = ``
+            console.log(e);
+            console.log("I am in all real estaate error")
         }
     }
 
@@ -292,6 +292,7 @@ const AllRealEstate = async (req, res) =>{
                 }
             }
         } catch (e) {
+            console.log("I am in specificaton error")
             console.log(e)
         }   
     }
@@ -530,7 +531,8 @@ const RealEstatePositions = async (req, res) =>{
     // console.log(spec_values)
     
     const query_text =`
-    SELECT DISTINCT ON (re.id) re.id, position[0] AS lat, position[1] AS lng, rep.price
+    SELECT DISTINCT ON (re.id) re.id, position[0] AS lat, position[1] AS lng, rep.price,
+    (SELECT real_estate_name(re.id, l.id, tt.name, re.area))
 
         FROM real_estates re 
             INNER JOIN ctypes cp 
@@ -539,6 +541,10 @@ const RealEstatePositions = async (req, res) =>{
                 ON rep.real_estate_id = re.id AND rep.is_active = 'true'
             LEFT JOIN locations lc 
                 ON lc.id = re.location_id
+            INNER JOIN languages l
+                ON l.language_code = '${lang}'
+            INNER JOIN type_translations tt
+                ON tt.type_id = cp.type_id AND tt.language_id = l.id
                 ${spec_part} 
             INNER JOIN users u
                 ON u.id = re.user_id
@@ -1290,6 +1296,37 @@ const GetHistoryView = async (req, res) =>{
     }
 }
 
+const GetNotifies = async (req, res) =>{
+    const {lang} = req.params
+    const query_text = `
+        SELECT re.id,  (SELECT real_estate_name(re.id, l.id, tt.name, re.area)), rep.price 
+        FROM real_estates re
+        INNER JOIN real_estate_notifies ren
+            ON ren.real_estate_id = re.id
+        INNER JOIN ctypes cp 
+            ON cp.id = re.ctype_id
+        INNER JOIN real_estate_prices rep 
+            ON rep.real_estate_id = re.id AND rep.is_active = 'true'
+        LEFT JOIN locations lc 
+            ON lc.id = re.location_id
+        INNER JOIN languages l
+            ON l.language_code = '${lang}'
+        INNER JOIN type_translations tt
+            ON tt.type_id = cp.type_id AND tt.language_id = l.id
+        INNER JOIN users u
+            ON u.id = re.user_id
+        INNER JOIN types t
+            ON t.id = cp.type_id
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecificationsForTypes,
@@ -1313,6 +1350,7 @@ module.exports = {
     GetTypesOfCategory,
     GetCountOfCategory,
     GetSpecByID,
-    GetHistoryView
+    GetHistoryView,
+    GetNotifies
     
 }   

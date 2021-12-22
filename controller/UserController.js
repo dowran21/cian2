@@ -972,6 +972,40 @@ const MakeComplaint = async (req, res) =>{
     }
 }
 
+const GetNotifications = async (req, res) =>{
+    const user_id = req.user.id;
+    const {lang} = req.params
+    const query_text = `
+        SELECT pm.id, pm.message_${lang} AS message, pm.push_id 
+        FROM push_messages pm
+            INNER JOIN pushes p
+                ON p.id = pm.push_id
+        WHERE pm.user_id = ${user_id} AND pm.is_sent = false
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const UpdateNotification = async (req, res) =>{
+    const user_id = req.user.id;
+    const {id} = req.params;
+    const query_text = `
+        UPDATE push_messages SET is_sent = true WHERE id = ${id}
+        `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(false)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     UserRegistration,
     UserLogin,
@@ -998,6 +1032,9 @@ module.exports = {
     SendCodeAgain,
     AddToWishListMobile,
     RemoveFromWishList,
-    MakeComplaint
+    MakeComplaint,
+
+    GetNotifications,
+    UpdateNotification
 }
 
