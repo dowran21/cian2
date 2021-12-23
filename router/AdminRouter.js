@@ -82,7 +82,7 @@ router.post('/add-to-vip/:id/:re_id', VerifyAdminAccessToken, AdminController.Ad
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )
-router.post('/activation-real-estate/:id/:re_id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateRealEstate);//shunan duzetmeli
+router.post('/activation-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateRealEstate);//shunan duzetmeli
 router.post('/delete-image/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteImage);
 router.post('/get-confirm-vip', VerifyAdminAccessToken, AdminController.GetConfirmRealEstates)
 
