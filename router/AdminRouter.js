@@ -69,6 +69,7 @@ router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.
 router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)
 router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GivePermission)
 router.post('/change-user-type/:id', VerifyAdminAccessToken, AdminController.ChangeUserType)
+router.post('/delete-user/:id', VerifyAdminAccessToken, AdminController.DeleteUser)
 
 router.get('/get-logs', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLogs);
 router.get('/get-complaints', VerifyAdminAccessToken, AdminController.GetComplaints);

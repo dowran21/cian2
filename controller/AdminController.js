@@ -1202,6 +1202,20 @@ const GetAllUsers = async (req, res) =>{
     }
 }
 
+const DeleteUser = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE users SET deleted = true WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const ChangePermission = async (req, res) =>{
     const {id} = req.params;
     const {is_active} = req.body;
@@ -2130,6 +2144,7 @@ module.exports = {
     GetAllSpecifications,
     SpecificationActivation,
     GetNotContainedSpec,
+    DeleteUser,
 
     GetAllTypes,
     AddType,
