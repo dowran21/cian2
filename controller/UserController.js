@@ -410,8 +410,10 @@ const UserRealEstates = async (req, res) =>{
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
             LEFT JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = true
-            WHERE re.user_id = ${user_id})
+            WHERE re.user_id = ${user_id}
+            ORDER BY re.created_at DESC
             ${offSet}
+            )
             SELECT (
                 SELECT COUNT(*) FROM real_estates
                 WHERE user_id = ${user_id}
@@ -945,7 +947,7 @@ const UpateRealEstate = async (req, res) =>{
 const RemoveRealEstate = async (req, res) =>{
     const {id} = req.params;
     const query_text = `
-        UPDATE real_estates SET status_id = real_estates.status_id*2 WHERE id = ${id}
+        UPDATE real_estates SET status_id = real_estates.status_id+1 WHERE id = ${id}
     `
     try {
         await database.query(query_text, [])
