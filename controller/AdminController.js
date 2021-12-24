@@ -2,8 +2,7 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
-const { off } = require("process");
-const { response } = require("express");
+
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -382,6 +381,34 @@ const AddSpecification = async (req, res) =>{
         console.log(e)
         return res.status(status.error).send(false)
     }
+}
+
+const UpdateSpecification = async (req, res) =>{
+    /******
+     {
+         is_required: true,
+        is_multiple: false,
+        translation_tm: 'aaaaa',
+        translation_ru: 'bbbbb',
+     }
+     */
+    const {id} = req.params;
+    const {is_required, is_multiple, translation_ru, translation_tm} = req.body;
+    const query_text = `
+        WITH updated AS (
+            UPDATE specifications SET is_required = ${is_required}, is_multiple = ${is_multiple} WHERE id = ${id}
+            ), update_trans_ru AS (
+                UPDATE specification_translations SET name = '${translation_ru}' WHERE spec_id = ${id} AND language_id = 2
+            ) UPDATE specification_translations SET name = '${translation_tm}' WHERE spec_id = ${id} AND language_id = 1
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+
 }
 
 const GetSpecificationByID = async (req, res)=>{
@@ -1156,12 +1183,12 @@ const GetAllUsers = async (req, res) =>{
                 FROM users 
                 WHERE role_id = 3 ${WherePart}),
             (SELECT json_agg(op) FROM (
-                SELECT u.id, u.full_name, u.email, u.phone, u.owner_id,  
+                SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.created_at, 'YYYY.MM.DD') AS created_at,
                 up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val
                 FROM users u
                     LEFT JOIN user_permissions up  
                         ON up.user_id = u.id AND (lower(validity) <= localtimestamp OR upper(validity) >= localtimestamp) AND is_active = true
-                    WHERE u.role_id = 3 ${WherePart}
+                    WHERE u.role_id = 3 AND u.deleted = false ${WherePart}
                 ${order_part}
                 ${OffSet}
             )op) AS users
@@ -1606,6 +1633,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ${op_join}
                 WHERE re.id > 0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                     OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                    AND re.status_id <> 2 AND re.status_id <> 4
                 ORDER BY  re.id DESC
                 
             ), updated AS (
@@ -1765,6 +1793,20 @@ const RealestateByID = async (req, res) =>{
     try {
         const {rows} = await database.query(query_text, [id])
         return res.status(status.success).json(rows[0])
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const RemoveRealEstate = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE real_estates SET status_id = real_estates.status_id+1 WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
         return res.status(status.error).send(false)
@@ -2083,6 +2125,7 @@ module.exports = {
     AddOperatorLocation,
 
     AddSpecification,
+    UpdateSpecification,
     GetSpecificationByID,
     GetAllSpecifications,
     SpecificationActivation,
@@ -2138,6 +2181,7 @@ module.exports = {
     RealestateByID,
     ActivateRealEstate,
     DeleteImage,
+    RemoveRealEstate,
 
     GetLogs,
     GetComplaints,

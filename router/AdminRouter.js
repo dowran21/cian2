@@ -28,6 +28,7 @@ router.get('/get-all-specifications', VerifyAdminAccessToken, VerifyIsAdmin, Adm
 router.post('/activation-of-specification/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.SpecificationActivation)
 router.post('/disable-enable-spec-val/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DisableEnableValue)
 router.post('/add-spec-val/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.AddSpecVal)
+router.post('/update-specification/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.UpdateSpecification)
 
 router.post('/add-main-type', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.AddMaintype)
 router.post('/add-type', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.AddType)
@@ -85,6 +86,7 @@ router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddlewar
 router.post('/activation-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.ActivateRealEstate);//shunan duzetmeli
 router.post('/delete-image/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteImage);
 router.post('/get-confirm-vip', VerifyAdminAccessToken, AdminController.GetConfirmRealEstates)
+router.post('/remove-real-estate/:id', VerifyAdminAccessToken, AdminController.RemoveRealEstate)
 
 router.post('/add-push-notify', VerifyAdminAccessToken, AdminController.AddNotify)
 router.post('/add-to-notification/:id', VerifyAdminAccessToken, AdminController.AddNotifyEstate)

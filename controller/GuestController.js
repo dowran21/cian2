@@ -60,7 +60,7 @@ const GetSpecificationsForTypes = async (req, res) =>{
                     ON ts${i}.spec_id = s.id AND ts${i}.ctype_id = ctp${i}.id AND ts${i}.deleted = false`
         }
     }else{
-        return res.status(status.success).send(true)
+        return res.status(status.success).json({"rows":null})
     }
     console.log(types)
     try {
@@ -706,15 +706,13 @@ const FlatFilter = async (req, res) =>{
                     
                     (SELECT json_agg(co) FROM (
                         SELECT sv.absolute_value::text, sv.id AS value_id, 
-                            
-                            
-                                
+                
                                 (SELECT COUNT(*) 
                                 FROM real_estates re
-                                INNER JOIN ctypes cp
-                                    ON cp.category_id = c.id AND cp.type_id = 3
-                                INNER JOIN real_estate_specification_values resv
-                                    ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
+                                    INNER JOIN ctypes cp
+                                        ON cp.category_id = c.id AND cp.type_id = 3 AND re.ctype_id = cp.id
+                                    INNER JOIN real_estate_specification_values resv
+                                        ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
                                     WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4
                             )
                         
