@@ -410,7 +410,7 @@ const UserRealEstates = async (req, res) =>{
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
             LEFT JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = true
-            WHERE re.user_id = ${user_id}
+            WHERE re.user_id = ${user_id} AND re.status_id <> 2 AND re.status_id <> 4
             ORDER BY re.created_at DESC
             ${offSet}
             )
