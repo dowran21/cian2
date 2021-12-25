@@ -1588,8 +1588,12 @@ const GetConfirmRealEstates = async (req, res) =>{
     if(is_active=="false" || is_active == "true"){
         active_part = ` AND re.is_active = ${is_active}`
     }else{
-        active_part = ` AND re.is_active IS NULL`
+        active_part = ` AND re.is_active IS NULL `
     }
+    /****
+     AND (selected = 'false'
+            OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+     */
 
     let status_part = ``;
     if(status_id){
@@ -1645,8 +1649,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     LEFT JOIN logs lg
                         ON re.id = (lg.data ->>'id')::bigint AND lg.event_type_id =1
                         ${op_join}
-                WHERE re.id > 0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
-                    OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                WHERE re.id > 0 ${active_part} ${status_part} ${where_part} 
                     AND re.status_id <> 2 AND re.status_id <> 4
                 ORDER BY  re.id DESC
                 
@@ -1665,8 +1668,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     INNER JOIN users u
                         ON u.id = re.user_id
                         ${op_join}
-                    WHERE re.id >0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
-                        OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                    WHERE re.id >0 ${active_part} ${status_part} ${where_part} 
                         AND re.status_id <> 2 AND re.status_id <> 4
                     ), (SELECT json_agg(re) FROM(
                         SELECT * FROM selected
