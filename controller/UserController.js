@@ -581,7 +581,7 @@ const AddImage = async (req, res) =>{
     //     if (global.gc) {global.gc();}
     //   } catch (e) {
     //     console.log("`node --expose-gc index.js`");
-    //     process.exit();
+    //     process.exit(); 
     //   }
     return res.status(status.bad).json({"messageage":"there is no file"})
 }
