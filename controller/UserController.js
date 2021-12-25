@@ -415,8 +415,8 @@ const UserRealEstates = async (req, res) =>{
             ${offSet}
             )
             SELECT (
-                SELECT COUNT(*) FROM real_estates
-                WHERE user_id = ${user_id} AND re.status_id <> 2 AND re.status_id <> 4
+                SELECT COUNT(*) FROM real_estates re
+                WHERE re.user_id = ${user_id} AND re.status_id <> 2 AND re.status_id <> 4
             ), (SELECT json_agg(re) FROM (SELECT * FROM selected)re) AS real_estates
         `
         const {rows} = await database.query(query_text, [])

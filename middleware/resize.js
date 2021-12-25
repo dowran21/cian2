@@ -19,13 +19,16 @@ const resize_image  = async (req, res, next) =>{
 
             await sharp(`./uploads/${req.files[i].filename}`)
                 .resize(150, 150)
+                .toFormat("webp")
                 .toFile(`./uploads/${id}/${date}-${name}-mini.webp`)
 
             await sharp(`./uploads/${req.files[i].filename}`)
                 .resize(450, 450)
+                .toFormat("webp")
                 .toFile(`./uploads/${id}/${date}-${name}-big.webp`)
 
             await sharp(`./uploads/${req.files[i].filename}`)
+                .toFormat("webp")
                 .toFile(`./uploads/${id}/${date}-${name}-large.webp`)
             
             fs.unlinkSync(`./uploads/${req.files[i].filename}`)
