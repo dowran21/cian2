@@ -1667,6 +1667,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ${op_join}
                     WHERE re.id >0 ${active_part} ${status_part} ${where_part} AND (selected = 'false'
                         OR (selected_time::tsrange @> localtimestamp IS NULL OR (NOT (selected_time::tsrange @> localtimestamp))))
+                        AND re.status_id <> 2 AND re.status_id <> 4
                     ), (SELECT json_agg(re) FROM(
                         SELECT * FROM selected
                         ORDER BY vip_type_id ASC NULLS LAST, vip_id ASC NULLS LAST, created_at DESC

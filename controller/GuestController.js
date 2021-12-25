@@ -1297,18 +1297,23 @@ const GetHistoryView = async (req, res) =>{
 const GetNotifies = async (req, res) =>{
     const {lang} = req.params
     const query_text = `
-        SELECT re.id,  (SELECT real_estate_name(re.id, l.id, tt.name, re.area)), rep.price 
+        SELECT re.id,  (SELECT real_estate_name(re.id, l.id, tt.name, re.area)), rep.price,
+        concat(lt.translation || ', ' || CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation  END ) AS location
         FROM real_estates re
         INNER JOIN real_estate_notifies ren
             ON ren.real_estate_id = re.id
+        INNER JOIN languages l
+            ON l.language_code = '${lang}'
         INNER JOIN ctypes cp 
             ON cp.id = re.ctype_id
         INNER JOIN real_estate_prices rep 
             ON rep.real_estate_id = re.id AND rep.is_active = 'true'
         LEFT JOIN locations lc 
             ON lc.id = re.location_id
-        INNER JOIN languages l
-            ON l.language_code = '${lang}'
+        LEFT JOIN location_translations lt
+            ON lt.location_id = re.location_id AND lt.language_id = l.id
+        LEFT JOIN location_translations ltt
+            ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
         INNER JOIN type_translations tt
             ON tt.type_id = cp.type_id AND tt.language_id = l.id
         INNER JOIN users u
