@@ -577,12 +577,12 @@ const AddImage = async (req, res) =>{
             return res.status(status.error).json(false)
         }
     }
-    try {
-        if (global.gc) {global.gc();}
-      } catch (e) {
-        console.log("`node --expose-gc index.js`");
-        process.exit();
-      }
+    // try { /usr/lib/x86_64-linux-gnu/libjemalloc.so
+    //     if (global.gc) {global.gc();}
+    //   } catch (e) {
+    //     console.log("`node --expose-gc index.js`");
+    //     process.exit();
+    //   }
     return res.status(status.bad).json({"messageage":"there is no file"})
 }
 

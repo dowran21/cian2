@@ -16,7 +16,7 @@ const resize_image  = async (req, res, next) =>{
             const date = moment().format('DDMMYYYY-HHmmss_SSS');
             const name = req.files[i].originalname.replace(' ', '').split('.')[0];
             req.files[i].path = `uploads/${id}/${date}-${name}`
-
+            sharp.cache(false);
             await sharp(`./uploads/${req.files[i].filename}`)
                 .resize(150, 150)
                 .toFormat("webp")
