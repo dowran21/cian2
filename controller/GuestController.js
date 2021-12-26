@@ -1333,7 +1333,7 @@ const GetNotifies = async (req, res) =>{
 const GetImagePlaceRandom = async (req, res)=>{
     const {id} = req.params;
     const query_text = `
-            SELECT destination FROM place_images WHERE place_id = ${id}
+            SELECT destination FROM place_images WHERE image_place_id = ${id}
     `
     try {
         const {rows} = await database.query(query_text, []);
