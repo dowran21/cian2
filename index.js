@@ -26,6 +26,7 @@ app.use(cors({
         },
     credentials: true
 }));
+
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Credentials', true);
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -33,6 +34,7 @@ app.use(function (req, res, next) {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({limit: '50mb'}));
 app.use(express.static(path.join(__dirname, 'build')))
 
 app.use('/api', Routers)
