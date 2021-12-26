@@ -1330,6 +1330,20 @@ const GetNotifies = async (req, res) =>{
     }
 }
 
+const GetImagePlaceRandom = async (req, res)=>{
+    const {id} = req.params;
+    const query_text = `
+            SELECT destination FROM place_images WHERE place_id = ${id}
+    `
+    try {
+        const {rows} = await database.query(query_text, []);
+        return res.status(status.success).json({"rows":rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     GetSpecificationsForType,
     GetSpecificationsForTypes,
@@ -1354,6 +1368,7 @@ module.exports = {
     GetCountOfCategory,
     GetSpecByID,
     GetHistoryView,
-    GetNotifies
+    GetNotifies,
+    GetImagePlaceRandom
     
 }   

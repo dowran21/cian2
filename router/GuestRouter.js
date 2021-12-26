@@ -34,5 +34,7 @@ router.post('/:lang/get-history-view', ParamsSchemaMiddleware(Schema.LangSchema)
 router.get('/:lang/specifications-for-type/:type_id/:category_id', ParamsSchemaMiddleware(Schema.CategoryTypeSchema),  GuestController.GetSpecificationsForType)
 router.get('/:lang/specifications-for-types/:category_id', GuestController.GetSpecificationsForTypes)
 router.get('/:lang/get-notifies', GuestController.GetNotifies)
+router.get('/page-images/:id', GuestController.GetImagePlaceRandom)
+
 
 module.exports = router
