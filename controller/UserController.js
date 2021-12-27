@@ -392,7 +392,14 @@ const UserRealEstates = async (req, res) =>{
                 (SELECT json_agg(image) FROM (
                     SELECT rei.destination FROM real_estate_images rei
                     WHERE rei.real_estate_id = re.id
-                )image) AS images
+                )image) AS images,
+
+                (SELECT json_agg(rejection) FROM(
+                    SELECT rec.id, rec.comment
+                    FROM real_estate_comments rec
+                    WHERE rec.real_estate_id = re.id
+                    ORDER BY rec.id DESC LIMIT 1
+                )rejection) AS rejections
             
                 FROM real_estates re
 
