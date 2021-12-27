@@ -83,7 +83,7 @@ const GetSpecificationsForTypes = async (req, res) =>{
                     LEFT JOIN specification_translations st 
                         ON st.spec_id = s.id AND st.language_id = l.id
                      ${join_part}
-            WHERE s.is_active = true
+            WHERE s.is_active = true 
             ORDER BY ts0.queue_position ASC
     ` 
         const {rows} = await database.query(query_text, [lang, category_id])
@@ -1372,6 +1372,5 @@ module.exports = {
     GetSpecByID,
     GetHistoryView,
     GetNotifies,
-    GetImagePlaceRandom
-    
+    GetImagePlaceRandom 
 }   

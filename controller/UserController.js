@@ -188,6 +188,18 @@ const UserLogin = async (req, res) =>{
             message["phone"] = "Telefon yada acar soz yalnysh"
             return res.status(status.bad).json({error:message})
         }
+        if(user.id == 2){
+            let compare = await UserHelper.ComparePassword(password, user.password)
+            if(!compare){
+                message["phone"] = "Telefon yada acar soz yalnysh"
+                return res.status(405).send({error:message})        
+            }else{
+                let data = {"id":user.id, "full_name":user.full_name, "email":user.email, "phone":user.phone, "role_id":user.role_id}
+                const access_token = await UserHelper.GenerateUserAccessToken(data);
+                const refresh_token = await UserHelper.GenerateUserRefreshToken(data);
+                return res.status(status.success).json({"token":access_token, "refresh_token":refresh_token, "data":data})
+            }
+        }
 
         if (!user.bann){
             let compare = await UserHelper.ComparePassword(password, user.password)
