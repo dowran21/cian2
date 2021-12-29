@@ -44,7 +44,9 @@ INSERT INTO image_places(id, place) VALUES
 (1, 'Main Page'),
 (2, 'Готовый поиск купить квартиру'),
 (3, 'Готовый поиск арендовать квартиру'),
-(4, 'Logo');
+(4, 'Logo'),
+(5, 'Готовый поиск купить коммер.недв.'),
+(6, 'Готовый поиск арендовать коммер.недв.');
 
 INSERT INTO event_types VALUES 
 (1, 'activation or deactivation real estate'),
