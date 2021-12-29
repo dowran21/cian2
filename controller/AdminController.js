@@ -25,7 +25,7 @@ const AdminLogin = async (req, res) =>{
         }
         const is_password_same = await AdminHelper.ComparePassword(password, user.password)
         if (!is_password_same){
-            const message = {type:"manual", name:"email", message:"'Email ' ýada 'Açar söz' ýalňyş"} 
+            const message = {type:"manual", name:"email", message:"Телефон или пароль неправильный"} 
             return res.status(status.bad).json(message)
         }
         let data = {}
