@@ -42,7 +42,7 @@ const AdminLogin = async (req, res) =>{
             refresh_token = await AdminHelper.GenerateAdminRefreshToken(data)
         }
         if(user.role_id == 3){
-            return res.status(499).json({"message":"Idi otsuda eto ne twoye mesto"})
+            return res.status(499).json({"message":"Только для админов и операторов"})
         }
         return res.status(status.success).json({"access_token":access_token, "refresh_token":refresh_token, "data":data})
     } catch (e) {
