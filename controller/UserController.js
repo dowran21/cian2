@@ -396,7 +396,7 @@ const UserRealEstates = async (req, res) =>{
     // console.log(user_id)
     try {
         const query_text = `
-            WITH selected AS (SELECT re.id, rep.price::text, re.is_active, re.status_id,
+            WITH selected AS (SELECT re.id, rep.price::text, re.is_active, re.status_id, to_char(re.created_at, 'YYYY-MM-DD') AS created_at,
                 concat(CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' END || lt.translation) AS location,
                 
                 (SELECT real_estate_name(re.id, l.id, tt.name, area)),
