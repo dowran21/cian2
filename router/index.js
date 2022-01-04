@@ -1,13 +1,12 @@
-const express = require('express')
-const router = new express.Router()
-const AdminRouter = require('./AdminRouter')
-const GuestRouter = require('./GuestRouter')
-const UserRouter = require('./UserRouter')
-const OperatorRouter = require('./OperatorRouter')
+const express = require('express');
+const router = new express.Router();
 
-router.use('/admin', AdminRouter )
-router.use('/user', UserRouter)
-router.use('/operator', OperatorRouter)
-router.use('', GuestRouter)
+const AdminRouter = require('./AdminRouter.js');
+const GuestRouter = require('./GuestRouter.js');
+const UserRouter = require('./UserRouter.js');
+
+router.use('/admin', AdminRouter);
+router.use('/user', UserRouter);
+router.use('/', GuestRouter);
 
 module.exports = router
