@@ -735,7 +735,11 @@ const FlatFilter = async (req, res) =>{
 
 const CommerceFilter = async (req, res) =>{
     const {lang} = req.params
-
+    const {location_id} = req.query
+    let wherePart = ``
+    if(location_id){
+        wherePart = ` AND (ml.id = ${location_id} OR l.id = ${location_id})`
+    }
     const query_text = `
         SELECT c.id AS category_id, (
             
@@ -746,8 +750,12 @@ const CommerceFilter = async (req, res) =>{
                         FROM real_estates re
                             INNER JOIN ctypes cp 
                                 ON cp.id = re.ctype_id
+                            INNER JOIN locations l
+                                ON l.id = re.id
+                            LEFT JOIN locations ml
+                                ON ml.id = l.main_location_id
                             WHERE re.is_active = 'true' AND re.status_id <> 2 
-                                AND re.status_id <> 4 AND cp.type_id = t.id AND cp.category_id = c.id 
+                                AND re.status_id <> 4 AND cp.type_id = t.id AND cp.category_id = c.id ${wherePart}
                     )
 
                 FROM types t
