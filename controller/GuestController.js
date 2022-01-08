@@ -751,7 +751,7 @@ const CommerceFilter = async (req, res) =>{
                             INNER JOIN ctypes cp 
                                 ON cp.id = re.ctype_id
                             INNER JOIN locations l
-                                ON l.id = re.id
+                                ON l.id = re.location_id
                             LEFT JOIN locations ml
                                 ON ml.id = l.main_location_id
                             WHERE re.is_active = 'true' AND re.status_id <> 2 
