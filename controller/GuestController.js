@@ -523,11 +523,11 @@ const RealEstatePositions = async (req, res) =>{
     }
     
     //----------about to have an image---------// 
-    if (images && images !== null && images !== 'undefined'){
-        image_part = `INNER JOIN real_estate_images rei ON rei.real_estate_id = re.id`
-    }else{
-        image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
-    }
+    // if (images && images !== null && images !== 'undefined'){
+    //     image_part = `INNER JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    // }else{
+    //     image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
+    // }
     // console.log(spec_values)
     
     const query_text =`
@@ -550,7 +550,7 @@ const RealEstatePositions = async (req, res) =>{
                 ON u.id = re.user_id
             INNER JOIN types t
                 ON t.id = cp.type_id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} 
         `
     try {
         console.log(query_text)
