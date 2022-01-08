@@ -421,12 +421,12 @@ const RealEstatePositions = async (req, res) =>{
     let spec_part = ``
     let where_part = ``
     let image_part =``
-    let order_part = `ORDER BY re.id DESC`
+    // let order_part = `ORDER BY re.id DESC`
     
     //--------------------Pagination part ---------------------//
-    if (page !== 'null' && limit !== 'null' && page && limit){
-        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
-    }
+    // if (page !== 'null' && limit !== 'null' && page && limit){
+    //     offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    // }
     
     ///------------------------main_type_id ------------------//
     if(main_type_id){
@@ -472,7 +472,7 @@ const RealEstatePositions = async (req, res) =>{
         where_part += ` AND u.owner_id = ${owner_id} `
     }
     if (price1?.min && price1?.max){
-        where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
+        where_part += ` AND (rep.price > ${price1?.min} AND rep.price < ${price1?.max})`
     }else if(price1?.min && !price1?.max){
         where_part += ` AND rep.price > ${price1.min}`
     }else if(!price1?.min && price1?.max){
@@ -553,6 +553,7 @@ const RealEstatePositions = async (req, res) =>{
         WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} ${spec_part}
         `
     try {
+        console.log(query_text)
         const {rows} = await database.query(query_text, [])
         return res.status(status.success).json({"rows":rows})
     } catch (e) {
