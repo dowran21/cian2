@@ -472,7 +472,7 @@ req.body should be like this;
     let user = {}
     try {
         const user_query = `
-            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission,
+            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission, u.active
                 
                 (SELECT COUNT(*) 
                     FROM real_estates
@@ -488,6 +488,9 @@ req.body should be like this;
         user = rows[0]
         if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
             return res.status(444).send(false)
+        }
+        if(!rows[0]?.active){
+            return res.status(488).send({message:"You can't add you are in bann"})
         }
     } catch (e) {
         console.log("I am in user select error")
