@@ -54,7 +54,7 @@ CREATE TABLE users(
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
 ); 
 
-
+ 
 CREATE TABLE user_permissions(
     id BIGSERIAL PRIMARY KEY NOT NULL,
     validity tsrange NOT NULL,
