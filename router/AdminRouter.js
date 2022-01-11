@@ -81,6 +81,7 @@ router.get('/get-real-estate-statistics', VerifyAdminAccessToken, VerifyIsAdmin,
 router.get('/get-user-for-activation', VerifyAdminAccessToken, AdminController.GetUserForActivation)
 router.post('/activate-user-ip/:id', VerifyAdminAccessToken, AdminController.ActivateIP)
 router.post('/add-to-vip/:id/:re_id', VerifyAdminAccessToken, AdminController.AddToVIP)
+router.post('/change-activation/:id', VerifyAdminAccessToken, AdminController.ChangeActivation)
 
 router.get('/get-confirm-real-estates', VerifyAdminAccessToken,  AdminController.GetConfirmRealEstates)
 router.get('/get-real-estate/:id', VerifyAdminAccessToken, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.RealestateByID )
@@ -91,5 +92,7 @@ router.post('/remove-real-estate/:id', VerifyAdminAccessToken, AdminController.R
 
 router.post('/add-push-notify', VerifyAdminAccessToken, AdminController.AddNotify)
 router.post('/add-to-notification/:id', VerifyAdminAccessToken, AdminController.AddNotifyEstate)
+
+
 
 module.exports = router

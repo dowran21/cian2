@@ -47,6 +47,7 @@ CREATE TABLE users(
     "password" VARCHAR (300) NOT NULL,
     deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    active BOOLEAN NOT NULL DEFAULT true, ---need to be added
     UNIQUE(phone),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),

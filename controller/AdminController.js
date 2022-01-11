@@ -1184,7 +1184,7 @@ const GetAllUsers = async (req, res) =>{
                 WHERE role_id = 3 ${WherePart}),
             (SELECT json_agg(op) FROM (
                 SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.created_at, 'YYYY.MM.DD') AS created_at,
-                up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val
+                up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active
                 FROM users u
                     LEFT JOIN user_permissions up  
                         ON up.user_id = u.id AND (lower(validity) <= localtimestamp OR upper(validity) >= localtimestamp) AND is_active = true
@@ -2127,6 +2127,21 @@ const AddNotifyEstate = async (req, res) =>{
     }
 }
 
+const ChangeActivation = async (req, res) =>{
+    const {id} = req.params;
+    const {is_active} = req.body
+    const query_text = `
+        UPDATE users SET active = ${is_active} WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e);
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2206,5 +2221,7 @@ module.exports = {
     AcceptComplaint,
 
     AddNotify,
-    AddNotifyEstate
+    AddNotifyEstate,
+
+    ChangeActivation
 }
