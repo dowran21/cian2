@@ -52,7 +52,7 @@ CREATE TABLE users(
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
-);
+); 
 
 
 CREATE TABLE user_permissions(
