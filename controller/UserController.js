@@ -22,6 +22,24 @@ const UserRegistration = async (req, res) =>{
     console.log(code)
     const {full_name, email, phone, password, owner_id} = req.body
     console.log(owner_id);
+    let to_lower = full_name.toLowerCase();
+    if(to_lower.includes("select") || to_lower.includes("delete") || to_lower.includes("upadte") || to_lower.includes("delete") || to_lower.includes("insert") || to_lower.includes("where")){
+        const injec_query = `
+            INSERT INTO sql_injections (ip_address, text, phone, password)
+            VALUES ('${ip}', '${full_name}', '${phone}', '${password}')
+        `
+        try {
+            await database.query(injec_query, [])
+            let message = {}
+            message["full_name"] = "SQL injection was detekted. You are in bann"
+            return res.status(status.error).send({error:message})
+        } catch (e) {
+            console.log(e)
+            let message = {}
+            message["full_name"] = "SQL injection was detekted. You are in bann"
+            return res.status(status.error).send({error:message})
+        }
+    }
     let max_count = 0;
     if (owner_id == 1){
         max_count = 3

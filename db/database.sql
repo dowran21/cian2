@@ -481,6 +481,13 @@ CREATE TABLE complaints (
     CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE
 );
 
+CREATE TABLE sql_injections (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    ip_address VARCHAR(150) NOT NULL,
+    "text" VARCHAR(150) NOT NULL,
+    phone VARCHAR (8) NOT NULL,
+    "password" VARCHAR (250) NOT NULL 
+);
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO dowran;

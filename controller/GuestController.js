@@ -211,8 +211,8 @@ const AllRealEstate = async (req, res) =>{
         try {
             types = JSON.parse(type_id);
         } catch (e) {
-            console.log(e);
-            console.log("I am in all real estaate error")
+            // console.log(e);
+            // console.log("I am in all real estaate error")
         }
     }
 
@@ -414,13 +414,13 @@ const AllRealEstate = async (req, res) =>{
 }
 
 const RealEstatePositions = async (req, res) =>{
-    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, owner_id} = req.query
     const {lang} = req.params
-    let offSet = ``
-    let ctype_part =``
+    // let offSet = ``
+    // let ctype_part =``
     let spec_part = ``
     let where_part = ``
-    let image_part =``
+    // let image_part =``
     // let order_part = `ORDER BY re.id DESC`
     
     //--------------------Pagination part ---------------------//
@@ -564,7 +564,7 @@ const RealEstatePositions = async (req, res) =>{
 }
 
 const CountForFilter = async (req, res) =>{
-    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
+    const {spec_values, location_id, type_id, main_type_id, category_id, price, area, images, owner_id} = req.query
     const {lang} = req.params
     let where_part = ``
     let spec_part = ``
@@ -587,8 +587,8 @@ const CountForFilter = async (req, res) =>{
         try {
             types = JSON.parse(type_id);
         } catch (e) {
-            throw e
-            types = ``
+            // throw e
+            // types = ``
         }
     }
 
