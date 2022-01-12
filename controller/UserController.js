@@ -32,11 +32,13 @@ const UserRegistration = async (req, res) =>{
             await database.query(injec_query, [])
             let message = {}
             message["full_name"] = "SQL injection was detekted. You are in bann"
+            message["phone"] = "SQL injection was detekted. You are in bann"
             return res.status(409).send({error:message})
         } catch (e) {
             console.log(e)
             let message = {}
             message["full_name"] = "SQL injection was detekted. You are in bann"
+            message["phone"] = "SQL injection was detekted. You are in bann"
             return res.status(409).send({error:message})
         }
     }
