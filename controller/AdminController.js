@@ -2,6 +2,8 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
+const { ParamsSchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
+const { triggerAsyncId } = require("async_hooks");
 
 
 const AdminLogin = async (req, res) =>{
@@ -2142,6 +2144,43 @@ const ChangeActivation = async (req, res) =>{
     }
 }
 
+const GetInjections = async (req, res) =>{
+    const {page, limit} = req.query;
+    let offSet = ``
+    if(page && limit){
+        offSet = `OFFSET ${page*limit} LIMIT ${limit}`
+    }
+    const query_text = `
+        SELECT (
+            SELECT COUNT(*) FROM sql_injections si WHERE si.deleted = false
+        ), (SELECT json_agg(inj) FROM (
+            SELECT * FROM sql_injections si
+            WHERE si.deleted = false
+            ORDER BY si.id DESC
+            ${offSet}
+        )inj) AS injections
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows:rows[0]})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const DeleteInjection = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `UPDATE sql_injections SET deleted = true WHERE id = ${id}`
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2223,5 +2262,7 @@ module.exports = {
     AddNotify,
     AddNotifyEstate,
 
-    ChangeActivation
+    ChangeActivation,
+    GetInjections,
+    DeleteInjection
 }

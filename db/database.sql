@@ -486,7 +486,8 @@ CREATE TABLE sql_injections (
     ip_address VARCHAR(150) NOT NULL,
     "text" VARCHAR(150) NOT NULL,
     phone VARCHAR (8) NOT NULL,
-    "password" VARCHAR (250) NOT NULL 
+    "password" VARCHAR (250) NOT NULL,
+    deleted BOOLEAN DEFAULT FALSE
 );
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;

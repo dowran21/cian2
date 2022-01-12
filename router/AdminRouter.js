@@ -93,6 +93,8 @@ router.post('/remove-real-estate/:id', VerifyAdminAccessToken, AdminController.R
 router.post('/add-push-notify', VerifyAdminAccessToken, AdminController.AddNotify)
 router.post('/add-to-notification/:id', VerifyAdminAccessToken, AdminController.AddNotifyEstate)
 
+router.get('/get-injections', VerifyAdminAccessToken, AdminController.GetInjections)
+router.post('/delete-injection/:id', VerifyAdminAccessToken, AdminController.DeleteInjection)
 
 
 module.exports = router
