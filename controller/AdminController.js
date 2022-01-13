@@ -422,7 +422,7 @@ const GetSpecificationByID = async (req, res)=>{
                 INNER JOIN specification_value_translations svt
                     ON svt.spec_value_id = sv.id AND svt.language_id = 1
                 INNER JOIN specification_value_translations svtt
-                    ON svtt.spec_value_id = sv.id AND svtt.language_id = 1
+                    ON svtt.spec_value_id = sv.id AND svtt.language_id = 2
             WHERE sv.spec_id = ${id}
             ORDER BY sv.enable DESC
 

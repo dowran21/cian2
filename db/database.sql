@@ -238,7 +238,7 @@ CREATE TABLE real_estates(
     realesed_at TIMESTAMP WITH TIME ZONE,
     user_id BIGINT NOT NULL,
     ctype_id SMALLINT NOT NULL,
-    area NUMERIC(8,2) NOT NULL,
+    area NUMERIC(8,1) NOT NULL,
     position point,
     is_active BOOLEAN,
     selected BOOLEAN DEFAULT FALSE,

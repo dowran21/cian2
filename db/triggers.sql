@@ -50,7 +50,10 @@ CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_n
                     WHEN language_id = 2 THEN ' комн.'
                 END
             END,
-            t_name,' ', E'\u00B7' , ' ' ,area ||
+            '' || 
+            CASE WHEN (t_name = 'Квартира') THEN 'кв.' 
+            ELSE t_name END,
+            ' ', E'\u00B7' , ' ' ,area ||
                 CASE 
                     WHEN language_id = 1 THEN ' m'
                     WHEN language_id = 2 THEN ' м'
@@ -73,7 +76,11 @@ CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_n
                 FROM specification_values sv
                     INNER JOIN specifications s ON s.id = sv.spec_id
                     INNER JOIN real_estate_specification_values resv ON resv.spec_id = s.id AND resv.spec_value_id = sv.id
-            WHERE resv.spec_id = 2 AND resv.real_estate_id = re_id)
+            WHERE resv.spec_id = 2 AND resv.real_estate_id = re_id) || 
+                 CASE 
+                    WHEN language_id = 1 THEN ' gat'
+                    WHEN language_id = 2 THEN ' этаж'
+                END
             END          
         )
         INTO real_name;
