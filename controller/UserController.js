@@ -510,7 +510,7 @@ req.body should be like this;
             return res.status(444).send(false)
         }
         if(!rows[0]?.active){
-            return res.status(488).send({message:"You can't add you are in bann"})
+            return res.status(444).send({message:"You can't add you are in bann"})
         }
     } catch (e) {
         console.log("I am in user select error")
