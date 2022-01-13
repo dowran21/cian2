@@ -48,13 +48,13 @@ CREATE TABLE users(
     deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     active BOOLEAN NOT NULL DEFAULT true, ---need to be added
-    UNIQUE(phone),
+    UNIQUE(phone) WHERE (deleted = false),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
 ); 
+-- CREATE UNIQUE INDEX users_idfx ON users (phone) WHERE (deleted = false);
 
- 
 CREATE TABLE user_permissions(
     id BIGSERIAL PRIMARY KEY NOT NULL,
     validity tsrange NOT NULL,

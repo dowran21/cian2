@@ -197,7 +197,7 @@ const UserLogin = async (req, res) =>{
         FROM users u
             LEFT JOIN access_ip ai
                 ON u.id = ai.user_id
-        WHERE u.phone = '${phone}' 
+        WHERE u.phone = '${phone}' AND deleted = false
         `
     try {
         const {rows} = await database.query(query_text, [])
