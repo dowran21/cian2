@@ -852,7 +852,8 @@ const GetRealEstateByID = async (req, res) => {
             ) AS location, 
             real_estate_name($1, l.id, tt.name, area), u.phone::text, ott.translation AS owner_type, 
             u.full_name, u.id::text AS user_id,
-            (SELECT COUNT(real.id)::text FROM real_estates real WHERE real.user_id = re.user_id) AS user_real_estate_count,
+            (SELECT COUNT(real.id)::text FROM real_estates real WHERE real.user_id = re.user_id AND real.is_active = 'true' AND real.status_id <> 2 
+            AND real.status_id <> 4) AS user_real_estate_count,
             
             (SELECT json_agg(image) FROM (
                 SELECT destination FROM real_estate_images rei
