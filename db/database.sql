@@ -495,7 +495,7 @@ CREATE TABLE activation_comment(
     user_id BIGINT NOT NULL,
     comment VARCHAR (300) NOT NULL,
     
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASACDE 
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE 
 );
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;

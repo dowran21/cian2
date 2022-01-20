@@ -1189,7 +1189,7 @@ const GetAllUsers = async (req, res) =>{
                 up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active,
                 (SELECT json_agg(com) FROM (
                     SELECT ac.comment FROM 
-                    activation_comment ac WHERE ac.user_id = ${u.id}
+                    activation_comment ac WHERE ac.user_id = u.id
                     ORDER BY ac.id DESC
                     LIMIT 1
                 )com) AS comment
