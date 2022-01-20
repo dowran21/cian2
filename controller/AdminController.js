@@ -1186,7 +1186,13 @@ const GetAllUsers = async (req, res) =>{
                 WHERE role_id = 3 ${WherePart}),
             (SELECT json_agg(op) FROM (
                 SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.created_at, 'YYYY.MM.DD') AS created_at,
-                up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active
+                up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active,
+                (SELECT json_agg(com) FROM (
+                    SELECT ac.comment FROM 
+                    activation_comment ac WHERE ac.user_id = ${u.id}
+                    ORDER BY ac.id DESC
+                    LIMIT 1
+                )com) AS comment
                 FROM users u
                     LEFT JOIN user_permissions up  
                         ON up.user_id = u.id AND (lower(validity) <= localtimestamp OR upper(validity) >= localtimestamp) AND is_active = true
@@ -2131,10 +2137,12 @@ const AddNotifyEstate = async (req, res) =>{
 
 const ChangeActivation = async (req, res) =>{
     const {id} = req.params;
-    const {is_active} = req.body
+    const {is_active, comment} = req.body
     const query_text = `
-        UPDATE users SET active = ${is_active} WHERE id = ${id}
+       WITH updated AS (UPDATE users SET active = ${is_active} WHERE id = ${id}) 
+        INSERT INTO activation_comment (user_id, comment) VALUES(${id}, '${comment}') 
     `
+    
     try {
         await database.query(query_text, [])
         return res.status(status.success).send(true)
