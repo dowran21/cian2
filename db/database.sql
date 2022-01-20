@@ -490,5 +490,13 @@ CREATE TABLE sql_injections (
     deleted BOOLEAN DEFAULT FALSE
 );
 
+CREATE TABLE activation_comment(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    user_id BIGINT NOT NULL,
+    comment VARCHAR (300) NOT NULL,
+    
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASACDE 
+);
+
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO dowran;
