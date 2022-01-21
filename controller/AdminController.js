@@ -1185,7 +1185,7 @@ const GetAllUsers = async (req, res) =>{
                 FROM users 
                 WHERE role_id = 3 ${WherePart}),
             (SELECT json_agg(op) FROM (
-                SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.created_at, 'YYYY.MM.DD') AS created_at,
+                SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.last_logged, 'YYYY.MM.DD') AS created_at,
                 up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active,
                 (SELECT json_agg(com) FROM (
                     SELECT ac.comment FROM 

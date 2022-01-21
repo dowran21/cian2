@@ -182,6 +182,19 @@ const VerifyEstateUser = async (req, res, next) =>{
     }
 }
 
+const CheckLastLogged = async (req, res, next) =>{
+    const user_id = req.user.id;
+    const query_text = `
+        UPDATE users SET last_logged = localtimestamp WHERE id = ${user_id}
+    `
+    try {
+        await database.query(query_text, [])
+        next();
+    } catch (e) {
+        next();
+    }
+}
+
 module.exports = {
     VerifyAdminAccessToken,
     VerifyUserAccessToken,
@@ -192,5 +205,6 @@ module.exports = {
     VerifyAdminRefreshToken,
     VerifyIsAdmin,
     VerifyEstateUser,
-    VerifyUserAccessTokenNext
+    VerifyUserAccessTokenNext,
+    CheckLastLogged
 }

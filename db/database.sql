@@ -48,6 +48,7 @@ CREATE TABLE users(
     deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     active BOOLEAN NOT NULL DEFAULT true, ---need to be added
+    last_logged TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     UNIQUE(phone) WHERE (deleted = false),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
