@@ -6,7 +6,8 @@ const Routers = require('./router/index.js')
 const cookieParser = require('cookie-parser')
 const path = require('path')
 const morgan = require ('morgan')
-
+// const { required } = require('joi')
+const {cron_job} = require ('./utils/cron')
 const port = process.env.PORT || 3000
 
 // let dir = path.join(__dirname, 'uploads')
@@ -45,7 +46,7 @@ app.use('/api', Routers)
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
-
+cron_job();
 
 
 

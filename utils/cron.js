@@ -4,8 +4,7 @@ const database = require('../db/index.js')
 const cron_job = async () =>{
     cron.schedule('00 00 * * *', function(){
         const query_text = `
-            WITH deleted AS (DELETE FROM view_address) 
-            DELETE FROM view_address_advertisements
+            UPDATE users SET deleted = true WHERE last_logged < (localtimestamp - INTERVAL '3 MONTHS') AND role_id = 3
             `
         try {
             database.query(query_text, [])
