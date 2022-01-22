@@ -70,6 +70,7 @@ CREATE TABLE locations(
     id SERIAL PRIMARY KEY NOT NULL,
     absolute_name VARCHAR(100) NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
+    position point,
     comment VARCHAR(150),
     main_location_id SMALLINT,
     UNIQUE(main_location_id, absolute_name),
