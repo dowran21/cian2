@@ -13,8 +13,7 @@ const GetSpecificationsForType = async (req, res) =>{
                             LEFT JOIN specification_value_translations svt 
                                 ON svt.spec_value_id = sv.id AND svt.language_id = l.id
                         WHERE sv.spec_id = s.id AND sv.enable = true
-                        ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
-                            integer) ELSE null END ASC, sv.absolute_value ASC
+                        ORDER BY sv.absolute_value ASC
                 )value) AS values
                 
             FROM specifications s
