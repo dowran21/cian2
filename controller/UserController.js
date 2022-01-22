@@ -50,7 +50,7 @@ const UserRegistration = async (req, res) =>{
         max_count = 20000
     }
     try {
-        const s = await database.query(`SELECT * FROM users WHERE phone = '${phone}'`, [])
+        const s = await database.query(`SELECT * FROM users WHERE phone = '${phone}' AND deleted = false`, [])
         if (s.rows[0]){
             let message = {}
             message["phone"] = "User with this phone has already exists"
