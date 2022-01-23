@@ -1040,7 +1040,7 @@ const UpdateLocation = async (req, res) =>{
         const {rows} = await database.query(query_text);
         try {
             const qt = `
-                SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
+                SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled, position[0] AS lat, position[1] AS lng
                     FROM locations l
                         INNER JOIN location_translations lt
                             ON lt.location_id = l.id AND lt.language_id = 1
