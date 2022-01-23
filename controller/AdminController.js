@@ -1030,9 +1030,9 @@ const UpdateLocation = async (req, res) =>{
     }
     const query_text = `
         WITH updated1 AS (
-            UPDATE location_translations SET translation = '${name_ru}' ${positionPart} WHERE language_id = 2 AND location_id = ${id}
+            UPDATE location_translations SET translation = '${name_ru}'  WHERE language_id = 2 AND location_id = ${id}
         ), aupdate_it AS (
-            UPDATE locations SET enabled = ${enabled} WHERE id = ${id}
+            UPDATE locations SET enabled = ${enabled} ${positionPart} WHERE id = ${id}
         )
         UPDATE location_translations SET translation = '${name_tm}' WHERE language_id = 1 AND location_id = ${id}
     `
