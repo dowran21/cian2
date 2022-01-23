@@ -571,7 +571,7 @@ const GetAllTypes = async (req, res) =>{
         const query_text = `
         SELECT ct.name, ctp.id, 
             t.absolute_name, cti.destination, tt.name AS name_ru, ttt.name AS name_tm 
-            , mtt.name AS main_type_name
+            , mtt.name AS main_type_name, t.id AS type_id
         FROM types t
             INNER JOIN type_translations mtt
                 ON mtt.type_id = t.main_type_id AND mtt.language_id = 2 
