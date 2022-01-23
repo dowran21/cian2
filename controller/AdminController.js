@@ -811,8 +811,8 @@ const Updatetype = async (req, res) =>{
     const {id} = req.params;
     const query_text = `
     WITH updated1 AS (
-        UPDATE type_translations SET name = ${name_ru} WHERE language_id = 2 AND type_id = ${id}
-    ) UPDATE type_translations SET name = ${name_ru} WHERE language_id = 1 AND type_id = ${id}
+        UPDATE type_translations SET name = '${name_ru}' WHERE language_id = 2 AND type_id = ${id}
+    ) UPDATE type_translations SET name = '${name_tm}' WHERE language_id = 1 AND type_id = ${id}
     `
     try {
         await database.query(query_text, [])

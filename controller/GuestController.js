@@ -941,7 +941,7 @@ const GetTypesCategory = async (req, res) => {
 const GetLocations = async (req, res) =>{
     const {lang} = req.params
     const query_text = `
-        SELECT l.id, lt.translation AS name,l.position[0] AS lat, l.position[1] AS lng
+        SELECT l.id, lt.translation AS name, l.position[0] AS lat, l.position[1] AS lng
         FROM locations l
             INNER JOIN languages lg 
                 ON lg.language_code = '${lang}'
