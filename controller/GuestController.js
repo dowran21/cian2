@@ -736,7 +736,7 @@ const FlatFilter = async (req, res) =>{
 
 const CommerceFilter = async (req, res) =>{
     const {lang} = req.params
-    const {location_id} = req.query
+    const {location_id, main_type_id} = req.query
     let wherePart = ``
     if(location_id){
         wherePart = ` AND (ml.id = ${location_id} OR l.id = ${location_id})`
@@ -768,7 +768,7 @@ const CommerceFilter = async (req, res) =>{
                         ON tt.type_id = t.id AND tt.language_id = l.id 
                     LEFT JOIN ctype_image ci
                         ON ci.ctype_id = cp.id
-                    WHERE t.main_type_id = 2 AND cp.deleted = false
+                    WHERE t.main_type_id = ${main_type_id} AND cp.deleted = false
                     
         )esta) estates
 
