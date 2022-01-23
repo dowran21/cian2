@@ -1026,11 +1026,11 @@ const UpdateLocation = async (req, res) =>{
     const {name_ru, name_tm, enabled, lat, lng} = req.body
     let positionPart = ``
     if(lat && lng){
-        positionPart = ` AND position = '(${lat}, ${lng})'`
+        positionPart = ` , position = '(${lat}, ${lng})'`
     }
     const query_text = `
         WITH updated1 AS (
-            UPDATE location_translations SET translation = '${name_ru}' WHERE language_id = 2 AND location_id = ${id}
+            UPDATE location_translations SET translation = '${name_ru}' ${positionPart} WHERE language_id = 2 AND location_id = ${id}
         ), aupdate_it AS (
             UPDATE locations SET enabled = ${enabled} WHERE id = ${id}
         )
