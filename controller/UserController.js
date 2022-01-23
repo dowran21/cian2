@@ -449,7 +449,7 @@ const UserRealEstates = async (req, res) =>{
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
             LEFT JOIN real_estate_prices rep 
                 ON rep.real_estate_id = re.id AND rep.is_active = true
-            WHERE re.user_id = ${user_id} AND re.status_id <> 2 AND re.status_id <> 4
+            WHERE re.user_id = ${user_id} AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false
             ORDER BY re.created_at DESC
             ${offSet}
             )
@@ -557,7 +557,7 @@ req.body should be like this;
     try {
         const query_text = `
             WITH selected AS (
-                SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id}
+                SELECT id FROM ctypes WHERE type_id = ${type_id} AND category_id = ${category_id} AND deleted = false
 
             ),inserted AS (
                 INSERT INTO real_estates(user_id, ctype_id, area, position, status_id, location_id)
@@ -705,7 +705,7 @@ const GetUserRealEstateByID = async (req, res) =>{
             ON lc.id = re.location_id
         LEFT JOIN location_translations ltt
             ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-        WHERE re.id = $1 
+        WHERE re.id = $1 AND ctp.deleted = false
    `
    try {
        const {rows} = await database.query(query_text, [id, lang]);
@@ -800,7 +800,7 @@ const GetWishList = async (req, res) =>{
             ON c.id = cp.category_id
         INNER JOIN user_wish_list uwl
             ON uwl.user_id = $1 AND uwl.real_estate_id = re.id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4     
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  AND cp.deleted = false 
     ) AS count) AS count,
 
         (SELECT json_agg(all1) FROM(
@@ -842,7 +842,7 @@ const GetWishList = async (req, res) =>{
                     ON c.id = cp.category_id
                 INNER JOIN user_wish_list uwl
                     ON uwl.user_id = $1 AND uwl.real_estate_id = re.id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  AND cp.deleted = false
             ORDER BY  re.id DESC  
         )all1) AS real_estates_all
             `
