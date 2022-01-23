@@ -832,14 +832,16 @@ const AddMainLocation = async (req, res)=>{
      {
          "name_ru":"Adding Russian wairnat"
          "name_tm":"Adding turmen wariant"
+         "lat":54512.546,
+         "lng":6513.3165
      }
      *******************************************/
-     const {name_ru, name_tm} = req.body
+     const {name_ru, name_tm, lat, lng} = req.body
      console.log(req.body)
      const query_text = `
          WITH inserted AS (
-             INSERT INTO locations(absolute_name)
-              VALUES ('${name_ru}') RETURNING id
+             INSERT INTO locations(absolute_name, position)
+              VALUES ('${name_ru}', '(${lat}, ${lng})') RETURNING id
         ), insert_trans AS (
              INSERT INTO location_translations(translation, language_id, location_id) VALUES
              ('${name_ru}', 2, (SELECT id FROM inserted)), ('${name_tm}', 1, (SELECT id FROM inserted)) 
@@ -848,7 +850,7 @@ const AddMainLocation = async (req, res)=>{
      try {
          const {rows} = await database.query(query_text, [])
          try {
-            const qt = `SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
+            const qt = `SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled, position[0] AS lat, position[1] AS lng
             FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1
@@ -921,7 +923,7 @@ const GetLocations = async (req, res) =>{
     const {lang} = req.params
     // console.log("hello getlocations")
     const query_text = `
-        SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled
+        SELECT l.id, lt.translation AS name_tm, ltt.translation AS name_ru, l.enabled, position[0] AS lat, position[1] AS lng
         FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 1
