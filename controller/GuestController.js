@@ -55,7 +55,7 @@ const GetSpecificationsForTypes = async (req, res) =>{
         for(let i=0; i<types.length; i++){
             join_part += `
                 INNER JOIN ctypes ctp${i}
-                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2 AND ctp.deleted = false
+                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2 AND ctp${i}.deleted = false
                 INNER JOIN type_specifications ts${i} 
                     ON ts${i}.spec_id = s.id AND ts${i}.ctype_id = ctp${i}.id AND ts${i}.deleted = false`
         }
