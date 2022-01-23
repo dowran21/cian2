@@ -531,7 +531,7 @@ const RealEstatePositions = async (req, res) =>{
     // console.log(spec_values)
     
     const query_text =`
-    SELECT DISTINCT ON (re.id) re.id, position[0] AS lat, position[1] AS lng, rep.price,
+    SELECT DISTINCT ON (re.id) re.id, re.position[0] AS lat, re.position[1] AS lng, rep.price,
     (SELECT real_estate_name(re.id, l.id, tt.name, re.area))
 
         FROM real_estates re 
@@ -832,7 +832,7 @@ const GetRealEstateByID = async (req, res) => {
 
     const position_part = `
     (SELECT json_agg(pos) FROM(
-        SELECT position[0] AS lat, position[1] AS lng
+        SELECT re.position[0] AS lat, re.position[1] AS lng
             FROM real_estates 
             WHERE real_estates.id = $1                 
     )pos) AS position,`

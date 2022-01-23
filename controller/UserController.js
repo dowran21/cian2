@@ -632,7 +632,7 @@ const GetUserRealEstateByID = async (req, res) =>{
     const {lang, id} = req.params
     const query_text = `
         SELECT DISTINCT ON (re.id) re.id AS real_estate_id, re.area::text, rep.price::text, re.location_id, 
-            ret.description AS description_tm, rett.description AS description_ru, position[0] AS lat, position[1] AS lng,
+            ret.description AS description_tm, rett.description AS description_ru, re.position[0] AS lat, re.position[1] AS lng,
             re.created_at::text, re.is_active, t.id AS type_id, c.id AS category_id,
             concat(
                 CASE 
