@@ -41,6 +41,7 @@ router.post('/add-specifications-to-type/:ctype_id', VerifyAdminAccessToken, Ver
 router.post('/change-queue-position/:type_spec_id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangeQueuePosition )
 router.post('/activation-type-specification/:type_spec_id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.DeleteTypeSpecification)
 router.post('/add-image-to-type/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), upload.single('picture'), resize_page_images, AdminController.AddTypeImage)
+router.post(`/delete-ctype/:id`, VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteCtype)
 
 router.post('/update-real-estate/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.UpdateRealEstate)
 

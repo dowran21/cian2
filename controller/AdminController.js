@@ -792,6 +792,20 @@ const ChangeQueuePosition = async (req, res) =>{
 
 }
 
+const DeleteCtype = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        UPDATE ctypes SET deleted = true WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const DeleteTypeSpecification = async (req, res) =>{
     const {type_spec_id} = req.params
     const {deleted} = req.body
@@ -2224,6 +2238,7 @@ module.exports = {
     AddSpecificationToType,
     DeleteTypeSpecification,
     ChangeQueuePosition,
+    DeleteCtype,
 
     AddToVIP,
     AddMainLocation,
