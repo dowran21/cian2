@@ -1023,7 +1023,7 @@ const UpdateLocation = async (req, res) =>{
     console.log(req.body)
 
     const {id} = req.params
-    const {name_ru, name_tm, enabled} = req.body
+    const {name_ru, name_tm, enabled, lat, lng} = req.body
     let positionPart = ``
     if(lat && lng){
         positionPart = ` AND position = '(${lat}, ${lng})'`
