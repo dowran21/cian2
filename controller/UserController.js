@@ -492,7 +492,7 @@ req.body should be like this;
     let user = {}
     try {
         const user_query = `
-            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission, u.active
+            SELECT u.id, u.max_count, u.owner_id, up.id AS user_permission, u.active,
                 
                 (SELECT COUNT(*) 
                     FROM real_estates
