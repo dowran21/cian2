@@ -1018,12 +1018,16 @@ const ActivateLocation = async (req, res) =>{
 
 const UpdateLocation = async (req, res) =>{
     /*
-         "name_tm"; "name_ru", enabled 
+         "name_tm"; "name_ru", enabled, lat, lng
     */ 
     console.log(req.body)
 
     const {id} = req.params
     const {name_ru, name_tm, enabled} = req.body
+    let positionPart = ``
+    if(lat && lng){
+        positionPart = ` AND position = '(${lat}, ${lng})'`
+    }
     const query_text = `
         WITH updated1 AS (
             UPDATE location_translations SET translation = '${name_ru}' WHERE language_id = 2 AND location_id = ${id}
