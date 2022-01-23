@@ -768,7 +768,7 @@ const CommerceFilter = async (req, res) =>{
                         ON tt.type_id = t.id AND tt.language_id = l.id 
                     LEFT JOIN ctype_image ci
                         ON ci.ctype_id = cp.id
-                    WHERE t.main_type_id = ${main_type_id} AND cp.deleted = false
+                    WHERE t.main_type_id = ${main_type_id ? `${main_type_id}` : `2`} AND cp.deleted = false
                     
         )esta) estates
 
