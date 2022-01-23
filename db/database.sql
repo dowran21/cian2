@@ -165,6 +165,7 @@ CREATE TABLE ctypes(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
     category_id SMALLINT NOT NULL,
     "type_id" SMALLINT NOT NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE;,
     UNIQUE(category_id, "type_id"),
     CONSTRAINT ctype_category_id_fk 
         FOREIGN KEY(category_id) REFERENCES  categories(id) ON UPDATE CASCADE,

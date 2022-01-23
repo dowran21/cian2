@@ -26,7 +26,7 @@ const GetSpecificationsForType = async (req, res) =>{
                         ON ctp.type_id = $2 AND ctp.category_id = $3
                     INNER JOIN type_specifications ts 
                         ON ts.spec_id = s.id 
-            WHERE ts.ctype_id = ctp.id AND ts.deleted = false AND s.is_active = true
+            WHERE ts.ctype_id = ctp.id AND ts.deleted = false AND ctp.deleted = false AND s.is_active = true
             ORDER BY ts.queue_position ASC
     ` 
         const {rows} = await database.query(query_text, [lang, type_id, category_id])
@@ -55,7 +55,7 @@ const GetSpecificationsForTypes = async (req, res) =>{
         for(let i=0; i<types.length; i++){
             join_part += `
                 INNER JOIN ctypes ctp${i}
-                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2
+                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2 AND ctp.deleted = false
                 INNER JOIN type_specifications ts${i} 
                     ON ts${i}.spec_id = s.id AND ts${i}.ctype_id = ctp${i}.id AND ts${i}.deleted = false`
         }
@@ -358,7 +358,7 @@ const AllRealEstate = async (req, res) =>{
                 ON t.id = cp.type_id
             LEFT JOIN categories c 
                 ON c.id = cp.category_id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} 
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false ${where_part} 
         ORDER BY  re.id DESC),
 
                     
@@ -393,7 +393,7 @@ const AllRealEstate = async (req, res) =>{
                 ON u.id = re.user_id
             INNER JOIN categories c 
                 ON c.id = cp.category_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  ${where_part}
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false ${where_part}
         ) AS count),
 
         (SELECT json_agg(res) FROM 
@@ -550,7 +550,7 @@ const RealEstatePositions = async (req, res) =>{
                 ON u.id = re.user_id
             INNER JOIN types t
                 ON t.id = cp.type_id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 ${where_part} 
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false ${where_part} 
         `
     try {
         console.log(query_text)
@@ -684,7 +684,7 @@ const CountForFilter = async (req, res) =>{
                     ON lc.id = re.location_id
                 INNER JOIN users u
                     ON u.id = re.user_id
-                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 
+                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false
                     ${where_part} ) AS real_estaates
     `
     try {
@@ -714,7 +714,7 @@ const FlatFilter = async (req, res) =>{
                                         ON cp.category_id = c.id AND cp.type_id = 3 AND re.ctype_id = cp.id
                                     INNER JOIN real_estate_specification_values resv
                                         ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
-                                    WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4
+                                    WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false
                             )
                         
                         FROM specification_values sv 
@@ -756,7 +756,7 @@ const CommerceFilter = async (req, res) =>{
                             LEFT JOIN locations ml
                                 ON ml.id = l.main_location_id
                             WHERE re.is_active = 'true' AND re.status_id <> 2 
-                                AND re.status_id <> 4 AND cp.type_id = t.id AND cp.category_id = c.id ${wherePart}
+                                AND re.status_id <> 4 AND cp.type_id = t.id AND cp.category_id = c.id AND cp.deleted = false ${wherePart}
                     )
 
                 FROM types t
@@ -768,7 +768,7 @@ const CommerceFilter = async (req, res) =>{
                         ON tt.type_id = t.id AND tt.language_id = l.id 
                     LEFT JOIN ctype_image ci
                         ON ci.ctype_id = cp.id
-                    WHERE t.main_type_id = 2
+                    WHERE t.main_type_id = 2 AND cp.deleted = false
                     
         )esta) estates
 
@@ -798,7 +798,7 @@ const TypeCategoryController = async (req, res) =>{
                                 ON ctypes.type_id = t.id 
                             INNER JOIN type_translations tt 
                                 ON tt.type_id = t.id 
-                        WHERE ctypes.category_id = c.id AND tt.language_id = l.id AND t.main_type_id = ty.id AND t.main_type_id IS NOT NULL
+                        WHERE ctypes.category_id = c.id AND tt.language_id = l.id AND t.main_type_id = ty.id AND t.main_type_id IS NOT NULL AND ctypes.deleted = false
 
                     )type) AS sub_types
             
@@ -902,7 +902,7 @@ const GetRealEstateByID = async (req, res) => {
                 ON lc.id = re.location_id
             LEFT JOIN location_translations ltt
                 ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-        WHERE re.id = $1 AND re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4
+        WHERE re.id = $1 AND re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND ctp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [id, lang, ip])
@@ -926,7 +926,7 @@ const GetTypesCategory = async (req, res) => {
                 ON t.id = ctp.type_id AND t.main_type_id = $3
             INNER JOIN type_translations tt 
                 ON tt.type_id = t.id AND tt.language_id = l.id
-        WHERE ctp.category_id = $2
+        WHERE ctp.category_id = $2 AND ctp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [lang, cat_id, main_id])
@@ -1021,7 +1021,7 @@ const GetWishList = async (req, res) =>{
                      ON resv.real_estate_id = re.id
                  INNER JOIN users u
                      ON u.id = re.user_id
-             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND re.id IN (${real_estates?.map(item => `${item}`).join(',')})
+             WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false AND re.id IN (${real_estates?.map(item => `${item}`).join(',')})
          ) res) AS real_estates_all
      `
         const {rows} = await database.query(query_text, [lang])
@@ -1121,7 +1121,7 @@ const GetUserRealEstates = async (req, res) =>{
                 ON t.id = cp.type_id
             INNER JOIN categories c 
                 ON c.id = cp.category_id
-        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND re.user_id = $1
+        WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND re.user_id = $1 AND cp.deleted = false
         ORDER BY  re.id DESC  ${offSet}
     `
     try {
@@ -1146,7 +1146,7 @@ const GetTypesOfCategory = async (req, res) =>{
                 ON cp.category_id = ${id}
             INNER JOIN ctype_image cpi
                 ON cpi.ctype_id = cp.id
-        WHERE t.main_type_id IS NOT NULL
+        WHERE t.main_type_id IS NOT NULL AND cp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1175,7 +1175,7 @@ const GetCountOfCategory = async (req, res) =>{
                 ON cp.category_id = ${id} AND cp.type_id = t.id
             LEFT JOIN ctype_image cpi
                 ON cpi.ctype_id = cp.id
-            WHERE t.main_type_id = 1
+            WHERE t.main_type_id = 1 AND cp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1261,7 +1261,7 @@ const GetHistoryView = async (req, res) =>{
                     ON t.id = cp.type_id
                 LEFT JOIN categories c 
                     ON c.id = cp.category_id
-            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4  AND re.id IN (${real_estates.map(item => `${item}`).join(',')})
+            WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false AND re.id IN (${real_estates.map(item => `${item}`).join(',')})
             ORDER BY  re.id DESC  ${offSet})
         
         SELECT
@@ -1288,7 +1288,7 @@ const GetHistoryView = async (req, res) =>{
                     ON t.id = cp.type_id
                 INNER JOIN categories c 
                     ON c.id = cp.category_id
-                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4    
+                WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4   AND cp.deleted = false 
             ) AS count),
 
             (SELECT json_agg(res) FROM 
@@ -1330,6 +1330,7 @@ const GetNotifies = async (req, res) =>{
             ON u.id = re.user_id
         INNER JOIN types t
             ON t.id = cp.type_id
+        WHERE cp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [])

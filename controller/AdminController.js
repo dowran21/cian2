@@ -587,7 +587,7 @@ const GetAllTypes = async (req, res) =>{
                 ON ct.category_id = ctp.category_id AND ct.language_id = 2
             LEFT JOIN ctype_image cti
                 ON cti.ctype_id = ctp.id
-        WHERE t.main_type_id IS NOT NULL
+        WHERE t.main_type_id IS NOT NULL AND ctp.deleted = false
         ORDER BY ctp.id ASC
         `
         const {rows} = await database.query(query_text, [])
@@ -673,7 +673,7 @@ const AddType = async (req, res) =>{
                     ON ct.category_id = ctp.category_id AND ct.language_id = 2
                 LEFT JOIN ctype_image cti
                     ON cti.ctype_id = ctp.id
-            WHERE t.main_type_id IS NOT NULL AND t.id = ${rows[0].id}
+            WHERE t.main_type_id IS NOT NULL AND t.id = ${rows[0].id} AND ctp.deleted = false
             `
             const k = await database.query(s_query, [])
             const s = k.rows;
@@ -719,7 +719,7 @@ const GetTypeByID = async (req, res) =>{
                     ON tt.type_id = t.id AND tt.language_id = 2
                 INNER JOIN type_translations ttt
                     ON ttt.type_id = t.id AND ttt.language_id = 1
-            WHERE ctp.id = $1
+            WHERE ctp.id = $1 AND ctp.deleted = false
         `
     try{
         const {rows} = await database.query(query_text, [id])
@@ -1357,14 +1357,14 @@ const GetStatistics = async (req, res) =>{
             (SELECT DISTINCT ON (re.id) re.id
                 FROM real_estates re
                     INNER JOIN ctypes cp 
-                            ON cp.id = re.ctype_id
+                            ON cp.id = re.ctype_id 
                     INNER JOIN real_estate_prices rep 
                             ON rep.real_estate_id = re.id AND rep.is_active = 'true'
                     INNER JOIN locations lc 
                             ON lc.id = re.location_id
                     INNER JOIN real_estate_specification_values resv
                             ON resv.real_estate_id = re.id
-                WHERE re.status_id = st.id ${where_part} ${spec_part}
+                WHERE re.status_id = st.id AND cp.deleted = false ${where_part} ${spec_part}
             ) AS r
         )
         FROM statuses st
@@ -1454,7 +1454,7 @@ const GetPriceStatistics = async (req, res) =>{
                     ON lc.id = re.location_id
             INNER JOIN real_estate_specification_values resv
                     ON resv.real_estate_id = re.id
-        WHERE re.id > 0   ${where_part} ${spec_part}
+        WHERE re.id > 0  AND ctp.deleted = false ${where_part} ${spec_part}
         GROUP BY date_trunc('day', re.created_at) 
         `
     try {
@@ -1663,7 +1663,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     LEFT JOIN logs lg
                         ON re.id = (lg.data ->>'id')::bigint AND lg.event_type_id =1
                         ${op_join}
-                WHERE re.id > 0 ${active_part} ${status_part} ${where_part} 
+                WHERE re.id > 0 AND cp.deleted = false ${active_part} ${status_part} ${where_part} 
                     AND re.status_id <> 2 AND re.status_id <> 4
                 ORDER BY  re.id DESC
                 
@@ -1819,7 +1819,7 @@ const RealestateByID = async (req, res) =>{
             ON lc.id = re.location_id
         LEFT JOIN location_translations ltt
             ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-    WHERE re.id = $1 AND re.status_id <> 2 AND re.status_id <> 4
+    WHERE re.id = $1 AND re.status_id <> 2 AND re.status_id <> 4 AND tp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [id])
@@ -1908,7 +1908,7 @@ const GetRealEstateStatistics = async (req, res) =>{
                 ON ssss.id = re.status_id AND ssss.id = 4
             INNER JOIN ctypes ctp 
                 ON ctp.id = re.ctype_id
-            WHERE re.id > 0 ${where_part}    
+            WHERE re.id > 0 AND ctp.deleted = false ${where_part}    
         GROUP BY date_trunc('${inter}', re.created_at) 
         
     `
@@ -1954,7 +1954,7 @@ const NotActivatedEstates = async (req, res) =>{
                     LEFT JOIN location_translations ltt
                         ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
                 WHERE re.is_active = 'false' 
-                    AND re.status_id <> 2 AND re.status_id <> 4 
+                    AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false
                 ORDER BY  re.updated_at DESC  
                 LIMIT 15
             ) SELECT * FROM selected;   
@@ -2115,7 +2115,7 @@ const AddNotify = async (req, res) => {
                     ON cp.id = re.ctype_id
                 INNER JOIN real_estate_prices rep
                     ON rep.real_estate_id = re.id AND rep.is_active = true
-            WHERE re.id > 0 ${where_part}
+            WHERE re.id > 0 AND cp.deleted = false ${where_part}
         ) INSERT INTO push_messages (user_id, push_id) SELECT id ,  (SELECT id FROM inserted) FROM selected        
     `   
     try {
