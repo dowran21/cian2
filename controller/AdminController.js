@@ -806,6 +806,23 @@ const DeleteCtype = async (req, res) =>{
     }
 }
 
+const Updatetype = async (req, res) =>{
+    const {name_ru, name_tm} = req.body;
+    const {id} = req.params;
+    const query_text = `
+    WITH updated1 AS (
+        UPDATE type_translations SET name = ${name_ru} WHERE language_id = 2 AND type_id = ${id}
+    ) UPDATE type_translations SET name = ${name_ru} WHERE language_id = 1 AND type_id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const DeleteTypeSpecification = async (req, res) =>{
     const {type_spec_id} = req.params
     const {deleted} = req.body
@@ -2239,6 +2256,7 @@ module.exports = {
     DeleteTypeSpecification,
     ChangeQueuePosition,
     DeleteCtype,
+    Updatetype,
 
     AddToVIP,
     AddMainLocation,
