@@ -1819,7 +1819,7 @@ const RealestateByID = async (req, res) =>{
             ON lc.id = re.location_id
         LEFT JOIN location_translations ltt
             ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
-    WHERE re.id = $1 AND re.status_id <> 2 AND re.status_id <> 4 AND tp.deleted = false
+    WHERE re.id = $1 AND re.status_id <> 2 AND re.status_id <> 4 AND ctp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [id])
