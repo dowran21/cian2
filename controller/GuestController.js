@@ -95,6 +95,120 @@ const GetSpecificationsForTypes = async (req, res) =>{
     }
 }
 
+const GetRequiredSpecificationsForTypes = async (req, res) =>{
+    const {category_id, lang} = req.params
+    const {type_id} = req.query;
+    let types = []
+    if(type_id){
+        try {
+            types = JSON.parse(type_id);
+        } catch (e) {
+            console.log(e);
+            console.log("I am in all specifications error")
+        }
+    }
+    let join_part = ``
+    if (types && types.length > 0){
+        for(let i=0; i<types.length; i++){
+            join_part += `
+                INNER JOIN ctypes ctp${i}
+                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2 AND ctp${i}.deleted = false
+                INNER JOIN type_specifications ts${i} 
+                    ON ts${i}.spec_id = s.id AND ts${i}.ctype_id = ctp${i}.id AND ts${i}.deleted = false`
+        }
+    }else{
+        return res.status(status.success).json({"rows":null})
+    }
+    console.log(types)
+    try {
+        const query_text = `
+            SELECT s.id AS specification_id, s.is_multiple, s.is_required, st.name,
+
+                (SELECT json_agg(value) FROM (
+                    SELECT sv.id AS value_id, sv.absolute_value, svt.name 
+                        FROM specification_values sv
+                            LEFT JOIN specification_value_translations svt 
+                                ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                        WHERE sv.spec_id = s.id AND sv.enable = true
+                        ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                            DOUBLE PRECISION) ELSE null END ASC, sv.absolute_value ASC
+                )value) AS values
+                
+            FROM specifications s
+                    INNER JOIN languages l 
+                        ON l.language_code = $1
+                    LEFT JOIN specification_translations st 
+                        ON st.spec_id = s.id AND st.language_id = l.id
+                     ${join_part}
+            WHERE s.is_active = true AND s.is_required = true
+            ORDER BY ts0.queue_position ASC
+    ` 
+        const {rows} = await database.query(query_text, [lang, category_id])
+        // console.log(rows)
+        res.status(status.success).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(e)
+    }
+}
+
+const GetNotRequiredSpecificationsForTypes = async (req, res) =>{
+    const {category_id, lang} = req.params
+    const {type_id} = req.query;
+    let types = []
+    if(type_id){
+        try {
+            types = JSON.parse(type_id);
+        } catch (e) {
+            console.log(e);
+            console.log("I am in all specifications error")
+        }
+    }
+    let join_part = ``
+    if (types && types.length > 0){
+        for(let i=0; i<types.length; i++){
+            join_part += `
+                INNER JOIN ctypes ctp${i}
+                    ON ctp${i}.type_id = ${types[i]} AND ctp${i}.category_id = $2 AND ctp${i}.deleted = false
+                INNER JOIN type_specifications ts${i} 
+                    ON ts${i}.spec_id = s.id AND ts${i}.ctype_id = ctp${i}.id AND ts${i}.deleted = false`
+        }
+    }else{
+        return res.status(status.success).json({"rows":null})
+    }
+    console.log(types)
+    try {
+        const query_text = `
+            SELECT s.id AS specification_id, s.is_multiple, s.is_required, st.name,
+
+                (SELECT json_agg(value) FROM (
+                    SELECT sv.id AS value_id, sv.absolute_value, svt.name 
+                        FROM specification_values sv
+                            LEFT JOIN specification_value_translations svt 
+                                ON svt.spec_value_id = sv.id AND svt.language_id = l.id
+                        WHERE sv.spec_id = s.id AND sv.enable = true
+                        ORDER BY CASE WHEN sv.absolute_value ~ '\\d+' THEN cast(sv.absolute_value as 
+                            DOUBLE PRECISION) ELSE null END ASC, sv.absolute_value ASC
+                )value) AS values
+                
+            FROM specifications s
+                    INNER JOIN languages l 
+                        ON l.language_code = $1
+                    LEFT JOIN specification_translations st 
+                        ON st.spec_id = s.id AND st.language_id = l.id
+                     ${join_part}
+            WHERE s.is_active = true AND s.is_required = false
+            ORDER BY ts0.queue_position ASC
+    ` 
+        const {rows} = await database.query(query_text, [lang, category_id])
+        // console.log(rows)
+        res.status(status.success).json({"rows":rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(e)
+    }
+}
+
 const GetSpecForTypeSearch = async (req, res) =>{
     const {type_id, lang} = req.params
     try {
@@ -130,37 +244,6 @@ const GetSpecForTypeSearch = async (req, res) =>{
     }
 }
 
-const GetNotRequiredSpecificationsForType = async (req, res) =>{
-    const {type_id, lang} = req.params
-    try {
-        const query_text = `
-                    SELECT s.id AS specification_id, s.is_multiple, s.is_required, st.name,
-
-                        (SELECT json_agg(value) FROM (
-                            SELECT sv.id AS value_id, sv.absolute_value, svt.name 
-                                FROM specification_values sv
-                                    LEFT JOIN specification_value_translations svt 
-                                        ON svt.spec_value_id = sv.id AND svt.language_id = l.id
-                                WHERE sv.spec_id = s.id
-                        )value) AS values
-                        
-                    FROM specifications s
-                            INNER JOIN languages l ON l.language_code = $1
-                            LEFT JOIN specification_translations st ON st.spec_id = s.id AND st.language_id = l.id
-                            INNER JOIN type_specifications ts ON ts.spec_id = s.id
-                    WHERE ts.type_id = $2 AND s.is_required = 'false'               
-                
-        ` 
-        console.log(query_text)
-        const {rows} = await database.query(query_text, [lang, type_id])
-
-        res.json({"rows":rows})
-    } catch (e) {
-        res.json({"message":"something went wrog"})
-        throw e
-    }
-
-}
 
 const Languages = async (req, res) =>{
 
@@ -1362,7 +1445,7 @@ module.exports = {
     GetSpecificationsForType,
     GetSpecificationsForTypes,
     GetSpecForTypeSearch,
-    GetNotRequiredSpecificationsForType,
+    GetNotRequiredSpecificationsForTypes,
     Languages,
     AllRealEstate,
     TypeCategoryController,
@@ -1383,5 +1466,6 @@ module.exports = {
     GetSpecByID,
     GetHistoryView,
     GetNotifies,
-    GetImagePlaceRandom 
+    GetImagePlaceRandom,
+    GetRequiredSpecificationsForTypes
 }   
