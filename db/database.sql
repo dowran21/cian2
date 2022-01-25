@@ -49,12 +49,12 @@ CREATE TABLE users(
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     active BOOLEAN NOT NULL DEFAULT true, ---need to be added
     last_logged TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    UNIQUE(phone) WHERE (deleted = false),
+    -- UNIQUE(phone, deleted) WHERE (deleted = false),
 
     CONSTRAINT owner_id_fk FOREIGN KEY (owner_id) REFERENCES owners(id),
     CONSTRAINT role_id_fk FOREIGN KEY (role_id) REFERENCES roles(id) 
 ); 
--- CREATE UNIQUE INDEX users_idfx ON users (phone) WHERE (deleted = false);
+CREATE UNIQUE INDEX users_idfx ON users (phone) WHERE (deleted = false);
 
 CREATE TABLE user_permissions(
     id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE user_permissions(
     is_active BOOLEAN NOT NULL DEFAULT true,
     user_id BIGINT NOT NULL,
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE 
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE 
 );
 
 ---------------locations----------------
@@ -98,7 +98,7 @@ CREATE TABLE operator_locations(
     location_id BIGINT NOT NULL,
     UNIQUE(user_id, location_id),
 
-    CONSTRAINT location_id_fk FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE,
+    CONSTRAINT location_id_fk FOREIGN KEY (location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
 );
 
@@ -113,7 +113,7 @@ CREATE TABLE access_ip(
     activated BOOLEAN DEFAULT FALSE,
     UNIQUE(user_id, ip_address),
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id)  REFERENCES users(id)
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id)  REFERENCES users(id)   ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE categories(
@@ -138,7 +138,7 @@ CREATE TABLE types(
     absolute_name CHARACTER VARYING(30) NOT NULL,
     main_type_id SMALLINT,
     CONSTRAINT main_type_id_fk 
-        FOREIGN KEY (main_type_id) REFERENCES types(id)
+        FOREIGN KEY (main_type_id) REFERENCES types(id)  ON UPDATE CASCADE  ON DELETE CASCADE
 );
 
 CREATE TABLE type_translations(
@@ -165,10 +165,10 @@ CREATE TABLE ctypes(
     id SMALLSERIAL PRIMARY KEY NOT NULL,
     category_id SMALLINT NOT NULL,
     "type_id" SMALLINT NOT NULL,
-    deleted BOOLEAN NOT NULL DEFAULT FALSE;,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE(category_id, "type_id"),
     CONSTRAINT ctype_category_id_fk 
-        FOREIGN KEY(category_id) REFERENCES  categories(id) ON UPDATE CASCADE,
+        FOREIGN KEY(category_id) REFERENCES  categories(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT ctype_type_id_fk 
         FOREIGN KEY("type_id") REFERENCES  types(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -251,11 +251,11 @@ CREATE TABLE real_estates(
     selected_vip BOOLEAN DEFAULT FALSE,
 
     CONSTRAINT location_id_fk 
-        FOREIGN KEY(location_id) REFERENCES locations(id) ON UPDATE CASCADE,
+        FOREIGN KEY(location_id) REFERENCES locations(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT real_estate_ctype_id_fk 
-        FOREIGN KEY(ctype_id) REFERENCES ctypes(id) ON UPDATE CASCADE,
+        FOREIGN KEY(ctype_id) REFERENCES ctypes(id) ON UPDATE CASCADE  ON DELETE CASCADE,
     CONSTRAINT status_id_fk 
-        FOREIGN KEY (status_id) REFERENCES statuses(id)
+        FOREIGN KEY (status_id) REFERENCES statuses(id)  ON DELETE CASCADE
 );
 CREATE INDEX real_estate_ctype_idx ON real_estates (ctype_id);
 
@@ -264,7 +264,7 @@ CREATE TABLE real_estate_comments(
     real_estate_id BIGINT NOT NULL,
     comment VARCHAR(500),
 
-    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id)
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id)  ON DELETE CASCADE
 );
 
 CREATE TABLE real_estate_prices(
@@ -333,9 +333,9 @@ CREATE TABLE vip_real_estates(
     EXCLUDE USING gist(vip_dates WITH &&, real_estate_id WITH =),
 
     CONSTRAINT real_estate_id_fk 
-        FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE,
+        FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE  ON DELETE CASCADE,
     CONSTRAINT vip_type_id_fk 
-        FOREIGN KEY (vip_type_id) REFERENCES vip_types(id) ON UPDATE CASCADE
+        FOREIGN KEY (vip_type_id) REFERENCES vip_types(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 ----------VIEW COUNT-------------
 CREATE TABLE view_type(
@@ -379,7 +379,7 @@ CREATE TABLE place_images(
     image_place_id SMALLINT NOT NULL,
     destination VARCHAR(150) NOT NULL,
 
-    CONSTRAINT image_place_id_fk FOREIGN KEY (image_place_id) REFERENCES image_places(id) 
+    CONSTRAINT image_place_id_fk FOREIGN KEY (image_place_id) REFERENCES image_places(id)  ON UPDATE CASCADE  ON DELETE CASCADE
 );
 
 ------------------image for type -------------
@@ -389,7 +389,7 @@ CREATE TABLE ctype_image(
     destination VARCHAR(150) NOT NULL,
     UNIQUE(ctype_id),
 
-    CONSTRAINT type_id_fk FOREIGN KEY (ctype_id) REFERENCES ctypes(id)
+    CONSTRAINT type_id_fk FOREIGN KEY (ctype_id) REFERENCES ctypes(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE user_wish_list(
@@ -398,8 +398,8 @@ CREATE TABLE user_wish_list(
     real_estate_id BIGINT NOT NULL,
     UNIQUE (user_id, real_estate_id),
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
-    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 ------------push notifications------------
@@ -415,8 +415,8 @@ CREATE TABLE pushes(
     message_tm VARCHAR (300),
     message_ru VARCHAR (300),   
     
-    CONSTRAINT type_id_fk FOREIGN KEY (type_id) REFERENCES types(id),
-    CONSTRAINT category_id_fk FOREIGN KEY (category_id) REFERENCES categories(id)
+    CONSTRAINT type_id_fk FOREIGN KEY (type_id) REFERENCES types(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT category_id_fk FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE push_messages(
@@ -425,8 +425,8 @@ CREATE TABLE push_messages(
     is_sent BOOLEAN NOT NULL DEFAULT FALSE,
     push_id BIGINT NOT NULL,
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
-    CONSTRAINT push_id_fk FOREIGN KEY (push_id) REFERENCES pushes(id) ON UPDATE CASCADE
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE  ON DELETE CASCADE,
+    CONSTRAINT push_id_fk FOREIGN KEY (push_id) REFERENCES pushes(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE real_estate_notifies(
@@ -434,7 +434,7 @@ CREATE TABLE real_estate_notifies(
     real_estate_id BIGINT NOT NULL,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
 
-    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id)
+    CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -------------------logs-------------------
@@ -480,7 +480,7 @@ CREATE TABLE complaints (
     user_id BIGINT NOT NULL,
     accepted BOOLEAN DEFAULT FALSE,
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT real_estate_id_fk FOREIGN KEY (real_estate_id) REFERENCES real_estates(id) ON UPDATE CASCADE
 );
 
@@ -498,7 +498,7 @@ CREATE TABLE activation_comment(
     user_id BIGINT NOT NULL,
     comment VARCHAR (300) NOT NULL,
     
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE 
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO dowran;
