@@ -1650,8 +1650,6 @@ const GetConfirmRealEstates = async (req, res) =>{
     let where_part = ``
     if(search){
         where_part += ` AND (u.phone ~* '${search}' OR u.full_name ~* '${search}')`
-    }else{
-        where_part = ``
     }
     if(type_id){
         where_part += ` AND cp.type_id = ${type_id}`
