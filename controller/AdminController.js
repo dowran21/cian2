@@ -1614,7 +1614,7 @@ const ActivateIP = async (req, res) =>{
 }
 
 const GetConfirmRealEstates = async (req, res) =>{
-    const {page, limit, search, is_active, status_id} = req.query
+    const {page, limit, search, is_active, status_id, location_id, type_id, category_id} = req.query
     let offSet = ``
     if(page && limit){
         offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
@@ -1653,7 +1653,15 @@ const GetConfirmRealEstates = async (req, res) =>{
     }else{
         where_part = ``
     }
-
+    if(type_id){
+        where_part += ` AND cp.type_id = ${type_id}`
+    }
+    if(category_id){
+        where_part += ` AND cp.category_id = ${category_id}`
+    }
+    if(location_id) {
+        where_part +=  ` AND lc.main_location_id  = ${location_id}`
+    }
     
     try {
         const query_text = `
