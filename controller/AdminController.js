@@ -2232,6 +2232,7 @@ const GetLocationsForSelect = async (req, res) =>{
             FROM locations l
             INNER JOIN location_translations lt
                 ON lt.location_id = l.id AND lt.language_id = 2
+            WHERE l.main_location_id IS NULL
     `
     try {
         const {rows} = await database.query(query_text, [])
