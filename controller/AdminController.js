@@ -437,6 +437,34 @@ const GetSpecificationByID = async (req, res)=>{
 
 } 
 
+const DeleteSpecification = async (req, res) =>{
+    const {id} = req.params;
+    const query_text  = `
+        DELETE FROM specifications WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
+const DeleteSpecValue = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        DELETE FROM specification_values WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const SpecificationActivation = async (req, res) =>{
     const {id} = req.params
     const {is_active} = req.body
@@ -2285,6 +2313,8 @@ module.exports = {
     AddSpecification,
     UpdateSpecification,
     GetSpecificationByID,
+    DeleteSpecification,
+    DeleteSpecValue,
     GetAllSpecifications,
     SpecificationActivation,
     GetNotContainedSpec,

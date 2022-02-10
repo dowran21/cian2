@@ -29,6 +29,9 @@ router.post('/activation-of-specification/:id', VerifyAdminAccessToken, VerifyIs
 router.post('/disable-enable-spec-val/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DisableEnableValue)
 router.post('/add-spec-val/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.AddSpecVal)
 router.post('/update-specification/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.UpdateSpecification)
+router.post('/delete-specification/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteSpecification);
+router.post('/delete-spec-value/:id', VerifyAdminAccessToken, VerifyIsAdmin, ParamsSchemaMiddleware(Schema.IdSchema), AdminController.DeleteSpecValue)
+
 
 router.post('/add-main-type', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.AddMaintype)
 router.post('/add-type', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.AddType)
