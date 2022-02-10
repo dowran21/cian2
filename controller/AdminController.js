@@ -1718,6 +1718,8 @@ const GetConfirmRealEstates = async (req, res) =>{
                         ON lc.id = re.location_id
                     INNER JOIN users u
                         ON u.id = re.user_id
+                    INNER JOIN ctypes cp 
+                        ON cp.id = re.ctype_id
                         ${op_join}
                     WHERE re.id >0 ${active_part} ${status_part} ${where_part} 
                         AND re.status_id <> 2 AND re.status_id <> 4
