@@ -98,5 +98,7 @@ router.post('/add-to-notification/:id', VerifyAdminAccessToken, AdminController.
 router.get('/get-injections', VerifyAdminAccessToken, AdminController.GetInjections)
 router.post('/delete-injection/:id', VerifyAdminAccessToken, AdminController.DeleteInjection)
 
+router.get('/locations-for-select', VerifyAdminAccessToken, AdminController.GetLocationsForSelect);
+router.get('/types-for-select', VerifyAdminAccessToken, AdminController.GetTypesForSelect)
 
 module.exports = router
