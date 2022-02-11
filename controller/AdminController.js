@@ -1274,6 +1274,7 @@ const GetAllUsers = async (req, res) =>{
         `
     try {
         const {rows} = await database.query(query_text, [])
+        console.log(query_text)
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
