@@ -203,9 +203,9 @@ CREATE TABLE type_specifications(
     
     UNIQUE(spec_id, "ctype_id"),
     CONSTRAINT ctype_specification_spec_id_fk 
-        FOREIGN KEY(spec_id) REFERENCES  specifications(id) ON UPDATE CASCADE,
-    CONSTRAINT ctype_specification_type_id_fk 
-        FOREIGN KEY("ctype_id") REFERENCES  ctypes(id) ON UPDATE CASCADE
+        FOREIGN KEY(spec_id) REFERENCES  specifications(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT ctype_specification_type_id_fk  
+        FOREIGN KEY("ctype_id") REFERENCES  ctypes(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE specification_values(

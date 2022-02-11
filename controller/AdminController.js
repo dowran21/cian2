@@ -1212,7 +1212,7 @@ const GetTypes = async (req, res) =>{
 
 const GetAllUsers = async (req, res) =>{
     const {page, limit} = req.query
-    const {search, sort_direction, sort_column} = req.query
+    const {search, sort_direction, sort_column, owner_id, active} = req.query
     let OffSet = ``
     if (page && limit) {
         OffSet = ` OFFSET ${(page)*limit} LIMIT ${limit}`
@@ -1221,7 +1221,7 @@ const GetAllUsers = async (req, res) =>{
     }
     let WherePart = ``
     if(search && search != 'null' && search != 'undefined'){
-        WherePart += ` AND (full_name ~* '${search}' OR phone ~* '${search}')`
+        WherePart += ` AND (u.full_name ~* '${search}' OR u.phone ~* '${search}' OR u.email  ~* '${search}')`
     }
     // if(phone && phone != 'null' && phone != 'undefined'){
     //     WherePart += ` AND phone = '${phone}'`
@@ -1241,14 +1241,20 @@ const GetAllUsers = async (req, res) =>{
         order_direction = ` DESC`
     }
 
+    if(owner_id){
+        WherePart += ` AND u.owner_id = ${owner_id}`
+    }
+    if(active){
+        WherePart += ` AND u.active = ${active}`
+    }
     
     let order_part = `ORDER BY ${order_column} ${order_direction}`
 
     const query_text = `
         SELECT
             (SELECT COUNT(*) 
-                FROM users 
-                WHERE role_id = 3 ${WherePart}),
+                FROM users u
+                WHERE u.role_id = 3 ${WherePart}),
             (SELECT json_agg(op) FROM (
                 SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.last_logged, 'YYYY.MM.DD') AS created_at,
                 up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active,
