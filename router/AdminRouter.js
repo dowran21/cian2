@@ -82,6 +82,7 @@ router.post(`/accept-complaint/:id`, VerifyAdminAccessToken, AdminController.Acc
 router.get('/get-user-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUsersStatistics)
 router.get('/get-active-real-estates', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetActiveStatistics)
 router.get('/get-real-estate-statistics', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetRealEstateStatistics)
+router.get('/get-location-statistics', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetLocationStatistics)
 
 router.get('/get-user-for-activation', VerifyAdminAccessToken, AdminController.GetUserForActivation)
 router.post('/activate-user-ip/:id', VerifyAdminAccessToken, AdminController.ActivateIP)

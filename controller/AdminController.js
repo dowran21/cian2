@@ -2302,6 +2302,26 @@ const GetTypesForSelect = async (req, res) =>{
     }
 }
 
+const GetLocationStatistics = async (req, res) =>{
+    const query_text = `
+        SELECT l.id, lt.name, (
+            SELECT COUNT(re.id) 
+                FROM real_estates re
+            INNER JOIN locations lo
+                ON lo.id = re.location_id
+            INNER JOIN locations loc
+                ON loc.id = lo.main_location_id AND loc.id = l.id
+            ) AS count
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2391,5 +2411,6 @@ module.exports = {
     GetInjections,
     DeleteInjection,
     GetLocationsForSelect,
-    GetTypesForSelect
+    GetTypesForSelect,
+    GetLocationStatistics
 }
