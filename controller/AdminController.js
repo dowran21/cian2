@@ -2315,6 +2315,10 @@ const GetLocationStatistics = async (req, res) =>{
             INNER JOIN locations loc
                 ON loc.id = lo.main_location_id AND loc.id = l.id
             ) AS count
+            FROM locations l
+                INNER JOIN locations_translations lt
+                    ON lt.location_id = l.id
+                WHERE l.main_location_id IS NULL
     `
     try {
         const {rows} = await database.query(query_text, [])
