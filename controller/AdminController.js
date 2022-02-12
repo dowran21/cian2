@@ -1521,7 +1521,7 @@ const GetPriceStatistics = async (req, res) =>{
                     ON resv.real_estate_id = re.id
         WHERE re.id > 0  AND ctp.deleted = false ${where_part} ${spec_part}
         GROUP BY date_trunc('DAY', re.created_at) 
-        GROUP BY date_trunc('DAY', re.created_at)::date ASC
+        ORDER BY date_trunc('DAY', re.created_at)::date ASC
         `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1568,7 +1568,7 @@ const GetUserChart = async (req, res) =>{
         inter = `DAY`
     }
     const query_text = `
-        SELECT to_char(date_trunc('day', u.created_at), 'DD.MM') AS created_at, COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
+        SELECT to_char(date_trunc('DAY', u.created_at), 'DD.MM') AS created_at, COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
             FROM users u
             LEFT JOIN owners o 
                 ON o.id = u.owner_id AND o.id = 1
@@ -2307,7 +2307,7 @@ const GetTypesForSelect = async (req, res) =>{
 
 const GetLocationStatistics = async (req, res) =>{
     const query_text = `
-        SELECT l.id, lt.name, (
+        SELECT l.id, lt.translation, (
             SELECT COUNT(re.id) 
                 FROM real_estates re
             INNER JOIN locations lo
@@ -2317,7 +2317,7 @@ const GetLocationStatistics = async (req, res) =>{
             ) AS count
             FROM locations l
                 INNER JOIN locations_translations lt
-                    ON lt.location_id = l.id
+                    ON lt.location_id = l.id AND lt.language_id = 2
                 WHERE l.main_location_id IS NULL
     `
     try {
