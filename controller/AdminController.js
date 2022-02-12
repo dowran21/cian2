@@ -1274,7 +1274,6 @@ const GetAllUsers = async (req, res) =>{
         `
     try {
         const {rows} = await database.query(query_text, [])
-        console.log(query_text)
         return res.status(status.success).json(rows[0])
     } catch (e) {
         console.log(e)
@@ -1285,7 +1284,7 @@ const GetAllUsers = async (req, res) =>{
 const DeleteUser = async (req, res) =>{
     const {id} = req.params;
     const query_text = `
-        UPDATE users SET deleted = true WHERE id = ${id}
+        DELETE FROM users WHERE id = ${id}
     `
     try {
         await database.query(query_text, [])
