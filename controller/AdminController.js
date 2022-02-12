@@ -1565,7 +1565,7 @@ const GetUserChart = async (req, res) =>{
     if(date_part){
         inter = `${date_part}`
     }else{
-        inter = `day`
+        inter = `DAY`
     }
     const query_text = `
         SELECT to_char(date_trunc('day', u.created_at), 'DD.MM') AS created_at, COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
