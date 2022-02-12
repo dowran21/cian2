@@ -1503,7 +1503,7 @@ const GetPriceStatistics = async (req, res) =>{
 
     const query_text = `
     SELECT  
-        to_char(date_trunc('day', re.created_at), 'MM-DD') AS created_at, AVG(rep.price) AS "Продажа", AVG(repp.price) AS "Аренда"
+        to_char(date_trunc('DAY', re.created_at), 'DD.MM') AS created_at, AVG(rep.price) AS "Продажа", AVG(repp.price) AS "Аренда"
         FROM real_estates re
             INNER JOIN ctypes ctp 
                 ON ctp.id = re.ctype_id
@@ -1520,7 +1520,8 @@ const GetPriceStatistics = async (req, res) =>{
             INNER JOIN real_estate_specification_values resv
                     ON resv.real_estate_id = re.id
         WHERE re.id > 0  AND ctp.deleted = false ${where_part} ${spec_part}
-        GROUP BY date_trunc('day', re.created_at) 
+        GROUP BY date_trunc('DAY', re.created_at) 
+        GROUP BY date_trunc('DAY', re.created_at)::date ASC
         `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1567,7 +1568,7 @@ const GetUserChart = async (req, res) =>{
         inter = `day`
     }
     const query_text = `
-        SELECT to_char(date_trunc('day', u.created_at), 'MM-DD') AS created_at, COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
+        SELECT to_char(date_trunc('day', u.created_at), 'DD.MM') AS created_at, COUNT(o.id) AS "Собственники", COUNT(oo.id) AS "Риелторы"
             FROM users u
             LEFT JOIN owners o 
                 ON o.id = u.owner_id AND o.id = 1
@@ -1575,6 +1576,7 @@ const GetUserChart = async (req, res) =>{
                 ON oo.id = u.owner_id AND oo.id = 2
             WHERE u.role_id = 3 ${where_part} 
             GROUP BY date_trunc('${inter}', u.created_at) 
+            ORDER BY date_trunc('${inter}', u.created_at)::date ASC
     `
     try {
         const {rows} = await database.query(query_text, [])
@@ -1968,7 +1970,7 @@ const GetRealEstateStatistics = async (req, res) =>{
         inter = `day`
     }
     const query_text = `
-        SELECT to_char(date_trunc('day', re.created_at), 'MM-DD') AS created_at, COUNT(s.id) AS "На продаже",
+        SELECT to_char(date_trunc('DAY', re.created_at), 'DD.MM') AS created_at, COUNT(s.id) AS "На продаже",
         COUNT(ss.id) AS "Проданные", COUNT(sss.id) AS "Сдается в аренду", COUNT(ssss.id) AS "Сдано в аренду"
         FROM real_estates re
             LEFT JOIN statuses s
@@ -1982,7 +1984,8 @@ const GetRealEstateStatistics = async (req, res) =>{
             INNER JOIN ctypes ctp 
                 ON ctp.id = re.ctype_id
             WHERE re.id > 0 AND ctp.deleted = false ${where_part}    
-        GROUP BY date_trunc('${inter}', re.created_at) 
+        GROUP BY date_trunc('DAY', re.created_at) 
+        ORDER BY date_trunc('DAY', re.created_at)::date ASC
         
     `
     try {
