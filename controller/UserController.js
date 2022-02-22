@@ -578,7 +578,7 @@ req.body should be like this;
         // console.log("Hello it is me")
         // console.log(rows)
           try {
-              const {rows} = await database.query(`SELECT email FROM users WHERE role_id = 2`, [])
+              const k = await database.query(`SELECT email FROM users WHERE role_id = 2`, [])
               const nodemailer = require("nodemailer");
         // SendSMS({phone:`64311313`, message:"Пришел заказ на сайт Sharafyabi"})
         // SendSMS({phone:`788024`, message:"Пришел заказ на сайт Sharafyabi"})
@@ -587,13 +587,13 @@ req.body should be like this;
                 port: 465,
                 secure: true, // true for 465, false for other ports
                 auth: {
-                user: "order@sharafyabi.com", // generated ethereal user
-                pass: "ibragim2022", // generated ethereal password
+                user: "estate@gamysh.com", // generated ethereal user
+                pass: "Parola7cd4", // generated ethereal password
                 },
             });
             let info = await transporter.sendMail({
-                from: '"Пришло новое объявление на сайт Gamysh" <order@sharafyabi.com>', // sender address
-                to: `${rows?.map(item => `${item.email}`).join(', ')} , dovran@takyk.com`, // list of receivers
+                from: '"Пришло новое объявление на сайт Gamysh" <estate@gamysh.com>', // sender address
+                to: `${k.rows?.map(item => `${item.email}`).join(', ')}`, // list of receivers
                 subject: `ID ${rows[0].id}`, // Subject line
                 text: "Пришло объявление на сайт Gamysh. Пожалуйста подтвердите его.", // plain text body
                 html: `
@@ -603,7 +603,7 @@ req.body should be like this;
               // console.log("email message sent")
               console.log(info)
           } catch (e) {
-              
+              console.log(e)
           }
           // send mail with defined transport object
           
