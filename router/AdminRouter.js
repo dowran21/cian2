@@ -70,9 +70,9 @@ router.get('/get-all-types', VerifyAdminAccessToken, VerifyIsAdmin, AdminControl
 router.get('/get-price-statistics',  VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetPriceStatistics);
 router.get('/get-user-chart', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetUserChart)
 
-router.get('/get-users', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GetAllUsers)
-router.post('/change-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.ChangePermission)
-router.post('/give-user-permission/:id', VerifyAdminAccessToken, VerifyIsAdmin, AdminController.GivePermission)
+router.get('/get-users', VerifyAdminAccessToken, AdminController.GetAllUsers)
+router.post('/change-user-permission/:id', VerifyAdminAccessToken, AdminController.ChangePermission)
+router.post('/give-user-permission/:id', VerifyAdminAccessToken, AdminController.GivePermission)
 router.post('/change-user-type/:id', VerifyAdminAccessToken, AdminController.ChangeUserType)
 router.post('/delete-user/:id', VerifyAdminAccessToken, AdminController.DeleteUser)
 
