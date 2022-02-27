@@ -39,5 +39,6 @@ router.get('/:lang/not-required-specifications-for-types/:category_id', GuestCon
 router.get('/:lang/get-notifies', GuestController.GetNotifies)
 router.get('/page-images/:id', GuestController.GetImagePlaceRandom)
 
+router.get('/room-filters', GuestController.GetTypesForRooms)
 
 module.exports = router

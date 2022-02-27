@@ -244,7 +244,6 @@ const GetSpecForTypeSearch = async (req, res) =>{
     }
 }
 
-
 const Languages = async (req, res) =>{
 
     const query_text = `
@@ -1170,6 +1169,25 @@ const RoomSpecController = async (req, res) =>{
     }
 }
 
+const GetTypesForRooms = async (req, res) =>{
+    const query_text = `
+        SELECT DISTINCT ON (t.id) t.id 
+        FROM types t
+        INNER JOIN ctypes cp
+            ON cp.type_id = t.id
+        INNER JOIN type_specifications ts
+            ON ts.ctype_id = cp.id
+        WHERE ts.spec_id = 1
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 const GetUserRealEstates = async (req, res) =>{
     const {id,  lang} = req.params
     const {page, limit} = req.query
@@ -1479,5 +1497,6 @@ module.exports = {
     GetHistoryView,
     GetNotifies,
     GetImagePlaceRandom,
-    GetRequiredSpecificationsForTypes
+    GetRequiredSpecificationsForTypes,
+    GetTypesForRooms
 }   
