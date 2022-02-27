@@ -1189,11 +1189,13 @@ const AddTypeImage = async (req, res)=>{
 
 const GetTypes = async (req, res) =>{
     const query_text = `
-        SELECT t.id, tt.name 
+        SELECT DISTINCT ON (t.id) t.id, tt.name 
         FROM types t
             INNER JOIN type_translations tt
                 ON tt.type_id = t.id AND tt.language_id = 2
-        WHERE t.main_type_id IS NOT NULL
+            INNER JOIN ctypes cp
+                ON cp.type_id = t.id 
+        WHERE t.main_type_id IS NOT NULL AND cp.deleted = false
     `
     try {
         const {rows} = await database.query(query_text, [])
