@@ -270,7 +270,7 @@ CREATE TABLE real_estate_comments(
 CREATE TABLE real_estate_prices(
     id SERIAL PRIMARY KEY NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT clock_timestamp(),
-    real_estate_id INTEGER NOT NULL,
+    real_estate_id BIGINT NOT NULL, ---need to change
     price INTEGER NOT NUll,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 

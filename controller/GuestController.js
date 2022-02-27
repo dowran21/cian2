@@ -260,7 +260,7 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
-    const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id, sort_column, sort_diretion} = req.query
+    const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id, sort_column, sort_direction} = req.query
     const {lang} = req.params
     // console.log(req.query)
     let column = ``
@@ -270,8 +270,8 @@ const AllRealEstate = async (req, res) =>{
     }else{
         column = 'id'
     }
-    if(sort_diretion){
-        direction = sort_diretion
+    if(sort_direction){
+        direction = sort_direction
     }else{
         direction = 'DESC'
     }
