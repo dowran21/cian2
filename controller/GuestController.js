@@ -260,9 +260,21 @@ const Languages = async (req, res) =>{
 }
 
 const AllRealEstate = async (req, res) =>{
-    const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id} = req.query
+    const {spec_values, user_id, location_id, type_id, main_type_id, category_id, price, area, images, position, page, limit, owner_id, sort_column, sort_diretion} = req.query
     const {lang} = req.params
     // console.log(req.query)
+    let column = ``
+    let direction = ``
+    if(sort_column){
+        column = sort_column
+    }else{
+        column = 'id'
+    }
+    if(sort_diretion){
+        direction = sort_diretion
+    }else{
+        direction = 'DESC'
+    }
     console.log(type_id)
     let user_wish = ``
     let wish_list_join = ``
@@ -481,7 +493,7 @@ const AllRealEstate = async (req, res) =>{
 
         (SELECT json_agg(res) FROM 
             (SELECT * FROM selected 
-                ORDER BY vip_type_id ASC NULLS LAST, vip_id ASC NULLS LAST, id DESC
+                ORDER BY vip_type_id ASC NULLS LAST, vip_id ASC NULLS LAST, ${column} ${direction}
                 ${offSet}
             )res) AS real_estates_all
         `
