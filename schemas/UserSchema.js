@@ -162,6 +162,8 @@ const Schema = {
         owner_id:Joi.number().allow(""),
         lat:Joi.number().allow(""),
         lng:Joi.number().allow(""),
+        sort_column:Joi.string().allow(""),
+        sort_direction:Joi.string().allow(""),
     }),
 
     LangSchema:Joi.object({
