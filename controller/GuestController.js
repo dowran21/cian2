@@ -398,7 +398,7 @@ const AllRealEstate = async (req, res) =>{
     }else{
         image_part = `LEFT JOIN real_estate_images rei ON rei.real_estate_id = re.id`
     }
-    console.log(spec_values)
+    // console.log(spec_values)
     const requestip = require('request-ip')
     const ip = requestip.getClientIp(req)
     let vip_limit = ``
@@ -418,7 +418,7 @@ const AllRealEstate = async (req, res) =>{
     WITH selected AS 
         (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'YYYY-MM-DD') AS created_at, u.full_name, ${user_wish} u.owner_id,
         concat(lt.translation || ', ' || CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation  END ) AS location,
-        (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id,  vre.id AS vip_id,
+        (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id,  vre.id AS vip_id, re.area,
         
         (SELECT json_agg(dest) FROM (
             SELECT rei.destination FROM real_estate_images rei
