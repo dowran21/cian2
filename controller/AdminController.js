@@ -569,13 +569,7 @@ const GetAllSpecifications = async (req, res)=>{
                 (SELECT json_agg(specification) FROM (
 
                 
-                    SELECT s.id, s.absolute_name, s.is_multiple, s.is_required, is_active,
-                    
-                    (SELECT json_agg(tr) FROM(
-                        SELECT language_id, name 
-                        FROM specification_translations
-                        WHERE spec_id = s.id 
-                    )tr) AS translations  
+                    SELECT s.id, s.absolute_name, s.is_multiple, s.is_required, is_active, st.name AS name_tm, stt.name AS name_ru
 
                     FROM specifications s
                         INNER JOIN specification_translations st
