@@ -2402,6 +2402,77 @@ const GetLocationStatistics = async (req, res) =>{
     }
 }
 
+const GetDeleteAllUsers = async (req, res) =>{
+    const {page, limit} = req.query
+    const {search, sort_direction, sort_column, owner_id, active} = req.query
+    let OffSet = ``
+    if (page && limit) {
+        OffSet = ` OFFSET ${(page)*limit} LIMIT ${limit}`
+    }else{
+        OffSet = ``
+    }
+    let WherePart = ``
+    if(search && search != 'null' && search != 'undefined'){
+        WherePart += ` AND (u.full_name ~* '${search}' OR u.phone ~* '${search}' OR u.email  ~* '${search}')`
+    }
+    // if(phone && phone != 'null' && phone != 'undefined'){
+    //     WherePart += ` AND phone = '${phone}'`
+    // }
+
+    let order_column = ``
+    if(sort_column){
+        order_column = sort_column;
+    }else{
+        order_column = ` id`
+    }
+
+    let order_direction = ``
+    if(sort_direction){
+        order_direction = sort_direction
+    }else{
+        order_direction = ` DESC`
+    }
+
+    if(owner_id){
+        WherePart += ` AND u.owner_id = ${owner_id}`
+    }
+    if(active){
+        WherePart += ` AND u.active = ${active}`
+    }
+    
+    let order_part = `ORDER BY ${order_column} ${order_direction}`
+
+    const query_text = `
+        SELECT
+            (SELECT COUNT(*) 
+                FROM users u
+                WHERE u.role_id = 3 ${WherePart}),
+            (SELECT json_agg(op) FROM (
+                SELECT u.id, u.full_name, u.email, u.phone, u.owner_id, to_char(u.last_logged, 'YYYY.MM.DD') AS created_at,
+                up.is_active, lower(validity)::text AS low_val, upper(validity)::text AS upper_val, u.active,
+                (SELECT json_agg(com) FROM (
+                    SELECT ac.comment FROM 
+                    activation_comment ac WHERE ac.user_id = u.id
+                    ORDER BY ac.id DESC
+                    LIMIT 1
+                )com) AS comment
+                FROM users u
+                    LEFT JOIN user_permissions up  
+                        ON up.user_id = u.id AND (lower(validity) <= localtimestamp OR upper(validity) >= localtimestamp) AND is_active = true
+                    WHERE u.role_id = 3 AND u.deleted = true ${WherePart}
+                ${order_part}
+                ${OffSet}
+            )op) AS users
+        `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json(rows[0])
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2492,5 +2563,6 @@ module.exports = {
     DeleteInjection,
     GetLocationsForSelect,
     GetTypesForSelect,
-    GetLocationStatistics
+    GetLocationStatistics,
+    GetDeleteAllUsers
 }

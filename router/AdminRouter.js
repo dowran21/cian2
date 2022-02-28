@@ -105,4 +105,6 @@ router.post('/delete-injection/:id', VerifyAdminAccessToken, AdminController.Del
 router.get('/locations-for-select', VerifyAdminAccessToken, AdminController.GetLocationsForSelect);
 router.get('/types-for-select', VerifyAdminAccessToken, AdminController.GetTypesForSelect)
 
+router.get('/deleted-users', VerifyAdminAccessToken, AdminController.GetDeleteAllUsers)
+
 module.exports = router
