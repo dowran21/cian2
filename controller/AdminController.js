@@ -2,9 +2,13 @@ const database = require("../db/index.js");
 const {status} = require('../utils/status');
 const AdminHelper = require('../utils/index.js');
 const fs = require('fs');
-// const { ParamsSchemaMiddleware } = require("../middleware/SchemaMiddleware.js");
-// const { triggerAsyncId } = require("async_hooks");
-
+const admin = require("firebase-admin");
+const serviceAccount = require(process.env.PATH_TO_PUSH_JSON)
+const FIREBASE_DATABASE_URL = "https://gamysh-8a004-default-rtdb.europe-west1.firebasedatabase.app"
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseUrl: FIREBASE_DATABASE_URL
+})
 
 const AdminLogin = async (req, res) =>{
     /******
@@ -2201,11 +2205,84 @@ const AddNotify = async (req, res) => {
 
 const AddNotifyEstate = async (req, res) =>{
     const {id} = req.params;
+    // const query_text = `
+    //     INSERT INTO real_estate_notifies (real_estate_id) VALUES (${id})
+    // `
     const query_text = `
-        INSERT INTO real_estate_notifies (real_estate_id) VALUES (${id})
+        SELECT re.id, re.area, rep.price, vre.id AS VIP, u.phone, u.full_name, ott.translation,
+            re.created_at,
+            concat(
+                CASE 
+                    WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
+                    END ||
+                lt.translation
+            ) AS location,
+            real_estate_name($1, l.id, tt.name, area), u.phone, ott.translation AS owner_type,
+
+            (SELECT json_agg(image) FROM (
+                SELECT id, destination FROM real_estate_images rei
+                WHERE rei.real_estate_id = $1 AND rei.is_active = 'true'
+            )image) AS images, 
+
+            (SELECT json_agg(rejection) FROM(
+                SELECT rec.id, rec.comment
+                FROM real_estate_comments rec
+                WHERE rec.real_estate_id = re.id
+            )rejection) AS rejections,
+
+            (SELECT json_agg(specification) FROM(
+                SELECT DISTINCT ON (resvv.spec_id) st.name, 
+                   
+                    (SELECT json_agg(value) FROM(
+                        SELECT sv.absolute_value, svt.name FROM specification_values sv
+                            LEFT JOIN specification_value_translations svt
+                                ON svt.spec_value_id = sv.id AND svt.language_id = 2
+                            INNER JOIN real_estate_specification_values resv 
+                                ON resv.spec_value_id = sv.id
+                        WHERE resv.real_estate_id = re.id AND sv.spec_id = st.spec_id
+                    )value) AS values
+                    
+                FROM specification_translations st
+                    INNER JOIN real_estate_specification_values resvv
+                        ON resvv.spec_id = st.spec_id 
+                WHERE st.language_id = 2 AND resvv.real_estate_id = $1 
+
+            )specification) AS specifications, ret.description AS description_tm, rett.description AS description_ru
+
+    FROM real_estates re
+        INNER JOIN users u
+            ON u.id = re.user_id
+        INNER JOIN languages l 
+            ON l.id = 2
+        INNER JOIN owner_type_translations ott
+            ON ott.owner_id = u.owner_id AND ott.language_id = l.id
+        INNER JOIN ctypes ctp 
+            ON ctp.id = re.ctype_id 
+        LEFT JOIN vip_real_estates vre 
+            ON vre.real_estate_id = re.id AND vip_dates:: tsrange @> localtimestamp
+        INNER JOIN type_translations tt 
+            ON tt.type_id = ctp.type_id AND tt.language_id = l.id
+        LEFT JOIN real_estate_translations ret 
+            ON ret.real_estate_id = re.id AND ret.language_id = 1
+        LEFT JOIN real_estate_translations rett 
+            ON rett.real_estate_id = re.id AND rett.language_id = 2
+        INNER JOIN real_estate_prices rep 
+            ON rep.real_estate_id = re.id AND rep.is_active = true 
+        LEFT JOIN location_translations lt
+            ON lt.location_id = re.location_id AND lt.language_id = l.id
+        LEFT JOIN locations lc 
+            ON lc.id = re.location_id
+        LEFT JOIN location_translations ltt
+            ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
+    WHERE re.id = $1 AND re.status_id <> 2 AND re.status_id <> 4 AND ctp.deleted = false
     `
     try {
-        await database.query(query_text, [])
+        const {rows} = await database.query(query_text, [id])
+        let message = {
+            data: {title:`${rows[0].real_estate_name}`, body:`${rows[0].description_ru}`, item_id:`${id}`}
+            // token
+        }
+        await admin.messaging().sendToTopic('Events',message)
         return res.status(status.success).send(true)
     } catch (e) {
         console.log(e)
