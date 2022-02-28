@@ -1086,6 +1086,21 @@ const UpdateNotification = async (req, res) =>{
     }
 }
 
+const DeleteMyself = async (req, res) =>{
+    const {id} = req.params;
+    const user_id = req.user?.id
+    if(user_id != id){
+        return res.status(status.success).send("Idi na otsuda")
+    }
+    try {
+        await database.query(`UPDATE users SET deleted = true WHERE id = ${id}`, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     UserRegistration,
     UserLogin,
@@ -1115,6 +1130,8 @@ module.exports = {
     MakeComplaint,
 
     GetNotifications,
-    UpdateNotification
+    UpdateNotification,
+    
+    DeleteMyself
 }
 

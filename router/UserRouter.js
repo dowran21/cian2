@@ -39,4 +39,6 @@ router.post('/:lang/make-complaint/:id', VerifyUserAccessToken, CheckLastLogged,
 router.get('/:lang/get-notifications', VerifyUserAccessToken, CheckLastLogged, UserController.GetNotifications)
 router.post('/:lang/update-notification/:id', VerifyUserAccessToken, CheckLastLogged, UserController.UpdateNotification)
 
+router.post('/:lang/delete-myself/:id', VerifyUserAccessToken, UserController.DeleteMyself)
+
 module.exports = router
