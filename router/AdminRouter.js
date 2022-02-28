@@ -106,5 +106,6 @@ router.get('/locations-for-select', VerifyAdminAccessToken, AdminController.GetL
 router.get('/types-for-select', VerifyAdminAccessToken, AdminController.GetTypesForSelect)
 
 router.get('/deleted-users', VerifyAdminAccessToken, AdminController.GetDeleteAllUsers)
+router.post('/absolute-delete/:id', VerifyAdminAccessToken, AdminController.AbsoluteDeleteUser)
 
 module.exports = router

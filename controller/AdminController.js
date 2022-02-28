@@ -2473,6 +2473,20 @@ const GetDeleteAllUsers = async (req, res) =>{
     }
 }
 
+const AbsoluteDeleteUser = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        DELETE FROM users WHERE id = ${id}
+    `
+    try {
+        await database.query(query_text, [])
+        return res.status(status.success).send(true)
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2564,5 +2578,7 @@ module.exports = {
     GetLocationsForSelect,
     GetTypesForSelect,
     GetLocationStatistics,
-    GetDeleteAllUsers
+    GetDeleteAllUsers,
+    
+    AbsoluteDeleteUser
 }
