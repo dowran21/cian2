@@ -940,7 +940,7 @@ const GetRealEstateByID = async (req, res) => {
             re.created_at::text, ${position_part}
             concat(
                 CASE 
-                    WHEN ltt.translation IS NOT NULL THEN ltt.translation || ',' 
+                    WHEN ltt.translation IS NOT NULL THEN ltt.translation || ', ' 
                     END ||
                 lt.translation
             ) AS location, 
