@@ -113,7 +113,7 @@ CREATE TABLE access_ip(
     activated BOOLEAN DEFAULT FALSE,
     UNIQUE(user_id, ip_address),
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id)  REFERENCES users(id)   ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id)  REFERENCES users(id)  ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE categories(

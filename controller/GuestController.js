@@ -808,6 +808,8 @@ const FlatFilter = async (req, res) =>{
                                         ON cp.category_id = c.id AND cp.type_id = 3 AND re.ctype_id = cp.id
                                     INNER JOIN real_estate_specification_values resv
                                         ON resv.real_estate_id = re.id AND resv.spec_value_id = sv.id
+                                    INNER JOIN users u
+                                        ON u.id = re.user_id
                                     WHERE re.is_active = 'true' AND re.status_id <> 2 AND re.status_id <> 4 AND cp.deleted = false
                             )
                         
@@ -849,6 +851,8 @@ const CommerceFilter = async (req, res) =>{
                                 ON l.id = re.location_id
                             LEFT JOIN locations ml
                                 ON ml.id = l.main_location_id
+                            INNER JOIN users u
+                                ON u.id = re.user_id
                             WHERE re.is_active = 'true' AND re.status_id <> 2 
                                 AND re.status_id <> 4 AND cp.type_id = t.id AND cp.category_id = c.id AND cp.deleted = false ${wherePart}
                     )
