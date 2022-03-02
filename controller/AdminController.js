@@ -369,13 +369,13 @@ const AddSpecification = async (req, res) =>{
         const {rows} = await database.query(query_text, [])
         try{
             const qt = `
-                SELECT id, absolute_name, is_multiple, is_active, is_required,
-                    (SELECT json_agg(tr) FROM(
-                        SELECT language_id, name 
-                        FROM specification_translations
-                        WHERE spec_id = id 
-                    )tr) AS translations   
-                FROM specifications 
+                SELECT s.id, s.absolute_name, s.is_multiple, s.is_active, s.is_required,
+                st.name AS name_tm, stt.name AS name_ru
+                FROM specifications s
+                INNER JOIN specification_translations st
+                    ON st.specification_id = s.id AND st.language_id = 1
+                INNER JOIN specification_translations stt
+                    ON stt.specification_id = s.id AND stt.language_id = 2
                 WHERE  id = ${rows[0].id}`
             const so = await database.query(qt, [])
             return res.status(status.success).json({"rows":so.rows[0]})
