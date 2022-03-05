@@ -339,11 +339,11 @@ const AllRealEstate = async (req, res) =>{
         }
     }
     if (price1?.min && price1?.max){
-        where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
+        where_part += ` AND (rep.price => ${price1?.min} AND rep.price <= ${price1?.max})`
     }else if(price1?.min && !price1?.max){
-        where_part += ` AND rep.price > ${price1.min}`
+        where_part += ` AND rep.price => ${price1.min}`
     }else if(!price1?.min && price1?.max){
-        where_part += ` AND rep.price < ${price1.max}`
+        where_part += ` AND rep.price <= ${price1.max}`
     }else{
         where_part +=``
     }
@@ -359,11 +359,11 @@ const AllRealEstate = async (req, res) =>{
     }
 
     if (area1?.min && area1?.max){
-        where_part += ` AND re.area > ${area1.min}  AND re.area < ${area1.max}`
+        where_part += ` AND re.area => ${area1.min}  AND re.area <= ${area1.max}`
     }else if(area1?.min && !area1?.max){
-        where_part += ` AND re.area > ${area1?.min}`
+        where_part += ` AND re.area => ${area1?.min}`
     }else if(!area1?.min && area1?.max){
-        where_part += ` AND re.area < ${area1.max}`
+        where_part += ` AND re.area <= ${area1.max}`
     }else{
         where_part +=``
     }
