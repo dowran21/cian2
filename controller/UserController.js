@@ -587,12 +587,12 @@ req.body should be like this;
                 port: 465,
                 secure: true, // true for 465, false for other ports
                 auth: {
-                user: "estate@gamysh.com", // generated ethereal user
+                user: "dovran@takyk.com", // generated ethereal user
                 pass: "Parola7cd4", // generated ethereal password
                 },
             });
             let info = await transporter.sendMail({
-                from: '"Пришло новое объявление на сайт Gamysh" <estate@gamysh.com>', // sender address
+                from: '"Пришло новое объявление на сайт Gamysh" <dovran@takyk.com>', // sender address
                 to: `${k.rows?.map(item => `${item.email}`).join(', ')}`, // list of receivers
                 subject: `ID ${rows[0].id}`, // Subject line
                 text: "Пришло объявление на сайт Gamysh. Пожалуйста подтвердите его.", // plain text body
