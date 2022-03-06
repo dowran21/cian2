@@ -2494,6 +2494,24 @@ const AbsoluteDeleteUser = async (req, res) =>{
     }
 }
 
+const GetSelectSubLocaitons = async (req, res) =>{
+    const {id} = req.params;
+    const query_text = `
+        SELECT l.id AS value, lt.translation AS label 
+        FROM locations l
+        INNER JOIN location_translations lt
+            ON lt.location_id = l.id AND lt.language_id = 2
+        WHERE l.main_location_id = ${id} 
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        console.log(e)
+        return res.status(status.error).send(false)
+    }
+}
+
 module.exports = {
     AdminLogin,
     LoadAdmin,
@@ -2587,5 +2605,6 @@ module.exports = {
     GetLocationStatistics,
     GetDeleteAllUsers,
     
-    AbsoluteDeleteUser
+    AbsoluteDeleteUser,
+    GetSelectSubLocaitons
 }
