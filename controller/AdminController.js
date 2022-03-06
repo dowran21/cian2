@@ -2388,6 +2388,13 @@ const GetTypesForSelect = async (req, res) =>{
 }
 
 const GetLocationStatistics = async (req, res) =>{
+    const {main_location_id} = req.query;
+    let wherePart = ``
+    if(main_location_id){
+        wherePart = `WHERE l.main_location_id = ${main_location_id}`
+    }else{
+        wherePart = `WHERE l.main_location_id IS NULL`
+    }
     const query_text = `
         SELECT l.id, lt.translation, (
             SELECT COUNT(re.id) 
@@ -2400,7 +2407,7 @@ const GetLocationStatistics = async (req, res) =>{
             FROM locations l
                 INNER JOIN location_translations lt
                     ON lt.location_id = l.id AND lt.language_id = 2
-                WHERE l.main_location_id IS NULL
+                ${wherePart}
     `
     try {
         const {rows} = await database.query(query_text, [])
