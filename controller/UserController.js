@@ -583,7 +583,7 @@ req.body should be like this;
                 FROM users u 
                 INNER JOIN locations l
                     ON l.id = ${location_id}
-                INNER JOIN user_locations ul
+                INNER JOIN operator_locations ul
                     ON ul.user_id = u.id AND location_id = l.main_location_id
               WHERE u.role_id = 2
               `
