@@ -1695,7 +1695,7 @@ const GetConfirmRealEstates = async (req, res) =>{
         where_part += ` AND cp.category_id = ${category_id}`
     }
     if(location_id) {
-        where_part +=  ` AND lc.main_location_id  = ${location_id}`
+        where_part +=  ` AND (lc.main_location_id  = ${location_id} OR lc.id = ${location_id})`
     }
     if(vip == 'false' || vip == "true"){
         if(vip == "false"){
