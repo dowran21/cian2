@@ -1650,13 +1650,14 @@ const ActivateIP = async (req, res) =>{
 }
 
 const GetConfirmRealEstates = async (req, res) =>{
-    const {page, limit, search, is_active, status_id, location_id, type_id, category_id} = req.query
+    const {page, limit, search, is_active, status_id, location_id, type_id, category_id, vip} = req.query
     let offSet = ``
     if(page && limit){
         offSet = ` OFFSET ${page*limit} LIMIT ${limit}`
     }else{
         offSet = ``
     }
+    
     let op_join = ``
     let op_where = ``
     let user = req.user
@@ -1696,7 +1697,13 @@ const GetConfirmRealEstates = async (req, res) =>{
     if(location_id) {
         where_part +=  ` AND lc.main_location_id  = ${location_id}`
     }
-    
+    if(vip == 'false' || vip == "true"){
+        if(vip == "false"){
+            where_part += ` AND vre.id IS NULL `
+        }else{
+            where_part += ` AND vre.id IS NOT NULL `
+        }
+    }
     try {
         const query_text = `
         WITH selected AS ( 
