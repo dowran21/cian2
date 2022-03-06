@@ -578,7 +578,16 @@ req.body should be like this;
         // console.log("Hello it is me")
         // console.log(rows)
           try {
-              const k = await database.query(`SELECT email FROM users WHERE role_id = 2`, [])
+              const email_query = `
+              SELECT u.email 
+                FROM users u 
+                INNER JOIN locations l
+                    ON l.id = ${location_id}
+                INNER JOIN user_locations ul
+                    ON ul.user_id = u.id AND location_id = l.main_location_id
+              WHERE u.role_id = 2
+              `
+              const k = await database.query(email_query, [])
               const nodemailer = require("nodemailer");
         // SendSMS({phone:`64311313`, message:"Пришел заказ на сайт Sharafyabi"})
         // SendSMS({phone:`788024`, message:"Пришел заказ на сайт Sharafyabi"})
