@@ -1737,7 +1737,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     LEFT JOIN locations lc 
                         ON lc.id = re.location_id
                     LEFT JOIN vip_real_estates vre
-                        ON vre.real_estate_id = re.id AND (lower(vre.vip_dates) <= localtimestamp OR upper(vre.vip_dates) >= localtimestamp)  
+                        ON vre.real_estate_id = re.id AND (lower(vre.vip_dates) >= localtimestamp OR upper(vre.vip_dates) >= localtimestamp)  
                     LEFT JOIN location_translations ltt
                         ON ltt.location_id = lc.main_location_id AND ltt.language_id = l.id
                     LEFT JOIN logs lg
@@ -1764,7 +1764,7 @@ const GetConfirmRealEstates = async (req, res) =>{
                     INNER JOIN ctypes cp 
                         ON cp.id = re.ctype_id
                     LEFT JOIN vip_real_estates vre
-                        ON vre.real_estate_id = re.id AND (lower(vre.vip_dates) <= localtimestamp OR upper(vre.vip_dates) >= localtimestamp)
+                        ON vre.real_estate_id = re.id AND (lower(vre.vip_dates) >= localtimestamp OR upper(vre.vip_dates) >= localtimestamp)
                         ${op_join}
                     WHERE re.id >0 ${active_part} ${status_part} ${where_part} 
                         AND re.status_id <> 2 AND re.status_id <> 4
