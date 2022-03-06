@@ -2402,7 +2402,8 @@ const GetLocationStatistics = async (req, res) =>{
             INNER JOIN locations lo
                 ON lo.id = re.location_id
             INNER JOIN locations loc
-                ON loc.id = lo.main_location_id AND loc.id = l.id
+                ON loc.id = lo.main_location_id 
+            Where re.location_id = l.id OR lo.main_location_id = l.id
             ) AS "Количество" 
             FROM locations l
                 INNER JOIN location_translations lt
