@@ -1546,7 +1546,7 @@ const GetVipStatistics = async (req, res) =>{
     }
     const query_text = `
         SELECT to_char(date_trunc('DAY', vre.created_at), 'DD.MM') AS created_at,
-            COUNT(*) 
+            COUNT(*) AS "Количество VIP"
             FROM vip_real_estates vre
             WHERE vre.id > 0 ${where_part}
             GROUP BY date_trunc('DAY', vre.created_at)
