@@ -330,6 +330,7 @@ CREATE TABLE vip_real_estates(
     vip_dates tsrange NOT NULL,
     real_estate_id SMALLINT NOT NULL,
     vip_type_id SMALLINT NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     EXCLUDE USING gist(vip_dates WITH &&, real_estate_id WITH =),
 
     CONSTRAINT real_estate_id_fk 

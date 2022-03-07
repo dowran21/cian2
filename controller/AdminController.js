@@ -1532,6 +1532,34 @@ const GetPriceStatistics = async (req, res) =>{
     }
 }
 
+const GetVipStatistics = async (req, res) =>{
+    const {start_date, end_date} = req.query;
+    let where_part = ``
+    if(start_date && end_date){
+        where_part += ` AND re.created_at >= '${start_date}'::date AND re.created_at <= '${end_date}'::date`
+    }else if(start_date && !end_date){
+        where_part += ` AND re.created_at >= '${start_date}'::date`
+    }else if(!start_date && end_date){
+        where_part += ` AND re.created_at <= '${end_date}'::date`
+    }else{
+        where_part += ``
+    }
+    const query_text = `
+        SELECT to_char(date_trunc('DAY', vre.created_at), 'DD.MM') AS created_at,
+            COUNT(*) 
+            FROM vip_real_estates vre
+            WHERE vre.id > 0 ${where_part}
+            GROUP BY date_trunc('DAY', vre.created_at)
+            ORDER BY date_trunc('DAY', vre.created_at)::date ASC
+    `
+    try {
+        const {rows} = await database.query(query_text, [])
+        return res.status(status.success).json({rows})
+    } catch (e) {
+        
+    }
+}
+
 const GetUsersStatistics = async (req, res)=>{
     const query_text = `
         SELECT o.id,
