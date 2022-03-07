@@ -2644,5 +2644,6 @@ module.exports = {
     GetDeleteAllUsers,
     
     AbsoluteDeleteUser,
-    GetSelectSubLocaitons
+    GetSelectSubLocaitons,
+    GetVipStatistics
 }
