@@ -415,7 +415,7 @@ const AllRealEstate = async (req, res) =>{
     
     const query_text =`
     WITH selected AS 
-        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'DD.MM.YYY') AS created_at, u.full_name, ${user_wish} u.owner_id,
+        (SELECT DISTINCT ON (re.id) re.id, rep.price::text, u.phone::text, to_char(re.created_at, 'DD.MM.YYYy') AS created_at, u.full_name, ${user_wish} u.owner_id,
         concat(lt.translation || ', ' || CASE WHEN ltt.translation IS NOT NULL THEN ltt.translation  END ) AS location,
         (SELECT real_estate_name(re.id, l.id, tt.name, area)), vre.vip_type_id,  vre.id AS vip_id, re.area,
         
