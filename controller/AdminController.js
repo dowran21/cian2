@@ -1717,7 +1717,7 @@ const GetConfirmRealEstates = async (req, res) =>{
     if(search){
         ids = parseInt(search)
         if(ids){
-            where_part += ` AND re.id = ${ids}`
+            where_part += ` AND (re.id = ${ids} OR u.phone ~* '${search}')`
         }else{
             where_part += ` AND (u.phone ~* '${search}' OR u.full_name ~* '${search}')`
         }
