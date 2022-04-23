@@ -13,7 +13,7 @@ const port = process.env.PORT || 3000
 // let dir = path.join(__dirname, 'uploads')
 
 app.use(morgan('dev'))
-const allowedOrigins = ['http://153.92.223.44:3001','http://192.168.1.11:3000','http://192.168.31.243:3000','http://153.92.223.44:3002','https://gamysh.com',"http://153.92.223.44:3000",'http://localhost:3000','http://localhost:2000','http://192.168.31.30:3000', 
+const allowedOrigins = ['http://153.92.223.44:3001','http://192.168.1.11:3000','http://192.168.31.243:3000','http://153.92.223.44:3000','https://gamysh.com',"http://153.92.223.44:3000",'http://localhost:3000','http://localhost:2000','http://192.168.31.30:3000', 
     'http://localhost:3001', 'http://153.92.223.44:2000', 'http://admin.gamysh.com', 'https://admin.gamysh.com',`http://192.168.31.160:3000`,`http://192.168.31.160:3001` ];
 
 app.use(cors({
