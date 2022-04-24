@@ -51,9 +51,16 @@ CREATE OR REPLACE FUNCTION real_estate_name(re_id int, language_id smallint, t_n
                 END
             END,
             '' || 
-            CASE WHEN (t_name = 'Квартира') THEN 'кв.' 
+            CASE 
+                WHEN (t_name = 'Квартира') THEN 'кв.' 
+                WHEN (t_name = 'Kwartira') THEN 'kw.' 
             ELSE t_name END,
-            ' ', E'\u00B7' , ' ' ,area ||
+            ' ', E'\u00B7' , ' ' , '' || 
+            CASE 
+                WHEN ((area*10)%10 = 0) THEN floor(area)
+            ELSE area
+            END, 
+            '' ||
                 CASE 
                     WHEN language_id = 1 THEN ' m'
                     WHEN language_id = 2 THEN ' м'

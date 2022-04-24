@@ -506,9 +506,9 @@ req.body should be like this;
         const {rows} = await database.query(user_query, [])
         // console.log(rows)
         user = rows[0]
-        if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
-            return res.status(444).send(false)
-        }
+        // if (rows[0].owner_id == 1 && rows[0].count >= rows[0].max_count){
+        //     return res.status(444).send(false)
+        // }
         if(!rows[0]?.active){
             return res.status(444).send({message:"You can't add you are in bann"})
         }
