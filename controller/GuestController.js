@@ -705,11 +705,11 @@ const CountForFilter = async (req, res) =>{
     }
 
     if (price1?.min && price1?.max){
-        where_part += ` AND (rep.price > ${price1.min} AND rep.price < ${price1.max})`
+        where_part += ` AND (rep.price >= ${price1.min} AND rep.price <= ${price1.max})`
     }else if(price1?.min && !price1?.max){
-        where_part += ` AND rep.price > ${price1.min}`
+        where_part += ` AND rep.price >= ${price1.min}`
     }else if(!price1?.min && price1?.max){
-        where_part += ` AND rep.price < ${price1.max}`
+        where_part += ` AND rep.price <= ${price1.max}`
     }else{
         where_part +=``
     }
